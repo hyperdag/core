@@ -1,0 +1,59 @@
+cmake_minimum_required(VERSION 3.28)
+project(HYPERDAG VERSION 1.0.0 LANGUAGES C)
+
+# Critical policies for deterministic builds
+cmake_policy(SET CMP0135 NEW)  # Timestamp extraction in FetchContent
+set(CMAKE_POLICY_DEFAULT_CMP0141 NEW)  # MSVC debug info format
+
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+
+# Modern CMake features
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_UNITY_BUILD ON)
+set(CMAKE_UNITY_BUILD_BATCH_SIZE 16)  # Optimal for incremental builds
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+
+# Development mode flag
+option(HYPERDAG_DEV "Enable development mode (warnings as errors)" OFF)
+option(HYPERDAG_SANITIZERS "Enable sanitizers in debug builds" OFF)
+option(HYPERDAG_WERROR "Treat warnings as errors" OFF)
+option(HYPERDAG_FUZZING "Enable fuzzing targets" OFF)
+
+# Include custom CMake modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# Deterministic builds
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wdate-time")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ffile-prefix-map=${CMAKE_SOURCE_DIR}=.")
+
+# Honor SOURCE_DATE_EPOCH for reproducible builds
+if(DEFINED ENV{SOURCE_DATE_EPOCH})
+    set_property(GLOBAL PROPERTY SOURCE_DATE_EPOCH $ENV{SOURCE_DATE_EPOCH})
+endif()
+
+# Deterministic output directories
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+# Include compiler flags and sanitizers
+include(CompilerFlags)
+include(Sanitizers)
+include(StaticAnalysis)
+
+# Project directories
+add_subdirectory(src)
+
+# Enable testing
+enable_testing()
+add_subdirectory(tests)
+
+# Tools
+add_subdirectory(tools)
+
+# Benchmarks
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    add_subdirectory(benchmarks)
+endif()
