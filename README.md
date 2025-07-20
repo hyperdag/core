@@ -225,7 +225,7 @@ cmake --build build --target static-analysis
 ./scripts/profile.sh all
 ```
 
-See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines and build system documentation.
 
 ## Performance Targets
 
@@ -242,12 +242,11 @@ See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
 
 - **[Feature Specifications](docs/features/)**: Complete technical specifications
 - **[Third-Party Integration](docs/3rd-party.md)**: Library selection and usage guides
-- **[Development Log](DEVLOG.md)**: Project timeline and decisions
-- **[Situation Report](SITREP.md)**: Current status and implementation readiness
 
 ### Development Guides
 
-- **[CLAUDE.md](CLAUDE.md)**: Build system and AI development context
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Complete development guidelines and standards
+- **[CLAUDE.md](CLAUDE.md)**: AI-specific development context
 - **API Reference**: Generated from implementation (pending)
 - **Performance Guide**: Optimization recommendations (pending)
 
@@ -275,6 +274,10 @@ See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
 4. **Follow Standards**: C23 practices with comprehensive testing
 5. **Quality Gates**: >95% coverage, sanitizer-clean, static analysis passing
 
+**DevContainer (Recommended)**:
+Use the provided DevContainer for instant setup with VS Code.
+
+**Manual Setup**:
 ```bash
 # Set up development environment
 ./scripts/setup-dev-env.sh
@@ -282,14 +285,10 @@ See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
 # Validate contribution
 ctest --test-dir build --output-on-failure
 cmake --build build --target static-analysis
-./scripts/security-audit.sh
+./scripts/run-gitleaks.sh
 ```
 
-The development environment includes:
-- Bash-based git hooks for quality enforcement
-- Automated tool installation and configuration
-- POSIX-compliant scripts for cross-platform compatibility
-- "Silence is golden" - only outputs problems/warnings
+For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Development Timeline
 
