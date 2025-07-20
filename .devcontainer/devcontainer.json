@@ -11,7 +11,7 @@
         }
     },
     
-    "postCreateCommand": "bash -c 'apt-get update && apt-get install -y pkg-config libcriterion-dev clang-tidy cppcheck valgrind curl && curl -sSL https://github.com/gitleaks/gitleaks/releases/latest/download/gitleaks_linux_x64.tar.gz | tar -xz && mv gitleaks /usr/local/bin/ && chmod +x .git/hooks/pre-commit .git/hooks/pre-push'",
+    "postCreateCommand": "./scripts/setup-dev-env.sh --skip-vscode",
     
     "customizations": {
         "vscode": {

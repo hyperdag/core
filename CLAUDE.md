@@ -657,6 +657,50 @@ This Code Quality section establishes HyperDAG as having the most rigorous devel
 
 # Development Workflow
 
+## Automated Development Environment Setup
+
+### Quick Start (Recommended)
+
+```bash
+# Complete development environment setup
+./scripts/setup-dev-env.sh
+
+# Verify existing environment
+./scripts/setup-dev-env.sh --verify
+
+# Check what tools are missing
+./scripts/setup-dev-env.sh --dry-run
+```
+
+The setup script provides:
+- **Automated Tool Installation**: cmake, clang-format, clang-tidy, gitleaks, etc.
+- **Bash-Based Git Hooks**: Quality enforcement with proper failure behavior
+- **POSIX Compliance**: Works on Linux/macOS/Windows WSL2
+- **Interactive Configuration**: Git settings with Y/n prompts
+- **"Silence is Golden"**: Only outputs problems/warnings
+- **Security Hardening**: Never auto-installs in non-interactive mode
+
+### Environment Options
+
+```bash
+# Setup specific components
+./scripts/setup-dev-env.sh --deps-only      # Just install tools
+./scripts/setup-dev-env.sh --git-only       # Just configure git + hooks
+./scripts/setup-dev-env.sh --build-only     # Just setup build system
+./scripts/setup-dev-env.sh --vscode-only    # Just configure VSCode
+
+# Skip specific components  
+./scripts/setup-dev-env.sh --skip-deps      # Skip tool installation
+./scripts/setup-dev-env.sh --skip-vscode    # Skip VSCode setup (for containers)
+```
+
+### DevContainer Integration
+
+```json
+// .devcontainer/devcontainer.json automatically runs:
+"postCreateCommand": "./scripts/setup-dev-env.sh --skip-vscode"
+```
+
 ## Commands & Build Options
 
 ### Standard Build Commands
