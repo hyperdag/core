@@ -264,7 +264,7 @@ cmake --build build --target static-analysis
 - **Phase 3** (Weeks 6-7): Algorithms and concurrency
 - **Phase 4** (Weeks 8-9): Builder system and integration
 
-See [SITREP.md](SITREP.md) for detailed status and [DEVLOG.md](DEVLOG.md) for development history.
+See [Feature Specifications](docs/features/) for detailed implementation roadmap.
 
 ## License
 
