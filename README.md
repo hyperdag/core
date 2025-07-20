@@ -1,182 +1,281 @@
-# HyperDAG - High-Performance Directed Acyclic Graph Library
+# HyperDAG - Mathematical Hypergraph Foundation for Asset Management
 
 [![CI](https://github.com/hyperdag/hyperdag-core/workflows/CI/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
 [![Security](https://github.com/hyperdag/hyperdag-core/workflows/Security/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
+[![SLSA](https://slsa.dev/images/gh-badge-level1.svg)](https://slsa.dev)
 
-A high-performance C23 library for directed acyclic graph operations with focus on memory safety, performance, and modern development practices.
+A high-performance C23 library providing mathematical hypergraph foundations for complex asset dependency management. HyperDAG enables hyperedges that connect multiple nodes simultaneously, representing rich N-to-M relationships impossible with traditional graphs.
 
 ## What is HyperDAG?
 
-HyperDAG provides efficient data structures and algorithms for working with directed acyclic graphs (DAGs). It's designed for applications that need:
+HyperDAG implements the core mathematical structure underlying TurtlGraph's asset management system. It provides:
 
-- **Fast graph operations**: Node creation, edge manipulation, topological sorting
-- **Memory safety**: Built with comprehensive sanitizer coverage and safe memory management
-- **Scalability**: Optimized for large graphs with thousands of nodes
-- **Modern C**: Written in C23 with contemporary safety and performance practices
+- **🔗 Hypergraph Mathematics**: Hyperedges connecting multiple nodes (e.g., "this material depends on these 3 textures and 2 shaders")
+- **💾 Memory-Mapped Bundles**: Zero-copy binary format with cryptographic integrity
+- **⚡ Lock-Free Performance**: Concurrent access optimized for multi-core systems  
+- **🛡️ Memory Safety**: Comprehensive sanitizer coverage and deterministic cleanup
+- **🏗️ Modern C23**: Contemporary safety practices with broad platform support
+
+## Architecture Overview
+
+```mermaid
+graph TD
+    subgraph "HyperDAG Core System"
+        subgraph "Foundation"
+            F010[Platform Abstraction]
+            F011[Error Handling]
+        end
+        
+        subgraph "Data Layer"
+            F001[Hypergraph Model]
+            F007[Asset Addressing]
+            F009[Memory Pools]
+        end
+        
+        subgraph "I/O & Integrity"
+            F002[Binary Bundles]
+            F003[Memory Mapping]
+            F004[BLAKE3 Integrity]
+        end
+        
+        subgraph "Algorithms"
+            F005[Graph Traversal]
+            F006[Dependency Resolution]
+        end
+        
+        subgraph "Concurrency"
+            F008[Thread-Safe Access]
+        end
+        
+        subgraph "Builder"
+            F012[Bundle Creation]
+        end
+    end
+```
 
 ## Core Features
 
-### Graph Operations
-- Create and destroy graphs with automatic memory management
-- Add/remove nodes with optional user data
-- Add/remove directed edges with cycle detection
-- Topological sort for dependency resolution
-- Graph validation and cycle detection
+### 🎯 Hypergraph Mathematics ([F.001](docs/features/F001-core-hypergraph-data-model.md))
 
-### Performance
-- Cache-aligned data structures for optimal memory access
-- Platform-specific optimizations
-- Sub-microsecond operations for common tasks
-- Efficient memory layout with minimal overhead
+- **Hypernodes**: Assets with 128-bit content-addressed IDs
+- **Hyperedges**: Connect N sources to M targets with typed relationships
+- **O(1) Lookup**: Hash-based node access with efficient edge enumeration
+- **Memory Efficient**: Arena allocation with cache-friendly layout
 
-### Safety & Quality
-- Memory safety validated with AddressSanitizer and UBSan
-- Comprehensive test suite with fuzzing
-- Static analysis with multiple tools
-- Zero-tolerance policy for undefined behavior
+### 💽 Binary Bundle Format ([F.002](docs/features/F002-binary-bundle-format.md))
+
+```text
+[Header: 64B][Index: Variable][Edges: Variable][Store: Variable]
+```
+
+- **Memory Mapped**: Zero-copy access with pointer hydration
+- **Cross-Platform**: Unified format for Windows/Linux/macOS
+- **Compressed**: LZ4/Zstandard optimization for size vs speed
+- **Integrity**: BLAKE3 cryptographic verification
+
+### ⚡ High Performance
+
+- **Lock-Free Reads**: Atomic operations for concurrent access
+- **NUMA Aware**: Memory binding for multi-socket systems
+- **Thread-Safe**: Reader-writer locks with deadlock prevention
+- **Streaming I/O**: Platform-optimized (io_uring, DirectStorage)
 
 ## Quick Start
 
-### Installation
+> **Note**: HyperDAG is currently in architectural design phase. Implementation begins with foundation layer.
+
+### Architecture Complete ✅
 
 ```bash
-git clone https://github.com/hyperdag/hyperdag-core.git
-cd hyperdag-core
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+# Review comprehensive feature specifications
+ls docs/features/
+# F001-core-hypergraph-data-model.md
+# F002-binary-bundle-format.md
+# ... (12 total features)
+
+# Examine third-party library recommendations  
+cat docs/3rd-party.md
 ```
 
-### Basic Usage
+### Planned API (Implementation Pending)
 
 ```c
 #include "hyperdag/hyperdag.h"
 
 int main() {
-    // Create a new graph
-    hyperdag_graph_t *graph = hyperdag_graph_create(0);
-    if (!graph) return 1;
+    // Create hypergraph with memory pool
+    hyperdag_graph_config_t config = {
+        .initial_node_capacity = 10000,
+        .enable_concurrent_access = true,
+        .memory_pool_size = 64 * 1024 * 1024  // 64MB
+    };
     
-    // Add some nodes
-    hyperdag_node_id_t node1, node2, node3;
-    hyperdag_graph_add_node(graph, NULL, 0, &node1);
-    hyperdag_graph_add_node(graph, NULL, 0, &node2);
-    hyperdag_graph_add_node(graph, NULL, 0, &node3);
+    hyperdag_graph_t* graph;
+    hyperdag_result_t result = hyperdag_graph_create(&config, &graph);
+    if (result != HYPERDAG_SUCCESS) return 1;
     
-    // Add edges: node1 -> node2 -> node3
-    hyperdag_graph_add_edge(graph, node1, node2);
-    hyperdag_graph_add_edge(graph, node2, node3);
+    // Add nodes (assets)
+    hyperdag_id_t texture_id, shader_id, material_id;
     
-    // Check for cycles (should be false)
-    bool has_cycle = hyperdag_graph_has_cycle(graph);
+    hyperdag_node_metadata_t texture_meta = {
+        .name = "brick_diffuse.png",
+        .type = HYPERDAG_ASSET_TYPE_TEXTURE,
+        .data_size = 2048 * 2048 * 4,
+        .hash = compute_asset_hash(texture_data)
+    };
+    hyperdag_graph_add_node(graph, &texture_meta, &texture_id);
     
-    // Get topological ordering
-    size_t node_count = hyperdag_graph_get_node_count(graph);
-    hyperdag_node_id_t *sorted = malloc(node_count * sizeof(hyperdag_node_id_t));
-    hyperdag_graph_topological_sort(graph, sorted, node_count);
+    // Create hyperedge: material depends on texture + shader
+    hyperdag_edge_metadata_t edge_meta = {
+        .type = HYPERDAG_EDGE_TYPE_DEPENDENCY,
+        .weight = 1.0f,
+        .node_count = 3,
+        .nodes = (hyperdag_id_t[]){material_id, texture_id, shader_id}
+    };
+    hyperdag_graph_add_edge(graph, &edge_meta, NULL);
     
-    // Clean up
-    free(sorted);
+    // Dependency resolution
+    hyperdag_id_t* sorted_assets;
+    size_t asset_count;
+    hyperdag_dependency_resolve(graph, &sorted_assets, &asset_count);
+    
     hyperdag_graph_destroy(graph);
     return 0;
 }
 ```
 
-## API Reference
+## Implementation Status
 
-### Graph Management
-- `hyperdag_graph_create()` - Create a new graph
-- `hyperdag_graph_destroy()` - Free graph memory
-- `hyperdag_graph_get_node_count()` - Get number of nodes
-- `hyperdag_graph_get_edge_count()` - Get number of edges
+### ✅ Complete
 
-### Node Operations
-- `hyperdag_graph_add_node()` - Add a node with optional data
-- `hyperdag_graph_remove_node()` - Remove a node and its edges
+- **Architecture**: 12 features fully specified with dependencies
+- **Third-Party Selection**: Libraries evaluated with integration guides
+- **API Design**: Core C interfaces defined with examples
+- **Documentation**: Comprehensive specs with Mermaid diagrams
 
-### Edge Operations
-- `hyperdag_graph_add_edge()` - Add a directed edge (with cycle check)
-- `hyperdag_graph_remove_edge()` - Remove an edge
+### 🔄 Next Phase (Ready to Start)
 
-### Graph Analysis
-- `hyperdag_graph_has_cycle()` - Check for cycles
-- `hyperdag_graph_topological_sort()` - Get topological ordering
+- **Foundation Layer**: Platform abstraction and error handling ([F.010](docs/features/F010-platform-abstraction.md), [F.011](docs/features/F011-error-handling-validation.md))
+- **Core Implementation**: Hypergraph data structures ([F.001](docs/features/F001-core-hypergraph-data-model.md))
+- **Memory Management**: Object pools and arenas ([F.009](docs/features/F009-memory-pool-management.md))
+
+## Technology Stack
+
+### Selected Libraries
+
+| Component | Library | Rating | Notes |
+|-----------|---------|--------|-------|
+| **Cryptography** | [BLAKE3](https://github.com/BLAKE3-team/BLAKE3) | ⭐⭐⭐⭐⭐ | Official implementation with SIMD |
+| **Threading** | [tinycthread](https://github.com/tinycthread/tinycthread) | ⭐⭐⭐⭐ | C11 compatibility + atomics |
+| **Memory** | [mimalloc](https://github.com/microsoft/mimalloc) | ⭐⭐⭐⭐ | High performance + custom arenas |
+| **Hash Tables** | [uthash](https://github.com/troydhanson/uthash) | ⭐⭐⭐⭐ | Flexible macro-based implementation |
+
+### Custom Components
+
+- **Platform Abstraction**: Thin wrapper for file I/O and memory mapping
+- **I/O Layer**: DirectStorage (Windows) and io_uring (Linux) optimization  
+- **Memory Pools**: Specialized allocators for hypergraph patterns
 
 ## Building
 
 ### Requirements
-- C23-compatible compiler (GCC 13+, Clang 17+, MSVC 2022+)
-- CMake 3.28+
-- Optional: Criterion testing framework
 
-### Build Options
+- **C23 Compiler**: GCC 13+, Clang 17+, MSVC 2022+
+- **CMake**: 3.28+ with modern practices
+- **Platform**: Windows 10+, Linux 5.4+, macOS 12+
+
+### Build Configuration
+
 ```bash
-# Debug build with sanitizers
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_SANITIZERS=ON
-
-# Release build with optimizations
+# Standard release build
 cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-# Development build with all checks
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON
-```
-
-### Testing
-```bash
-# Build and run tests
 cmake --build build
-ctest --test-dir build
 
-# Run specific test suites
-./build/bin/hyperdag_unit_tests
-./build/bin/hyperdag_integration_tests
+# Development with all sanitizers
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON -DHYPERDAG_SANITIZERS=ON
+
+# Static analysis
+cmake --build build --target static-analysis
+
+# Performance profiling  
+./scripts/profile.sh all
 ```
 
-## Performance
+See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
 
-Typical performance on modern hardware:
+## Performance Targets
 
-| Operation | Time |
-|-----------|------|
-| Graph creation | ~1 µs |
-| Node addition | ~0.4 µs |
-| Edge addition | ~0.6 µs |
-| Cycle detection | ~2 ms (100k nodes) |
-| Topological sort | ~3 ms (100k nodes) |
+| Operation | Target Performance |
+|-----------|-------------------|
+| Node Lookup | O(1) average, <100ns |
+| Bundle Loading | >1GB/s on NVMe |
+| Concurrent Reads | Linear scaling to 16 threads |
+| Memory Overhead | <5% of graph data |
 
-## Use Cases
+## Documentation
 
-HyperDAG is suitable for:
+### Architecture & Design
 
-- **Build systems**: Dependency resolution and parallel execution planning
-- **Task scheduling**: Job dependency management and execution ordering
-- **Data pipelines**: Processing workflow definition and optimization
-- **Package management**: Dependency resolution and conflict detection
-- **Academic research**: Graph algorithm development and testing
+- **[Feature Specifications](docs/features/)**: Complete technical specifications
+- **[Third-Party Integration](docs/3rd-party.md)**: Library selection and usage guides
+- **[Development Log](DEVLOG.md)**: Project timeline and decisions
+- **[Situation Report](SITREP.md)**: Current status and implementation readiness
 
-## Development
+### Development Guides
 
-### Project Structure
+- **[CLAUDE.md](CLAUDE.md)**: Build system and AI development context
+- **API Reference**: Generated from implementation (pending)
+- **Performance Guide**: Optimization recommendations (pending)
+
+## HyperDAG vs TurtlGraph
+
+**HyperDAG** (This Repository):
+
+- Mathematical hypergraph foundation
+- Binary bundle format and I/O
+- Memory management and concurrency primitives  
+- Pure C23 library with minimal dependencies
+
+**TurtlGraph** (Production System):
+
+- Game engine integration and UI
+- Network protocols and caching
+- Content pipeline and asset processing
+- Production deployment features
+
+## Contributing
+
+1. **Review Architecture**: Study feature specifications in `docs/features/`
+2. **Understand Dependencies**: Check third-party integration guides
+3. **Follow Standards**: C23 practices with comprehensive testing
+4. **Quality Gates**: >95% coverage, sanitizer-clean, static analysis passing
+
+```bash
+# Validate contribution
+ctest --test-dir build --output-on-failure
+cmake --build build --target static-analysis  
+./scripts/security-audit.sh
 ```
-├── include/hyperdag/     # Public API headers
-├── src/
-│   ├── core/            # Core graph implementation
-│   ├── platform/        # Platform-specific code
-│   └── internal/        # Internal utilities
-├── tests/               # Test suites
-├── tools/               # CLI utilities
-└── docs/                # Documentation
-```
 
-### Contributing
-1. Ensure all tests pass: `ctest --test-dir build`
-2. Run static analysis: `cmake --build build --target static-analysis`
-3. Follow the existing code style
-4. Add tests for new functionality
+## Development Timeline
+
+- **Phase 1** (Weeks 1-2): Foundation and core data structures
+- **Phase 2** (Weeks 3-5): I/O system and binary format
+- **Phase 3** (Weeks 6-7): Algorithms and concurrency
+- **Phase 4** (Weeks 8-9): Builder system and integration
+
+See [SITREP.md](SITREP.md) for detailed status and [DEVLOG.md](DEVLOG.md) for development history.
 
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Acknowledgments
+## Contact
 
-Built with modern C23 standards and comprehensive safety practices.
+- **Technical Questions**: GitHub Issues
+- **Security Reports**: <james@flyingrobots.dev>
+- **Development**: Reference [CLAUDE.md](CLAUDE.md) for AI-assisted development context
+
+---
+
+*HyperDAG: The mathematical foundation enabling "everything is graphs" for modern asset management.*
