@@ -186,6 +186,26 @@ int main() {
 - **CMake**: 3.28+ with modern practices
 - **Platform**: Windows 10+, Linux 5.4+, macOS 12+
 
+### Development Environment Setup
+
+```bash
+# Automated development environment setup
+./scripts/setup-dev-env.sh
+
+# Or verify existing environment  
+./scripts/setup-dev-env.sh --verify
+
+# Check what tools are missing
+./scripts/setup-dev-env.sh --dry-run
+```
+
+The setup script automatically:
+- Installs required tools (cmake, clang, gitleaks, etc.)
+- Configures git hooks for quality enforcement
+- Sets up clang-tidy and clang-format
+- Validates C23 tool compatibility
+- Provides optional git configuration improvements
+
 ### Build Configuration
 
 ```bash
@@ -247,17 +267,27 @@ See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
 
 ## Contributing
 
-1. **Review Architecture**: Study feature specifications in `docs/features/`
-2. **Understand Dependencies**: Check third-party integration guides
-3. **Follow Standards**: C23 practices with comprehensive testing
-4. **Quality Gates**: >95% coverage, sanitizer-clean, static analysis passing
+1. **Set Up Environment**: Run `./scripts/setup-dev-env.sh` for complete development setup
+2. **Review Architecture**: Study feature specifications in `docs/features/`
+3. **Understand Dependencies**: Check third-party integration guides
+4. **Follow Standards**: C23 practices with comprehensive testing
+5. **Quality Gates**: >95% coverage, sanitizer-clean, static analysis passing
 
 ```bash
+# Set up development environment
+./scripts/setup-dev-env.sh
+
 # Validate contribution
 ctest --test-dir build --output-on-failure
 cmake --build build --target static-analysis
 ./scripts/security-audit.sh
 ```
+
+The development environment includes:
+- Bash-based git hooks for quality enforcement
+- Automated tool installation and configuration
+- POSIX-compliant scripts for cross-platform compatibility
+- "Silence is golden" - only outputs problems/warnings
 
 ## Development Timeline
 
