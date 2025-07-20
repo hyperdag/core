@@ -1,10 +1,10 @@
 /**
  * @file version.h
  * @brief Version information for HyperDAG library
- * 
+ *
  * This header provides compile-time and runtime version information
  * including API versions, bundle format compatibility, and build details.
- * 
+ *
  * @copyright Apache License 2.0 - see LICENSE file for details
  */
 
@@ -69,8 +69,8 @@ extern "C" {
 // =============================================================================
 
 #define HYPERDAG_FEATURE_VERSIONED_BUNDLES 1
-#define HYPERDAG_FEATURE_DELTA_PATCHES 0     // Reserved for future
-#define HYPERDAG_FEATURE_COMPRESSION_V2 0    // Reserved for future
+#define HYPERDAG_FEATURE_DELTA_PATCHES 0  // Reserved for future
+#define HYPERDAG_FEATURE_COMPRESSION_V2 0 // Reserved for future
 
 // =============================================================================
 // Runtime Version API
@@ -98,7 +98,7 @@ int hyperdag_version_patch(void);
  * @brief Get API version string
  * @return Pointer to static version string (e.g., "0.1.0-alpha")
  */
-const char* hyperdag_version_string(void);
+const char *hyperdag_version_string(void);
 
 /**
  * @brief Get bundle format version
@@ -110,13 +110,13 @@ int hyperdag_bundle_format_version(void);
  * @brief Get bundle format UUID
  * @return Pointer to static UUID string
  */
-const char* hyperdag_bundle_format_uuid(void);
+const char *hyperdag_bundle_format_uuid(void);
 
 /**
  * @brief Get build information
  * @return Pointer to static string containing build timestamp and commit
  */
-const char* hyperdag_build_info(void);
+const char *hyperdag_build_info(void);
 
 /**
  * @brief Get detailed build information
@@ -124,14 +124,15 @@ const char* hyperdag_build_info(void);
  * @param commit_hash Output parameter for git commit hash (can be NULL)
  * @param branch Output parameter for git branch (can be NULL)
  */
-void hyperdag_build_details(const char** timestamp, const char** commit_hash, const char** branch);
+void hyperdag_build_details(const char **timestamp, const char **commit_hash,
+                            const char **branch);
 
 /**
  * @brief Check if a feature is available
  * @param feature_name Name of the feature to check
  * @return 1 if feature is available, 0 otherwise
  */
-int hyperdag_feature_available(const char* feature_name);
+int hyperdag_feature_available(const char *feature_name);
 
 /**
  * @brief Check API compatibility
@@ -140,7 +141,8 @@ int hyperdag_feature_available(const char* feature_name);
  * @param required_patch Required patch version
  * @return 1 if API is compatible, 0 otherwise
  */
-int hyperdag_api_compatible(int required_major, int required_minor, int required_patch);
+int hyperdag_api_compatible(int required_major, int required_minor,
+                            int required_patch);
 
 /**
  * @brief Check bundle format compatibility

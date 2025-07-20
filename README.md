@@ -8,11 +8,13 @@ A high-performance C23 library providing mathematical hypergraph foundations for
 
 ## What is HyperDAG?
 
+> _Graphs. All. The. Way. Down._
+
 HyperDAG implements the core mathematical structure underlying TurtlGraph's asset management system. It provides:
 
 - **🔗 Hypergraph Mathematics**: Hyperedges connecting multiple nodes (e.g., "this material depends on these 3 textures and 2 shaders")
 - **💾 Memory-Mapped Bundles**: Zero-copy binary format with cryptographic integrity
-- **⚡ Lock-Free Performance**: Concurrent access optimized for multi-core systems  
+- **⚡ Lock-Free Performance**: Concurrent access optimized for multi-core systems
 - **🛡️ Memory Safety**: Comprehensive sanitizer coverage and deterministic cleanup
 - **🏗️ Modern C23**: Contemporary safety practices with broad platform support
 
@@ -25,28 +27,28 @@ graph TD
             F010[Platform Abstraction]
             F011[Error Handling]
         end
-        
+
         subgraph "Data Layer"
             F001[Hypergraph Model]
             F007[Asset Addressing]
             F009[Memory Pools]
         end
-        
+
         subgraph "I/O & Integrity"
             F002[Binary Bundles]
             F003[Memory Mapping]
             F004[BLAKE3 Integrity]
         end
-        
+
         subgraph "Algorithms"
             F005[Graph Traversal]
             F006[Dependency Resolution]
         end
-        
+
         subgraph "Concurrency"
             F008[Thread-Safe Access]
         end
-        
+
         subgraph "Builder"
             F012[Bundle Creation]
         end
@@ -93,7 +95,7 @@ ls docs/features/
 # F002-binary-bundle-format.md
 # ... (12 total features)
 
-# Examine third-party library recommendations  
+# Examine third-party library recommendations
 cat docs/3rd-party.md
 ```
 
@@ -109,14 +111,14 @@ int main() {
         .enable_concurrent_access = true,
         .memory_pool_size = 64 * 1024 * 1024  // 64MB
     };
-    
+
     hyperdag_graph_t* graph;
     hyperdag_result_t result = hyperdag_graph_create(&config, &graph);
     if (result != HYPERDAG_SUCCESS) return 1;
-    
+
     // Add nodes (assets)
     hyperdag_id_t texture_id, shader_id, material_id;
-    
+
     hyperdag_node_metadata_t texture_meta = {
         .name = "brick_diffuse.png",
         .type = HYPERDAG_ASSET_TYPE_TEXTURE,
@@ -124,7 +126,7 @@ int main() {
         .hash = compute_asset_hash(texture_data)
     };
     hyperdag_graph_add_node(graph, &texture_meta, &texture_id);
-    
+
     // Create hyperedge: material depends on texture + shader
     hyperdag_edge_metadata_t edge_meta = {
         .type = HYPERDAG_EDGE_TYPE_DEPENDENCY,
@@ -133,12 +135,12 @@ int main() {
         .nodes = (hyperdag_id_t[]){material_id, texture_id, shader_id}
     };
     hyperdag_graph_add_edge(graph, &edge_meta, NULL);
-    
+
     // Dependency resolution
     hyperdag_id_t* sorted_assets;
     size_t asset_count;
     hyperdag_dependency_resolve(graph, &sorted_assets, &asset_count);
-    
+
     hyperdag_graph_destroy(graph);
     return 0;
 }
@@ -173,7 +175,7 @@ int main() {
 ### Custom Components
 
 - **Platform Abstraction**: Thin wrapper for file I/O and memory mapping
-- **I/O Layer**: DirectStorage (Windows) and io_uring (Linux) optimization  
+- **I/O Layer**: DirectStorage (Windows) and io_uring (Linux) optimization
 - **Memory Pools**: Specialized allocators for hypergraph patterns
 
 ## Building
@@ -197,7 +199,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON -DHYPERDAG_SANITIZERS=
 # Static analysis
 cmake --build build --target static-analysis
 
-# Performance profiling  
+# Performance profiling
 ./scripts/profile.sh all
 ```
 
@@ -233,7 +235,7 @@ See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
 
 - Mathematical hypergraph foundation
 - Binary bundle format and I/O
-- Memory management and concurrency primitives  
+- Memory management and concurrency primitives
 - Pure C23 library with minimal dependencies
 
 **TurtlGraph** (Production System):
@@ -253,7 +255,7 @@ See [CLAUDE.md](CLAUDE.md) for complete build system documentation.
 ```bash
 # Validate contribution
 ctest --test-dir build --output-on-failure
-cmake --build build --target static-analysis  
+cmake --build build --target static-analysis
 ./scripts/security-audit.sh
 ```
 
@@ -278,4 +280,4 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ---
 
-*HyperDAG: The mathematical foundation enabling "everything is graphs" for modern asset management.*
+_HyperDAG: The mathematical foundation enabling "everything is graphs" for modern asset management._

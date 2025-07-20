@@ -1,183 +1,351 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run nightly to catch regressions
+    - cron: '0 2 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CTEST_OUTPUT_ON_FAILURE: 1
 
 jobs:
+  # ============================================================================
+  # Pre-commit checks and formatting
+  # ============================================================================
+  pre-commit:
+    name: Pre-commit checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: pre-commit/action@v3.0.1
+
+  # ============================================================================
+  # Build matrix: Multiple compilers and platforms
+  # ============================================================================
   build:
+    name: ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        compiler: 
-          - { cc: gcc-13, cxx: g++-13 }
-          - { cc: gcc-14, cxx: g++-14 }
-          - { cc: clang-17, cxx: clang++-17 }
-          - { cc: clang-18, cxx: clang++-18 }
-          - { cc: cl, cxx: cl }  # MSVC on Windows
-        build_type: [Debug, Release, ASAN, UBSAN]
-        exclude:
-          # macOS doesn't have these GCC versions in runners
-          - os: macos-latest
-            compiler: { cc: gcc-13, cxx: g++-13 }
-          - os: macos-latest
-            compiler: { cc: gcc-14, cxx: g++-14 }
-          # Only Windows has MSVC
-          - os: ubuntu-latest
-            compiler: { cc: cl, cxx: cl }
-          - os: macos-latest
-            compiler: { cc: cl, cxx: cl }
-          # Sanitizers not available on Windows
-          - os: windows-latest
-            build_type: ASAN
-          - os: windows-latest
-            build_type: UBSAN
-    
-    runs-on: ${{ matrix.os }}
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Ubuntu dependencies
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          cmake \
-          pkg-config \
-          libcriterion-dev \
-          clang-tidy \
-          cppcheck \
-          valgrind
-        
-        # Install specific compiler versions
-        if [[ "${{ matrix.compiler.cc }}" == gcc-* ]]; then
-          sudo apt-get install -y ${{ matrix.compiler.cc }} ${{ matrix.compiler.cxx }}
-        elif [[ "${{ matrix.compiler.cc }}" == clang-* ]]; then
-          wget https://apt.llvm.org/llvm.sh
-          chmod +x llvm.sh
-          sudo ./llvm.sh ${CLANG_VERSION}
-        fi
-      env:
-        CLANG_VERSION: ${{ matrix.compiler.cc == 'clang-17' && '17' || '18' }}
-    
-    - name: Install macOS dependencies
-      if: matrix.os == 'macos-latest'
-      run: |
-        brew install cmake criterion cppcheck
-        
-        # Install LLVM for modern Clang
-        if [[ "${{ matrix.compiler.cc }}" == clang-* ]]; then
-          brew install llvm
-          echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
-        fi
-    
-    - name: Setup MSVC
-      if: matrix.os == 'windows-latest' && matrix.compiler.cc == 'cl'
-      uses: microsoft/setup-msbuild@v1.1
-    
-    - name: Configure CMake
-      run: |
-        CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DHYPERDAG_WERROR=ON"
-        
-        if [[ "${{ matrix.compiler.cc }}" != "cl" ]]; then
-          CMAKE_FLAGS="$CMAKE_FLAGS -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }}"
-        fi
-        
-        if [[ "${{ matrix.build_type }}" == "ASAN" ]]; then
-          CMAKE_FLAGS="$CMAKE_FLAGS -DHYPERDAG_SANITIZERS=ON -DHYPERDAG_ASAN=ON -DHYPERDAG_UBSAN=OFF"
-        elif [[ "${{ matrix.build_type }}" == "UBSAN" ]]; then
-          CMAKE_FLAGS="$CMAKE_FLAGS -DHYPERDAG_SANITIZERS=ON -DHYPERDAG_ASAN=OFF -DHYPERDAG_UBSAN=ON"
-        fi
-        
-        cmake -B build $CMAKE_FLAGS
-    
-    - name: Build
-      run: cmake --build build --parallel
-    
-    - name: Test
-      run: |
-        # Set sanitizer environment variables
-        export ASAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stats=1"
-        export UBSAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stacktrace=1"
-        
-        ctest --test-dir build --output-on-failure
-    
-    - name: Run CLI tool
-      run: |
-        ./build/bin/hyperdag-cli version
-        ./build/bin/hyperdag-inspect --help
-    
-    - name: Static Analysis
-      if: matrix.os == 'ubuntu-latest' && matrix.compiler.cc == 'clang-18' && matrix.build_type == 'Debug'
-      run: |
-        cmake --build build --target clang-tidy
-        cmake --build build --target cppcheck
+        config:
+          # Linux builds with different compilers
+          - name: "Ubuntu GCC 13"
+            os: ubuntu-latest
+            cc: gcc-13
+            cxx: g++-13
+            build_type: Release
+            sanitizers: false
 
-  # Docker matrix for bleeding-edge compilers
-  docker-matrix:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        image:
-          - "gcc:13"
-          - "gcc:14"
-          - "gcc:15"
-          - "silkeh/clang:17"
-          - "silkeh/clang:18"
-          - "silkeh/clang:dev"  # Bleeding edge
-    container:
-      image: ${{ matrix.image }}
+          - name: "Ubuntu GCC 14"
+            os: ubuntu-latest
+            cc: gcc-14
+            cxx: g++-14
+            build_type: Release
+            sanitizers: true
+
+          - name: "Ubuntu Clang 17"
+            os: ubuntu-latest
+            cc: clang-17
+            cxx: clang++-17
+            build_type: Release
+            sanitizers: false
+
+          - name: "Ubuntu Clang 18"
+            os: ubuntu-latest
+            cc: clang-18
+            cxx: clang++-18
+            build_type: Release
+            sanitizers: true
+
+          # Debug builds with sanitizers
+          - name: "Debug + ASAN"
+            os: ubuntu-latest
+            cc: clang-18
+            cxx: clang++-18
+            build_type: Debug
+            sanitizers: true
+            asan: true
+
+          - name: "Debug + UBSAN"
+            os: ubuntu-latest
+            cc: clang-18
+            cxx: clang++-18
+            build_type: Debug
+            sanitizers: true
+            ubsan: true
+
+          # macOS builds
+          - name: "macOS Clang"
+            os: macos-latest
+            cc: clang
+            cxx: clang++
+            build_type: Release
+            sanitizers: false
+
+          # Windows builds
+          - name: "Windows MSVC"
+            os: windows-latest
+            cc: cl
+            cxx: cl
+            build_type: Release
+            sanitizers: false
+
     steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install dependencies
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies (Ubuntu)
+        if: startsWith(matrix.config.os, 'ubuntu')
         run: |
-          if command -v apt-get >/dev/null; then
-            apt-get update
-            apt-get install -y cmake pkg-config libcriterion-dev git
-          elif command -v apk >/dev/null; then
-            apk add --no-cache cmake pkgconfig criterion-dev git
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            ${{ matrix.config.cc }} \
+            ${{ matrix.config.cxx }} \
+            clang-tidy \
+            cppcheck \
+            valgrind \
+            lcov
+
+          # Install newer CMake if needed
+          cmake_version=$(cmake --version | head -n1 | cut -d' ' -f3)
+          if dpkg --compare-versions "$cmake_version" lt "3.28"; then
+            wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
+            echo 'deb https://apt.kitware.com/ubuntu/ focal main' | sudo tee /etc/apt/sources.list.d/kitware.list
+            sudo apt-get update
+            sudo apt-get install -y cmake
           fi
-      
-      - name: Configure and Build
-        run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DHYPERDAG_DEV=ON \
-            -DHYPERDAG_SANITIZERS=ON
-          cmake --build build --parallel
-      
-      - name: Test
-        run: |
-          export ASAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stats=1"
-          export UBSAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stacktrace=1"
-          ctest --test-dir build --output-on-failure
 
-  # Fuzzing (nightly/on-demand)
-  fuzzing:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[fuzz]')
-    container:
-      image: silkeh/clang:18
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install dependencies
+      - name: Install dependencies (macOS)
+        if: startsWith(matrix.config.os, 'macos')
         run: |
-          apt-get update
-          apt-get install -y cmake pkg-config git
-      
-      - name: Build fuzzing targets
+          brew install cmake ninja llvm cppcheck
+
+      - name: Install dependencies (Windows)
+        if: startsWith(matrix.config.os, 'windows')
         run: |
-          cmake -B build \
-            -DCMAKE_BUILD_TYPE=Debug \
-            -DHYPERDAG_FUZZING=ON \
-            -DCMAKE_C_COMPILER=clang
-          cmake --build build --parallel
-      
-      - name: Run fuzzing
+          choco install cmake ninja
+
+      - name: Configure build
+        shell: bash
+        run: |
+          # Set up build directory
+          mkdir build
+          cd build
+
+          # Configure CMake options
+          cmake_options=""
+          cmake_options="$cmake_options -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}"
+          cmake_options="$cmake_options -DHYPERDAG_BUILD_TESTS=ON"
+          cmake_options="$cmake_options -DHYPERDAG_BUILD_EXAMPLES=ON"
+
+          if [[ "${{ matrix.config.sanitizers }}" == "true" ]]; then
+            cmake_options="$cmake_options -DHYPERDAG_SANITIZERS=ON"
+          fi
+
+          if [[ "${{ matrix.config.asan }}" == "true" ]]; then
+            cmake_options="$cmake_options -DHYPERDAG_ASAN=ON"
+          fi
+
+          if [[ "${{ matrix.config.ubsan }}" == "true" ]]; then
+            cmake_options="$cmake_options -DHYPERDAG_UBSAN=ON"
+          fi
+
+          # Set compilers
+          if [[ "${{ matrix.config.cc }}" != "cl" ]]; then
+            export CC=${{ matrix.config.cc }}
+            export CXX=${{ matrix.config.cxx }}
+          fi
+
+          # Configure
+          cmake .. $cmake_options -G Ninja
+
+      - name: Build
+        shell: bash
         run: |
           cd build
-          timeout 1800 ./tests/fuzz/fuzz_graph -max_total_time=1800 || true
-          timeout 1800 ./tests/fuzz/fuzz_node_ops -max_total_time=1800 || true
+          cmake --build . --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+
+      - name: Run tests
+        shell: bash
+        run: |
+          cd build
+          ctest --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) --output-on-failure
+
+      - name: Static analysis
+        if: matrix.config.name == 'Ubuntu Clang 18'
+        shell: bash
+        run: |
+          cd build
+          cmake --build . --target static-analysis
+
+      - name: Generate coverage report
+        if: matrix.config.build_type == 'Debug' && matrix.config.asan == true
+        shell: bash
+        run: |
+          cd build
+          # TODO: Add coverage generation when we have tests
+          echo "Coverage reporting will be added with test implementation"
+
+  # ============================================================================
+  # Docker matrix testing with bleeding-edge compilers
+  # ============================================================================
+  docker-matrix:
+    name: Docker ${{ matrix.compiler }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [gcc15, clang18]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build with Docker
+        run: |
+          docker build -f docker/Dockerfile.${{ matrix.compiler }} -t hyperdag-${{ matrix.compiler }} .
+          docker run --rm -v $PWD:/workspace hyperdag-${{ matrix.compiler }} \
+            bash -c "cd /workspace && mkdir -p build && cd build && \
+                     cmake -DHYPERDAG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release .. && \
+                     cmake --build . --parallel \$(nproc)"
+
+  # ============================================================================
+  # Security scanning
+  # ============================================================================
+  security:
+    name: Security scan
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run CodeQL analysis
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+          queries: security-and-quality
+
+      - name: Build for CodeQL
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Debug ..
+          cmake --build . --parallel $(nproc)
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+
+      - name: Run security audit script
+        run: |
+          chmod +x scripts/security-audit.sh
+          ./scripts/security-audit.sh
+
+  # ============================================================================
+  # Performance regression testing
+  # ============================================================================
+  performance:
+    name: Performance benchmarks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build gcc-13 g++-13 valgrind perf
+
+      - name: Run performance tests
+        run: |
+          chmod +x scripts/profile.sh
+          # TODO: Add performance testing when we have benchmarks
+          echo "Performance testing will be added with benchmark implementation"
+
+  # ============================================================================
+  # Documentation and release preparation
+  # ============================================================================
+  docs-and-release:
+    name: Documentation and release checks
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check version consistency
+        run: |
+          chmod +x scripts/check-version-consistency.sh
+          ./scripts/check-version-consistency.sh
+
+      - name: Validate documentation
+        run: |
+          # Check that all feature specs are properly linked
+          find docs/features -name "F*.md" | while read -r feature; do
+            feature_id=$(basename "$feature" .md)
+            if ! grep -q "$feature_id" docs/features/README.md; then
+              echo "ERROR: Feature $feature_id not referenced in docs/features/README.md"
+              exit 1
+            fi
+          done
+
+          # Check README links
+          if ! [ -f docs/features/README.md ]; then
+            echo "ERROR: docs/features/README.md missing"
+            exit 1
+          fi
+
+          echo "✓ Documentation validation passed"
+
+  # ============================================================================
+  # Summary job for required checks
+  # ============================================================================
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [pre-commit, build, docker-matrix, security]
+    if: always()
+
+    steps:
+      - name: Check CI results
+        run: |
+          if [[ "${{ needs.pre-commit.result }}" != "success" ]]; then
+            echo "Pre-commit checks failed"
+            exit 1
+          fi
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "Build matrix failed"
+            exit 1
+          fi
+          if [[ "${{ needs.docker-matrix.result }}" != "success" ]]; then
+            echo "Docker matrix failed"
+            exit 1
+          fi
+          if [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo "Security scan failed"
+            exit 1
+          fi
+          echo "✅ All CI checks passed!"

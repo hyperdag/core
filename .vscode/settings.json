@@ -1,82 +1,151 @@
 {
-    "workbench.colorTheme": "Tinacious Design",
-
-    // C/C++ Language Configuration
-    "C_Cpp.default.cStandard": "c23",
-    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-    "C_Cpp.default.compilerPath": "/opt/homebrew/opt/llvm/bin/clang",
-    "C_Cpp.default.intelliSenseMode": "macos-clang-arm64",
-    "C_Cpp.default.includePath": [
-        "${workspaceFolder}/include",
-        "${workspaceFolder}/src/internal",
-        "/opt/homebrew/include"
-    ],
-    "C_Cpp.default.defines": [
-        "HYPERDAG_HAS_C23=1",
-        "_GNU_SOURCE"
-    ],
-
-    // CMake Configuration
-    "cmake.configureOnOpen": true,
-    "cmake.buildBeforeRun": true,
-    "cmake.configureSettings": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "HYPERDAG_DEV": "ON",
-        "HYPERDAG_SANITIZERS": "ON",
-        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm/bin/clang",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
-    },
-    "cmake.generator": "Unix Makefiles",
-    "cmake.parallelJobs": 0,
-
-    // Editor Configuration
-    "editor.formatOnSave": true,
-    "editor.rulers": [100],
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true,
-    "editor.detectIndentation": false,
-    "editor.trimAutoWhitespace": true,
-
-    // File Associations
-    "files.associations": {
-        "*.h": "c",
-        "*.c": "c",
-        "CMakeLists.txt": "cmake",
-        "*.cmake": "cmake"
-    },
-    "files.trimTrailingWhitespace": true,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-
-    // clang-tidy Integration
-    "clang-tidy.checks": [
-        "bugprone-*",
-        "cert-*",
-        "clang-analyzer-*",
-        "concurrency-*",
-        "misc-*",
-        "performance-*",
-        "portability-*",
-        "readability-*",
-        "-readability-magic-numbers"
-    ],
-
-    // Terminal Configuration
-    "terminal.integrated.env.osx": {
-        "PATH": "/opt/homebrew/opt/llvm/bin:${env:PATH}",
-        "LDFLAGS": "-L/opt/homebrew/lib",
-        "CPPFLAGS": "-I/opt/homebrew/include",
-        "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stats=1",
-        "UBSAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stacktrace=1"
-    },
-
-    // Search Configuration
-    "search.exclude": {
-        "**/build*": true,
-        "**/.git": true,
-        "**/node_modules": true,
-        "**/*.log": true
-    },
-    "peacock.affectEditorGroupBorder": false,
-    "peacock.affectPanelBorder": false
+  "C_Cpp.default.cStandard": "c23",
+  "C_Cpp.default.cppStandard": "c++23",
+  "C_Cpp.default.compilerPath": "/usr/bin/clang-18",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/include",
+    "${workspaceFolder}/build/_deps/*/include",
+    "/usr/include",
+    "/usr/local/include"
+  ],
+  "C_Cpp.default.defines": [
+    "HYPERDAG_API_VERSION_MAJOR=0",
+    "HYPERDAG_API_VERSION_MINOR=1",
+    "HYPERDAG_API_VERSION_PATCH=0",
+    "_GNU_SOURCE",
+    "__STDC_WANT_LIB_EXT1__=1"
+  ],
+  "C_Cpp.default.intelliSenseMode": "linux-clang-x64",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.errorSquiggles": "enabled",
+  "C_Cpp.inlayHints.autoDeclarationTypes.enabled": true,
+  "C_Cpp.inlayHints.parameterNames.enabled": true,
+  "C_Cpp.inlayHints.referenceOperator.enabled": true,
+  "cmake.configureOnOpen": true,
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "cmake.generator": "Ninja",
+  "cmake.configureArgs": [
+    "-DCMAKE_BUILD_TYPE=Debug",
+    "-DHYPERDAG_DEV=ON",
+    "-DHYPERDAG_SANITIZERS=ON",
+    "-DHYPERDAG_BUILD_TESTS=ON",
+    "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+  ],
+  "cmake.buildArgs": [
+    "--parallel"
+  ],
+  "cmake.ctestArgs": [
+    "--output-on-failure"
+  ],
+  "cmake.showOptionsMovedNotification": false,
+  "editor.formatOnSave": true,
+  "editor.formatOnType": true,
+  "editor.formatOnPaste": true,
+  "C_Cpp.clang_format_path": "/usr/bin/clang-format",
+  "C_Cpp.clang_format_style": "file",
+  "C_Cpp.clang_format_fallbackStyle": "Google",
+  "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+  "C_Cpp.codeAnalysis.clangTidy.path": "/usr/bin/clang-tidy",
+  "C_Cpp.codeAnalysis.clangTidy.config": "",
+  "C_Cpp.codeAnalysis.clangTidy.args": [
+    "--config-file=${workspaceFolder}/.clang-tidy"
+  ],
+  "C_Cpp.codeAnalysis.clangTidy.useBuildPath": true,
+  "C_Cpp.codeAnalysis.runAutomatically": true,
+  "files.associations": {
+    "*.h": "c",
+    "*.c": "c",
+    "*.inc": "c",
+    "CMakeLists.txt": "cmake",
+    "*.cmake": "cmake",
+    ".clang-format": "yaml",
+    ".clang-tidy": "yaml"
+  },
+  "files.exclude": {
+    "**/build/**": true,
+    "**/.cache/**": true,
+    "**/third_party/**": true,
+    "**/external/**": true,
+    "**/*.o": true,
+    "**/*.a": true,
+    "**/*.so": true,
+    "**/*.dylib": true,
+    "**/*.dll": true
+  },
+  "search.exclude": {
+    "**/build/**": true,
+    "**/.cache/**": true,
+    "**/third_party/**": true,
+    "**/external/**": true
+  },
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.detectIndentation": false,
+  "editor.trimAutoWhitespace": true,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+  "editor.rulers": [
+    80,
+    100
+  ],
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 100,
+  "git.enableSmartCommit": false,
+  "git.confirmSync": false,
+  "git.autofetch": true,
+  "git.branchProtection": [
+    "main",
+    "develop"
+  ],
+  "git.inputValidation": true,
+  "git.showUnpublishedCommits": "always",
+  "python.defaultInterpreterPath": "/usr/bin/python3",
+  "pre-commit-helper.runOnSave": "all files",
+  "clangd.arguments": [
+    "--compile-commands-dir=${workspaceFolder}/build",
+    "--clang-tidy",
+    "--completion-style=detailed",
+    "--header-insertion=iwyu",
+    "--pch-storage=memory"
+  ],
+  "problems.showInlineSourceActions": "on",
+  "problems.defaultViewMode": "tree",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.env.linux": {
+    "CC": "clang-18",
+    "CXX": "clang++-18",
+    "CMAKE_BUILD_TYPE": "Debug",
+    "ASAN_OPTIONS": "abort_on_error=1:detect_leaks=1",
+    "UBSAN_OPTIONS": "print_stacktrace=1:abort_on_error=1"
+  },
+  "cmake.buildTask": true,
+  "cmake.parallelJobs": 0,
+  "security.workspace.trust.untrustedFiles": "prompt",
+  "extensions.ignoreRecommendations": false,
+  "C_Cpp.loggingLevel": "Warning",
+  "C_Cpp.workspaceParsingPriority": "highest",
+  "C_Cpp.enhancedColorization": "enabled",
+  "search.maintainFileSearchCache": true,
+  "search.maxResults": 10000,
+  "[markdown]": {
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 80,
+    "editor.quickSuggestions": {
+      "comments": "off",
+      "strings": "off",
+      "other": "off"
+    }
+  },
+  "[json]": {
+    "editor.tabSize": 2
+  },
+  "[jsonc]": {
+    "editor.tabSize": 2
+  },
+  "[cmake]": {
+    "editor.tabSize": 2
+  },
+  "workbench.colorTheme": "Cobalt2"
 }

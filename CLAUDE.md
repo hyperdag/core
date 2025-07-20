@@ -226,6 +226,128 @@ void test_hyperdag_graph_stress_many_nodes(void) {
 }
 ```
 
+## 🐚 Shell Script Excellence - POSIX Portability
+
+### MANDATORY Shell Script Standards
+```bash
+# ✅ Always use POSIX-compliant shebang
+#!/bin/sh
+
+# ✅ POSIX-compliant error handling
+set -eu  # NOT set -euo pipefail (pipefail is bash-specific)
+
+# ✅ Use pushd/popd for ALL directory changes
+SCRIPT_DIR="$(pushd "$(dirname "$0")" >/dev/null && pwd && popd >/dev/null)"
+PROJECT_ROOT="$(pushd "$SCRIPT_DIR/.." >/dev/null && pwd && popd >/dev/null)"
+
+# ✅ Directory navigation with proper cleanup
+pushd "$PROJECT_ROOT" >/dev/null
+# ... do work in project root ...
+popd >/dev/null  # ALWAYS match pushd with popd
+
+# ✅ POSIX-compliant conditionals
+if [ "$variable" = "value" ]; then  # NOT [[ ]]
+    echo "POSIX compliant"
+fi
+
+# ✅ POSIX-compliant loops and case statements
+for file in *.c; do
+    case "$file" in
+        *.h) echo "Header: $file" ;;
+        *.c) echo "Source: $file" ;;
+        *) echo "Other: $file" ;;
+    esac
+done
+
+# ✅ Portable command detection
+if command -v gcc >/dev/null 2>&1; then
+    echo "GCC found"
+fi
+
+# ❌ AVOID bashisms
+# Don't use: [[ ]], arrays, mapfile, ${BASH_SOURCE[0]}, &>/dev/null
+# Don't use: set -o pipefail, $'strings', <()
+```
+
+### Directory Management Excellence
+```bash
+# ✅ ALWAYS use pushd/popd pattern - NEVER use cd
+# This ensures proper cleanup even on script exit
+
+# Basic pattern
+pushd "$TARGET_DIR" >/dev/null
+# ... work in target directory ...
+popd >/dev/null
+
+# Error handling pattern
+pushd "$TARGET_DIR" >/dev/null
+if ! some_command; then
+    echo "Error occurred"
+    popd >/dev/null  # CRITICAL: cleanup before exit
+    exit 1
+fi
+popd >/dev/null
+
+# Complex pattern with multiple directories
+pushd "$PROJECT_ROOT" >/dev/null
+
+if [ -d "build" ]; then
+    pushd "build" >/dev/null
+    make all
+    popd >/dev/null
+fi
+
+# Final cleanup
+popd >/dev/null
+```
+
+### Cross-Platform Compatibility
+```bash
+# ✅ Portable temp file creation
+temp_file="/tmp/hyperdag_$$"  # Use $$ for unique PID
+
+# ✅ Portable file listing (avoid mapfile)
+find . -name "*.c" > "$temp_file"
+while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    process_file "$file"
+done < "$temp_file"
+rm -f "$temp_file"
+
+# ✅ Platform detection
+case "$(uname -s)" in
+    Linux*)   PLATFORM=linux ;;
+    Darwin*)  PLATFORM=macos ;;
+    MINGW*)   PLATFORM=windows ;;
+    *)        PLATFORM=unknown ;;
+esac
+
+# ✅ Tool detection across platforms
+find_tool() {
+    for path in tool /usr/bin/tool /usr/local/bin/tool /opt/homebrew/bin/tool; do
+        if command -v "$path" >/dev/null 2>&1; then
+            echo "$path"
+            return 0
+        fi
+    done
+    echo "Tool not found" >&2
+    return 1
+}
+```
+
+### Why POSIX Portability Matters
+- **Linux**: All distributions support POSIX sh
+- **macOS**: Works with both bash and zsh (default on modern macOS)
+- **Windows WSL2**: Ensures compatibility across different WSL distributions
+- **CI/CD**: Works in minimal Docker containers with only `/bin/sh`
+- **DevContainers**: Portable across different base images
+
+### Enforcement
+- ALL shell scripts MUST pass `shellcheck` with POSIX compliance
+- Scripts MUST work on Ubuntu, macOS, and Windows WSL2
+- Pre-commit hooks verify POSIX compliance
+- No bashisms allowed - zero tolerance policy
+
 ## 🔧 Third-Party Integration Excellence
 
 ### BLAKE3 Integration Standards
