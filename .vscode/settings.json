@@ -1,6 +1,6 @@
 {
     "workbench.colorTheme": "Tinacious Design",
-    
+
     // C/C++ Language Configuration
     "C_Cpp.default.cStandard": "c23",
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
@@ -51,7 +51,7 @@
     // clang-tidy Integration
     "clang-tidy.checks": [
         "bugprone-*",
-        "cert-*", 
+        "cert-*",
         "clang-analyzer-*",
         "concurrency-*",
         "misc-*",
@@ -76,5 +76,7 @@
         "**/.git": true,
         "**/node_modules": true,
         "**/*.log": true
-    }
+    },
+    "peacock.affectEditorGroupBorder": false,
+    "peacock.affectPanelBorder": false
 }

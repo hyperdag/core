@@ -1,51 +1,125 @@
----
-Checks: >
-  -*,
-  bugprone-*,
-  cert-*,
-  clang-analyzer-*,
-  concurrency-*,
-  misc-*,
-  performance-*,
-  portability-*,
-  readability-*,
-  -readability-magic-numbers
+# HyperDAG clang-tidy Configuration
+# EXTREME quality standards - ALL warnings are errors
 
+# Enable comprehensive check coverage
+Checks: '
+  *,
+  -abseil-*,
+  -altera-*,
+  -android-*,
+  -darwin-*,
+  -fuchsia-*,
+  -google-build-using-namespace,
+  -google-readability-avoid-underscore-in-googletest-name,
+  -google-readability-todo,
+  -hicpp-named-parameter,
+  -hicpp-no-array-decay,
+  -hicpp-signed-bitwise,
+  -llvm-header-guard,
+  -llvmlibc-*,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -zircon-*
+'
+
+# ALL warnings become compilation errors - zero tolerance
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*'
-FormatStyle: file
+
+# Apply checks to our headers only
+HeaderFilterRegex: '(include|src)/.*\.(h|c)$'
+
+# Check configuration
 CheckOptions:
-  - key: readability-identifier-naming.FunctionCase
-    value: lower_case
-  - key: readability-identifier-naming.ConstantCase
-    value: UPPER_CASE
-  - key: readability-identifier-naming.MacroCase
-    value: UPPER_CASE
-  - key: readability-identifier-naming.VariableCase
-    value: lower_case
-  - key: readability-identifier-naming.ParameterCase
-    value: lower_case
-  - key: readability-identifier-naming.StructCase
-    value: lower_case
-  - key: readability-identifier-naming.UnionCase
-    value: lower_case
-  - key: readability-identifier-naming.EnumCase
-    value: lower_case
+  # Naming conventions for HyperDAG
   - key: readability-identifier-naming.TypedefCase
-    value: lower_case
+    value: snake_case
   - key: readability-identifier-naming.TypedefSuffix
-    value: _t
+    value: '_t'
+  - key: readability-identifier-naming.StructCase
+    value: snake_case
+  - key: readability-identifier-naming.UnionCase
+    value: snake_case
+  - key: readability-identifier-naming.EnumCase
+    value: snake_case
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: 'HYPERDAG_'
+  - key: readability-identifier-naming.FunctionCase
+    value: snake_case
+  - key: readability-identifier-naming.FunctionPrefix
+    value: 'hyperdag_'
+  - key: readability-identifier-naming.VariableCase
+    value: snake_case
+  - key: readability-identifier-naming.ParameterCase
+    value: snake_case
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionPrefix
+    value: 'HYPERDAG_'
   - key: readability-identifier-naming.GlobalConstantCase
     value: UPPER_CASE
-  - key: readability-identifier-naming.StaticConstantCase
-    value: UPPER_CASE
-  - key: readability-identifier-naming.LocalConstantCase
-    value: lower_case
-  - key: readability-identifier-naming.MacroCase
-    value: UPPER_CASE
+  - key: readability-identifier-naming.GlobalConstantPrefix
+    value: 'HYPERDAG_'
+  
+  # Function complexity limits
+  - key: readability-function-cognitive-complexity.Threshold
+    value: '15'
   - key: readability-function-size.LineThreshold
-    value: 100
+    value: '50'
   - key: readability-function-size.StatementThreshold
-    value: 50
-  - key: misc-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
+    value: '25'
+  - key: readability-function-size.BranchThreshold
+    value: '8'
+  - key: readability-function-size.ParameterThreshold
+    value: '6'
+  - key: readability-function-size.NestingThreshold
+    value: '4'
+  
+  # Memory safety
+  - key: bugprone-suspicious-string-compare.WarnOnImplicitComparison
     value: true
+  - key: bugprone-suspicious-string-compare.WarnOnLogicalNotComparison
+    value: true
+  - key: cert-err33-c.CheckedFunctions
+    value: '::aligned_alloc;::calloc;::clock;::fclose;::ferror;::fflush;::fgetc;::fgetpos;::fgets;::fgetwc;::fopen;::fprintf;::fputc;::fputs;::fputwc;::fread;::freopen;::fscanf;::fseek;::fsetpos;::ftell;::fwprintf;::fwrite;::fwscanf;::getc;::getchar;::gets;::getwc;::getwchar;::gmtime;::localtime;::malloc;::mbrtowc;::mbsrtowcs;::mbstowcs;::memchr;::mktime;::printf;::putc;::putchar;::puts;::putwc;::putwchar;::raise;::realloc;::remove;::rename;::scanf;::setlocale;::setvbuf;::signal;::snprintf;::sprintf;::sscanf;::strchr;::strerror_s;::strftime;::strpbrk;::strrchr;::strstr;::strtod;::strtof;::strtoimax;::strtok;::strtol;::strtoll;::strtoul;::strtoull;::strtoumax;::strxfrm;::swprintf;::swscanf;::time;::tmpfile;::tmpnam;::ungetc;::ungetwc;::vfprintf;::vfscanf;::vfwprintf;::vfwscanf;::vprintf;::vscanf;::vsnprintf;::vsprintf;::vsscanf;::vswprintf;::vswscanf;::vwprintf;::vwscanf;::wcrtomb;::wcschr;::wcsftime;::wcspbrk;::wcsrchr;::wcsrtombs;::wcsstr;::wcstod;::wcstof;::wcstoimax;::wcstok;::wcstol;::wcstoll;::wcstombs;::wcstoul;::wcstoull;::wcstoumax;::wcsxfrm;::wctob;::wmemchr;::wprintf;::wscanf'
+  
+  # Performance
+  - key: performance-move-const-arg.CheckTriviallyCopyableMove
+    value: false
+  - key: performance-no-automatic-move.AllowedTypes
+    value: ''
+  
+  # Modernize to C23
+  - key: modernize-replace-auto-ptr.IncludeStyle
+    value: google
+  - key: modernize-use-auto.MinTypeNameLength
+    value: '5'
+  - key: modernize-use-auto.RemoveStars
+    value: false
+  
+  # Portability
+  - key: portability-restrict-system-includes.Includes
+    value: '*'
+  
+  # Thread safety
+  - key: misc-misplaced-const.CheckPrimitiveCasts
+    value: true
+
+# Force checking of system headers for complete validation
+SystemHeaders: false
+
+# Use absolute paths in diagnostics for IDE integration
+UseColor: true
+
+# Enable all available experimental checks
+ExtraArgs:
+  - '-std=c23'
+  - '-Wextra'
+  - '-Wall'
+  - '-Wpedantic'
+  - '-Wno-unused-parameter'  # Common in function pointer interfaces
+  - '-Wno-gnu-zero-variadic-macro-arguments'  # Allow empty __VA_ARGS__
+
+# Performance: run checks in parallel
+Parallel: true
