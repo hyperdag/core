@@ -84,6 +84,7 @@ missing
 *.log
 *.tmp
 *.temp
-core
+# Core dump files (not our src/core/ directory)
+/core
 *.core
 vgcore.*
