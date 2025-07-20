@@ -45,7 +45,7 @@ HyperDAG is built with security as a fundamental principle. This document outlin
 **DO NOT** create public GitHub issues for security vulnerabilities.
 
 Instead, please report security vulnerabilities by emailing:
-- **Primary**: security@hyperdag.org
+- **Primary**: james@flyingrobots.dev
 - **Alternative**: Use GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing/privately-reporting-a-security-vulnerability)
 
 ### What to Include
@@ -157,4 +157,4 @@ ASAN_OPTIONS="abort_on_error=1" ./build-asan/bin/hyperdag_unit_tests
 
 **Last Updated**: 2025-07-20  
 **Version**: 1.0.0  
-**Contact**: security@hyperdag.org
+**Contact**: james@flyingrobots.dev
