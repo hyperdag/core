@@ -1,0 +1,27 @@
+# Dockerfile for Clang 18 with full C23 support
+FROM silkeh/clang:18
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    cmake \
+    pkg-config \
+    libcriterion-dev \
+    clang-tidy \
+    cppcheck \
+    valgrind \
+    git \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set environment variables for reproducible builds
+ENV SOURCE_DATE_EPOCH=1
+ENV TZ=UTC
+ENV CC=clang
+ENV CXX=clang++
+
+# Create working directory
+WORKDIR /workspace
+
+# Default command
+CMD ["bash"]
