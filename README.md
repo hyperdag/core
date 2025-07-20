@@ -268,7 +268,7 @@ See [SITREP.md](SITREP.md) for detailed status and [DEVLOG.md](DEVLOG.md) for de
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ## Contact
 
