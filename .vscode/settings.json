@@ -1,0 +1,80 @@
+{
+    "workbench.colorTheme": "Tinacious Design",
+    
+    // C/C++ Language Configuration
+    "C_Cpp.default.cStandard": "c23",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "C_Cpp.default.compilerPath": "/opt/homebrew/opt/llvm/bin/clang",
+    "C_Cpp.default.intelliSenseMode": "macos-clang-arm64",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/include",
+        "${workspaceFolder}/src/internal",
+        "/opt/homebrew/include"
+    ],
+    "C_Cpp.default.defines": [
+        "HYPERDAG_HAS_C23=1",
+        "_GNU_SOURCE"
+    ],
+
+    // CMake Configuration
+    "cmake.configureOnOpen": true,
+    "cmake.buildBeforeRun": true,
+    "cmake.configureSettings": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "HYPERDAG_DEV": "ON",
+        "HYPERDAG_SANITIZERS": "ON",
+        "CMAKE_C_COMPILER": "/opt/homebrew/opt/llvm/bin/clang",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+    },
+    "cmake.generator": "Unix Makefiles",
+    "cmake.parallelJobs": 0,
+
+    // Editor Configuration
+    "editor.formatOnSave": true,
+    "editor.rulers": [100],
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.trimAutoWhitespace": true,
+
+    // File Associations
+    "files.associations": {
+        "*.h": "c",
+        "*.c": "c",
+        "CMakeLists.txt": "cmake",
+        "*.cmake": "cmake"
+    },
+    "files.trimTrailingWhitespace": true,
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+
+    // clang-tidy Integration
+    "clang-tidy.checks": [
+        "bugprone-*",
+        "cert-*", 
+        "clang-analyzer-*",
+        "concurrency-*",
+        "misc-*",
+        "performance-*",
+        "portability-*",
+        "readability-*",
+        "-readability-magic-numbers"
+    ],
+
+    // Terminal Configuration
+    "terminal.integrated.env.osx": {
+        "PATH": "/opt/homebrew/opt/llvm/bin:${env:PATH}",
+        "LDFLAGS": "-L/opt/homebrew/lib",
+        "CPPFLAGS": "-I/opt/homebrew/include",
+        "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stats=1",
+        "UBSAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+    },
+
+    // Search Configuration
+    "search.exclude": {
+        "**/build*": true,
+        "**/.git": true,
+        "**/node_modules": true,
+        "**/*.log": true
+    }
+}

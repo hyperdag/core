@@ -67,8 +67,7 @@ depcomp
 install-sh
 missing
 
-# IDE files
-.vscode/
+# IDE files (keep .vscode/ for shared development experience)
 .idea/
 *.swp
 *.swo

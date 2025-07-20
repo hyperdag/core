@@ -1,0 +1,201 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Configure Debug",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B", "build",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DHYPERDAG_DEV=ON",
+                "-DHYPERDAG_SANITIZERS=ON",
+                "-DCMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "CMake: Configure Release",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-B", "build-release",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DHYPERDAG_WERROR=ON",
+                "-DCMAKE_C_COMPILER=/opt/homebrew/opt/llvm/bin/clang"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "CMake: Build",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--parallel"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": "CMake: Configure Debug",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "CMake: Build Release",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build-release", "--parallel"],
+            "group": "build",
+            "dependsOn": "CMake: Configure Release",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Test: Run Unit Tests",
+            "type": "shell",
+            "command": "./build/bin/hyperdag_unit_tests",
+            "args": ["--verbose"],
+            "group": "test",
+            "dependsOn": "CMake: Build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "env": {
+                    "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stats=1",
+                    "UBSAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+                }
+            }
+        },
+        {
+            "label": "Test: Run Integration Tests",
+            "type": "shell",
+            "command": "./build/bin/hyperdag_integration_tests",
+            "args": ["--verbose"],
+            "group": "test",
+            "dependsOn": "CMake: Build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "options": {
+                "env": {
+                    "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stats=1",
+                    "UBSAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+                }
+            }
+        },
+        {
+            "label": "Test: Run Benchmarks",
+            "type": "shell",
+            "command": "./build/bin/hyperdag_benchmarks",
+            "group": "test",
+            "dependsOn": "CMake: Build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Analysis: Run clang-tidy",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "clang-tidy"],
+            "group": "test",
+            "dependsOn": "CMake: Configure Debug",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Analysis: Run cppcheck",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "cppcheck"],
+            "group": "test",
+            "dependsOn": "CMake: Configure Debug",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Analysis: Run All Static Analysis",
+            "type": "shell",
+            "command": "cmake",
+            "args": ["--build", "build", "--target", "static-analysis"],
+            "group": "test",
+            "dependsOn": "CMake: Configure Debug",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "Docker: Build Matrix",
+            "type": "shell",
+            "command": "./docker/build-all.sh",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        },
+        {
+            "label": "Clean: Remove Build Directory",
+            "type": "shell",
+            "command": "rm",
+            "args": ["-rf", "build", "build-release"],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared"
+            }
+        }
+    ]
+}

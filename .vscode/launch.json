@@ -1,0 +1,93 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Unit Tests",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/hyperdag_unit_tests",
+            "args": ["--verbose"],
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "ASAN_OPTIONS",
+                    "value": "abort_on_error=1:halt_on_error=1:print_stats=1"
+                },
+                {
+                    "name": "UBSAN_OPTIONS", 
+                    "value": "abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+                }
+            ],
+            "preLaunchTask": "CMake: Build",
+            "console": "integratedTerminal",
+            "stopOnEntry": false,
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Debug CLI Tool",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/hyperdag-cli",
+            "args": ["version"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "CMake: Build",
+            "console": "integratedTerminal",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Debug Inspect Tool",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/hyperdag-inspect",
+            "args": ["--help"],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "CMake: Build",
+            "console": "integratedTerminal",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Debug Benchmarks",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/hyperdag_benchmarks",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "CMake: Build",
+            "console": "integratedTerminal",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Debug Integration Tests",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/bin/hyperdag_integration_tests",
+            "args": ["--verbose"],
+            "cwd": "${workspaceFolder}",
+            "environment": [
+                {
+                    "name": "ASAN_OPTIONS",
+                    "value": "abort_on_error=1:halt_on_error=1:print_stats=1"
+                },
+                {
+                    "name": "UBSAN_OPTIONS",
+                    "value": "abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+                }
+            ],
+            "preLaunchTask": "CMake: Build",
+            "console": "integratedTerminal",
+            "stopOnEntry": false
+        },
+        {
+            "name": "Attach to Process",
+            "type": "lldb",
+            "request": "attach",
+            "pid": "${command:pickProcess}"
+        }
+    ]
+}
