@@ -1,0 +1,63 @@
+{
+    "name": "HyperDAG C23 Development",
+    "image": "silkeh/clang:18",
+    
+    "features": {
+        "ghcr.io/devcontainers/features/cmake:1": {
+            "version": "latest"
+        },
+        "ghcr.io/devcontainers/features/git:1": {
+            "version": "latest"
+        }
+    },
+    
+    "postCreateCommand": "bash -c 'apt-get update && apt-get install -y pkg-config libcriterion-dev clang-tidy cppcheck valgrind python3 python3-pip && pip3 install pre-commit'",
+    
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack", 
+                "ms-vscode.cmake-tools",
+                "twxs.cmake",
+                "notskm.clang-tidy",
+                "xaver.clang-format",
+                "eamodio.gitlens",
+                "editorconfig.editorconfig",
+                "vadimcn.vscode-lldb",
+                "cschlosser.doxdocgen",
+                "ms-azuretools.vscode-docker"
+            ],
+            "settings": {
+                "C_Cpp.default.cStandard": "c23",
+                "C_Cpp.default.compilerPath": "/usr/bin/clang",
+                "C_Cpp.default.intelliSenseMode": "linux-clang-x64",
+                "cmake.configureSettings": {
+                    "CMAKE_BUILD_TYPE": "Debug",
+                    "HYPERDAG_DEV": "ON",
+                    "HYPERDAG_SANITIZERS": "ON",
+                    "CMAKE_C_COMPILER": "/usr/bin/clang"
+                },
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    },
+    
+    "mounts": [
+        "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached"
+    ],
+    
+    "workspaceFolder": "/workspace",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+    
+    "forwardPorts": [],
+    
+    "containerEnv": {
+        "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stats=1",
+        "UBSAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stacktrace=1",
+        "CC": "clang",
+        "CXX": "clang++"
+    },
+    
+    "remoteUser": "root"
+}
