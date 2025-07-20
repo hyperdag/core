@@ -1,0 +1,87 @@
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Xcode
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# C/C++ build artifacts
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dylib
+*.dll
+*.exe
+*.out
+*.app
+*.deb
+*.rpm
+
+# Build directories
+build/
+dist/
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+# Make
+*.d
+
+# Autotools
+autom4te.cache/
+config.log
+config.status
+configure
+Makefile.in
+aclocal.m4
+compile
+depcomp
+install-sh
+missing
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Custom ignore directories
+.ignored
+.obsidian
+
+# Other common ignores
+*.log
+*.tmp
+*.temp
+core
+*.core
+vgcore.*
