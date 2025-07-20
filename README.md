@@ -1,5 +1,7 @@
 # HyperDAG - Mathematical Hypergraph Foundation for Asset Management
 
+> **This is a WIP!**
+
 [![CI](https://github.com/hyperdag/hyperdag-core/workflows/CI/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
 [![Security](https://github.com/hyperdag/hyperdag-core/workflows/Security/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
 [![SLSA](https://slsa.dev/images/gh-badge-level1.svg)](https://slsa.dev)

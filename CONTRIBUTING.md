@@ -6,6 +6,24 @@ Welcome to HyperDAG! This guide covers everything you need to know to contribute
 
 ### 1. Development Environment Setup
 
+**DevContainer (Recommended)**
+
+The fastest way to get started is using the provided DevContainer configuration:
+
+```bash
+# Open in VS Code with DevContainer extension
+code .
+# Click "Reopen in Container" when prompted
+```
+
+The DevContainer provides:
+- Pre-configured C23 development environment with Clang 18
+- All required tools (CMake, clang-tidy, clang-format, etc.)
+- Automatic setup via `./scripts/setup-dev-env.sh --skip-vscode`
+- Optimized VS Code settings for C23 development
+
+**Manual Setup**
+
 ```bash
 # Automated setup (recommended)
 ./scripts/setup-dev-env.sh
