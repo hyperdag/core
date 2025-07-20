@@ -520,7 +520,7 @@ typedef struct {
 - **Questions**: Open GitHub Issues with the `question` label
 - **Bugs**: Use the bug report template
 - **Features**: Propose new features with the feature request template
-- **Security**: Email security@hyperdag.dev for vulnerabilities
+- **Security**: Email james@flyingrobots.dev for vulnerabilities
 
 ## 📚 Additional Resources
 
