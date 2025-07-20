@@ -45,12 +45,15 @@ Release/
 x64/
 x86/
 
-# CMake
+# CMake generated files (keep our cmake/ modules)
 CMakeCache.txt
 CMakeFiles/
 cmake_install.cmake
 Makefile
-*.cmake
+# Only ignore generated cmake files, not our modules
+/**/CMakeCache.txt
+/**/cmake_install.cmake
+build/**/*.cmake
 
 # Make
 *.d

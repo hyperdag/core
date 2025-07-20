@@ -23,7 +23,7 @@ jobs:
             pkg-config \
             libcriterion-dev \
             clang-18 \
-            linux-perf \
+            linux-tools-generic \
             valgrind \
             time
       
