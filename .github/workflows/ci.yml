@@ -1,0 +1,183 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        compiler: 
+          - { cc: gcc-13, cxx: g++-13 }
+          - { cc: gcc-14, cxx: g++-14 }
+          - { cc: clang-17, cxx: clang++-17 }
+          - { cc: clang-18, cxx: clang++-18 }
+          - { cc: cl, cxx: cl }  # MSVC on Windows
+        build_type: [Debug, Release, ASAN, UBSAN]
+        exclude:
+          # macOS doesn't have these GCC versions in runners
+          - os: macos-latest
+            compiler: { cc: gcc-13, cxx: g++-13 }
+          - os: macos-latest
+            compiler: { cc: gcc-14, cxx: g++-14 }
+          # Only Windows has MSVC
+          - os: ubuntu-latest
+            compiler: { cc: cl, cxx: cl }
+          - os: macos-latest
+            compiler: { cc: cl, cxx: cl }
+          # Sanitizers not available on Windows
+          - os: windows-latest
+            build_type: ASAN
+          - os: windows-latest
+            build_type: UBSAN
+    
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Ubuntu dependencies
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake \
+          pkg-config \
+          libcriterion-dev \
+          clang-tidy \
+          cppcheck \
+          valgrind
+        
+        # Install specific compiler versions
+        if [[ "${{ matrix.compiler.cc }}" == gcc-* ]]; then
+          sudo apt-get install -y ${{ matrix.compiler.cc }} ${{ matrix.compiler.cxx }}
+        elif [[ "${{ matrix.compiler.cc }}" == clang-* ]]; then
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh ${CLANG_VERSION}
+        fi
+      env:
+        CLANG_VERSION: ${{ matrix.compiler.cc == 'clang-17' && '17' || '18' }}
+    
+    - name: Install macOS dependencies
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install cmake criterion cppcheck
+        
+        # Install LLVM for modern Clang
+        if [[ "${{ matrix.compiler.cc }}" == clang-* ]]; then
+          brew install llvm
+          echo "/opt/homebrew/opt/llvm/bin" >> $GITHUB_PATH
+        fi
+    
+    - name: Setup MSVC
+      if: matrix.os == 'windows-latest' && matrix.compiler.cc == 'cl'
+      uses: microsoft/setup-msbuild@v1.1
+    
+    - name: Configure CMake
+      run: |
+        CMAKE_FLAGS="-DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DHYPERDAG_WERROR=ON"
+        
+        if [[ "${{ matrix.compiler.cc }}" != "cl" ]]; then
+          CMAKE_FLAGS="$CMAKE_FLAGS -DCMAKE_C_COMPILER=${{ matrix.compiler.cc }}"
+        fi
+        
+        if [[ "${{ matrix.build_type }}" == "ASAN" ]]; then
+          CMAKE_FLAGS="$CMAKE_FLAGS -DHYPERDAG_SANITIZERS=ON -DHYPERDAG_ASAN=ON -DHYPERDAG_UBSAN=OFF"
+        elif [[ "${{ matrix.build_type }}" == "UBSAN" ]]; then
+          CMAKE_FLAGS="$CMAKE_FLAGS -DHYPERDAG_SANITIZERS=ON -DHYPERDAG_ASAN=OFF -DHYPERDAG_UBSAN=ON"
+        fi
+        
+        cmake -B build $CMAKE_FLAGS
+    
+    - name: Build
+      run: cmake --build build --parallel
+    
+    - name: Test
+      run: |
+        # Set sanitizer environment variables
+        export ASAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stats=1"
+        export UBSAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+        
+        ctest --test-dir build --output-on-failure
+    
+    - name: Run CLI tool
+      run: |
+        ./build/bin/hyperdag-cli version
+        ./build/bin/hyperdag-inspect --help
+    
+    - name: Static Analysis
+      if: matrix.os == 'ubuntu-latest' && matrix.compiler.cc == 'clang-18' && matrix.build_type == 'Debug'
+      run: |
+        cmake --build build --target clang-tidy
+        cmake --build build --target cppcheck
+
+  # Docker matrix for bleeding-edge compilers
+  docker-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - "gcc:13"
+          - "gcc:14"
+          - "gcc:15"
+          - "silkeh/clang:17"
+          - "silkeh/clang:18"
+          - "silkeh/clang:dev"  # Bleeding edge
+    container:
+      image: ${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          if command -v apt-get >/dev/null; then
+            apt-get update
+            apt-get install -y cmake pkg-config libcriterion-dev git
+          elif command -v apk >/dev/null; then
+            apk add --no-cache cmake pkgconfig criterion-dev git
+          fi
+      
+      - name: Configure and Build
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DHYPERDAG_DEV=ON \
+            -DHYPERDAG_SANITIZERS=ON
+          cmake --build build --parallel
+      
+      - name: Test
+        run: |
+          export ASAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stats=1"
+          export UBSAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+          ctest --test-dir build --output-on-failure
+
+  # Fuzzing (nightly/on-demand)
+  fuzzing:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[fuzz]')
+    container:
+      image: silkeh/clang:18
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y cmake pkg-config git
+      
+      - name: Build fuzzing targets
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DHYPERDAG_FUZZING=ON \
+            -DCMAKE_C_COMPILER=clang
+          cmake --build build --parallel
+      
+      - name: Run fuzzing
+        run: |
+          cd build
+          timeout 1800 ./tests/fuzz/fuzz_graph -max_total_time=1800 || true
+          timeout 1800 ./tests/fuzz/fuzz_node_ops -max_total_time=1800 || true

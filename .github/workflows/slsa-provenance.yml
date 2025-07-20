@@ -1,0 +1,167 @@
+name: SLSA v1.1 Provenance
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  id-token: write # For SLSA provenance
+  attestations: write # For GitHub attestations
+
+jobs:
+  # Build with SLSA v1.1 provenance
+  build-provenance:
+    runs-on: ubuntu-latest
+    outputs:
+      binary-name: hyperdag-cli
+      binary-digest: ${{ steps.hash.outputs.digest }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake pkg-config libcriterion-dev clang-18
+          
+      - name: Configure build with reproducible settings
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DHYPERDAG_WERROR=ON \
+            -DCMAKE_C_COMPILER=clang-18 \
+            -DCMAKE_C_FLAGS="-ffile-prefix-map=$PWD=. -fdebug-prefix-map=$PWD=." \
+            -DCMAKE_INSTALL_PREFIX=/usr/local
+            
+      - name: Build with reproducible environment
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          export TZ=UTC
+          cmake --build build --parallel
+          
+      - name: Strip and prepare artifacts
+        run: |
+          strip build/bin/hyperdag-cli
+          cp build/bin/hyperdag-cli hyperdag-cli-linux-x64
+          
+      - name: Generate artifact hash
+        id: hash
+        run: |
+          DIGEST=$(sha256sum hyperdag-cli-linux-x64 | cut -d' ' -f1)
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+          echo "SHA256: $DIGEST"
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hyperdag-cli-linux-x64
+          path: hyperdag-cli-linux-x64
+          if-no-files-found: error
+
+  # Generate SLSA v1.1 provenance
+  provenance:
+    needs: [build-provenance]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+      attestations: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.0.0
+    with:
+      base64-subjects: "${{ needs.build-provenance.outputs.binary-name }}:${{ needs.build-provenance.outputs.binary-digest }}"
+      upload-assets: true
+      provenance-name: "hyperdag-cli.intoto.jsonl"
+
+  # Additional security attestations
+  security-attestations:
+    needs: [build-provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+      
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: hyperdag-cli-linux-x64
+          
+      - name: Generate GitHub attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: hyperdag-cli-linux-x64
+          
+      - name: Generate SBOM (Software Bill of Materials)
+        run: |
+          cat > sbom.spdx.json << EOF
+          {
+            "spdxVersion": "SPDX-2.3",
+            "dataLicense": "CC0-1.0",
+            "SPDXID": "SPDXRef-DOCUMENT",
+            "name": "HyperDAG",
+            "documentNamespace": "https://github.com/hyperdag/hyperdag-core",
+            "creationInfo": {
+              "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+              "creators": ["Tool: HyperDAG-Build-System"]
+            },
+            "packages": [
+              {
+                "SPDXID": "SPDXRef-Package",
+                "name": "hyperdag-cli",
+                "downloadLocation": "NOASSERTION",
+                "filesAnalyzed": true,
+                "licenseConcluded": "MIT",
+                "copyrightText": "Copyright (c) 2025 HyperDAG Team"
+              }
+            ]
+          }
+          EOF
+          
+      - name: Attest SBOM
+        uses: actions/attest-sbom@v1
+        with:
+          subject-path: hyperdag-cli-linux-x64
+          sbom-path: sbom.spdx.json
+
+  # Vulnerability scanning
+  security-scan:
+    needs: [build-provenance]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: hyperdag-cli-linux-x64
+          
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+          
+      - name: Binary analysis with checksec
+        run: |
+          sudo apt-get update && sudo apt-get install -y checksec
+          checksec --file=hyperdag-cli-linux-x64

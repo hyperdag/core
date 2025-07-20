@@ -1,0 +1,163 @@
+name: Performance Analysis
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            pkg-config \
+            libcriterion-dev \
+            clang-18 \
+            linux-perf \
+            valgrind \
+            time
+      
+      - name: Build optimized version
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_COMPILER=clang-18 \
+            -DCMAKE_C_FLAGS="-O3 -march=native -fno-omit-frame-pointer"
+          cmake --build build --parallel
+      
+      - name: Run benchmarks
+        run: |
+          # Multiple runs for statistical significance
+          for i in {1..5}; do
+            echo "=== Run $i ===" >> benchmark-results.txt
+            ./build/bin/hyperdag_benchmarks >> benchmark-results.txt
+          done
+      
+      - name: Performance regression check
+        run: |
+          # Simple performance regression detection
+          # In real usage, you'd compare against baseline
+          LATEST_TIME=$(tail -10 benchmark-results.txt | grep "Graph creation" | tail -1 | awk '{print $4}')
+          echo "Latest graph creation time: $LATEST_TIME µs"
+          
+          # Alert if performance degrades significantly (>20% slower than 2µs baseline)
+          if (( $(echo "$LATEST_TIME > 2.4" | bc -l) )); then
+            echo "::warning::Performance regression detected: $LATEST_TIME µs > 2.4 µs baseline"
+          fi
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmark-results.txt
+
+  memory-profile:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            pkg-config \
+            libcriterion-dev \
+            clang-18 \
+            valgrind
+      
+      - name: Build with debug info
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_COMPILER=clang-18 \
+            -DHYPERDAG_SANITIZERS=OFF  # Disable for Valgrind
+          cmake --build build --parallel
+      
+      - name: Memory leak detection
+        run: |
+          valgrind --tool=memcheck \
+            --leak-check=full \
+            --show-leak-kinds=all \
+            --track-origins=yes \
+            --error-exitcode=1 \
+            --log-file=valgrind-memcheck.log \
+            ./build/bin/hyperdag_unit_tests
+      
+      - name: Cache performance analysis
+        run: |
+          valgrind --tool=cachegrind \
+            --cache-sim=yes \
+            --branch-sim=yes \
+            --cachegrind-out-file=cachegrind.out \
+            ./build/bin/hyperdag_benchmarks
+      
+      - name: Upload memory analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-analysis
+          path: |
+            valgrind-memcheck.log
+            cachegrind.out
+
+  fuzzing:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake pkg-config clang-18
+      
+      - name: Build fuzzing targets
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DHYPERDAG_FUZZING=ON \
+            -DCMAKE_C_COMPILER=clang-18
+          cmake --build build --parallel
+      
+      - name: Run continuous fuzzing
+        run: |
+          mkdir -p fuzz-corpus/{graph,node-ops}
+          
+          # Run fuzzing for 5 minutes
+          timeout 300 ./build/tests/fuzz/fuzz_graph \
+            -max_total_time=300 \
+            -print_final_stats=1 \
+            fuzz-corpus/graph/ || true
+            
+          timeout 300 ./build/tests/fuzz/fuzz_node_ops \
+            -max_total_time=300 \
+            -print_final_stats=1 \
+            fuzz-corpus/node-ops/ || true
+      
+      - name: Upload fuzzing corpus
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-corpus
+          path: fuzz-corpus/
+          
+      - name: Check for crashes
+        run: |
+          # Check if any crash files were generated
+          if find . -name "crash-*" -o -name "leak-*" -o -name "timeout-*" | grep -q .; then
+            echo "::error::Fuzzing found crashes or issues!"
+            find . -name "crash-*" -o -name "leak-*" -o -name "timeout-*" -exec echo "Found: {}" \;
+            exit 1
+          else
+            echo "::notice::No crashes found during fuzzing"
+          fi
