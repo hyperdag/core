@@ -68,14 +68,14 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
         -Wtrampolines
         -Wvector-operation-performance
     )
-elseif(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
     list(APPEND HYPERDAG_WARNING_FLAGS
         -Wthread-safety
         -Wthread-safety-beta
     )
     
     # Filter out Apple Clang unsupported warnings
-    if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang" OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
         # Apple Clang doesn't support some warnings that regular Clang does
         list(REMOVE_ITEM HYPERDAG_WARNING_FLAGS
             -Wcast-align=strict

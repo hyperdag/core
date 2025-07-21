@@ -20,6 +20,8 @@ option(HYPERDAG_DEV "Enable development mode (warnings as errors)" OFF)
 option(HYPERDAG_SANITIZERS "Enable sanitizers in debug builds" OFF)
 option(HYPERDAG_WERROR "Treat warnings as errors" OFF)
 option(HYPERDAG_FUZZING "Enable fuzzing targets" OFF)
+option(HYPERDAG_BUILD_TESTS "Build unit tests" ON)
+option(HYPERDAG_BUILD_EXAMPLES "Build examples" OFF)
 
 # Include custom CMake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -47,8 +49,10 @@ include(StaticAnalysis)
 add_subdirectory(src)
 
 # Enable testing
-enable_testing()
-add_subdirectory(tests)
+if(HYPERDAG_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 # Tools
 add_subdirectory(tools)
