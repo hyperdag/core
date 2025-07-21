@@ -55,9 +55,9 @@ if(HYPERDAG_BUILD_TESTS)
 endif()
 
 # Tools
-add_subdirectory(tools)
+# add_subdirectory(tools)
 
-# Benchmarks
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
-    add_subdirectory(benchmarks)
-endif()
+# # Benchmarks
+# if(CMAKE_BUILD_TYPE STREQUAL "Release")
+#     add_subdirectory(benchmarks)
+# endif()
