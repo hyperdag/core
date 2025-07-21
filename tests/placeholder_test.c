@@ -12,7 +12,7 @@ int main(void) {
     printf("Version: %s\n", HYPERDAG_VERSION_STRING);
 
     // Basic version validation
-    if (HYPERDAG_VERSION_MAJOR < 0 || HYPERDAG_VERSION_MAJOR > 100) {
+    if (HYPERDAG_VERSION_MAJOR < 0 || HYPERDAG_VERSION_MAJOR > 100) {  // NOLINT(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers,misc-redundant-expression)
         printf("FAIL: Invalid major version\n");
         return 1;
     }

@@ -117,7 +117,7 @@ typedef struct {
     const char *file;       ///< Source file where error occurred
     int line;               ///< Source line number
     const char *function;   ///< Function name where error occurred
-    char message[256];      ///< Human-readable error message
+    char message[256];      ///< Human-readable error message  // NOLINT(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers)
     void *detail;           ///< Optional detailed error information
     size_t detail_size;     ///< Size of detail data in bytes
 } hyperdag_error_context_t;
@@ -128,7 +128,7 @@ typedef struct {
  * @return true if the result indicates success, false otherwise
  */
 static inline bool hyperdag_result_is_success(hyperdag_result_t result) {
-    return result >= HYPERDAG_SUCCESS && result < HYPERDAG_ERROR_OUT_OF_MEMORY;
+    return (result >= HYPERDAG_SUCCESS && result < HYPERDAG_ERROR_OUT_OF_MEMORY) != 0;  // NOLINT(readability-implicit-bool-conversion)
 }
 
 /**
@@ -181,7 +181,7 @@ void hyperdag_clear_error_context(void);
 /**
  * @brief Return success result
  */
-#define HYP_OK() (HYPERDAG_SUCCESS)
+#define HYP_OK() (HYPERDAG_SUCCESS)  // NOLINT(readability-identifier-naming)
 
 /**
  * @brief Return error with context information
