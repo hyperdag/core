@@ -1,0 +1,66 @@
+#!/bin/sh
+# HyperDAG pre-commit hook - Extreme quality enforcement
+# This hook runs before every commit to ensure code quality standards
+
+set -eu
+
+# Import shared utilities
+. "$(git rev-parse --show-toplevel)/scripts/shlib.sh"
+
+echo "🔧 Running pre-commit quality checks..."
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+pushd "$PROJECT_ROOT" >/dev/null
+
+# Format all staged C/C++ files
+echo "📝 Formatting staged files..."
+git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|h|cpp|hpp)$' | while read -r file; do
+    if [ -f "$file" ]; then
+        clang-format -i "$file"
+        git add "$file"
+        echo "  ✓ Formatted: $file"
+    fi
+done
+
+# Run quick static analysis on staged files
+echo "🔍 Running clang-tidy on staged files..."
+git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|cpp)$' | while read -r file; do
+    if [ -f "$file" ]; then
+        if ! clang-tidy "$file" --quiet; then
+            echo "❌ clang-tidy failed for: $file"
+            popd >/dev/null
+            exit 1
+        fi
+        echo "  ✓ Clean: $file"
+    fi
+done
+
+# Check include guards
+echo "🛡️ Checking include guards..."
+if ! ./scripts/check-include-guards.sh; then
+    echo "❌ Include guard check failed"
+    popd >/dev/null
+    exit 1
+fi
+
+# Check version consistency
+echo "📋 Checking version consistency..."
+if ! ./scripts/check-version-consistency.sh; then
+    echo "❌ Version consistency check failed"
+    popd >/dev/null
+    exit 1
+fi
+
+# Run quick tests if available
+if [ -d "build" ] && [ -f "build/Makefile" ]; then
+    echo "🧪 Running quick tests..."
+    if ! ./scripts/run-quick-tests.sh; then
+        echo "❌ Quick tests failed"
+        popd >/dev/null
+        exit 1
+    fi
+fi
+
+popd >/dev/null
+echo "✅ All pre-commit checks passed!"
+echo "💡 Tip: Run 'make all' to ensure full build compatibility"

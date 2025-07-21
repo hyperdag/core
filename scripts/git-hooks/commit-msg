@@ -1,0 +1,74 @@
+#!/bin/sh
+# HyperDAG commit-msg hook - Enforce conventional commit format
+# This hook validates commit messages for consistency and clarity
+
+set -eu
+
+commit_file="$1"
+commit_msg=$(cat "$commit_file")
+
+# Check for conventional commit format
+# Pattern: type(optional scope): description
+# Examples: feat(core): add hypergraph structure, fix(memory): resolve leak in pool allocator
+
+if ! echo "$commit_msg" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?: .{1,50}'; then
+    cat << EOF
+❌ Invalid commit message format!
+
+Commit messages must follow conventional commit format:
+  <type>[optional scope]: <description>
+
+Valid types:
+  feat:     A new feature
+  fix:      A bug fix
+  docs:     Documentation only changes
+  style:    Changes that do not affect the meaning of the code
+  refactor: A code change that neither fixes a bug nor adds a feature
+  perf:     A code change that improves performance
+  test:     Adding missing tests or correcting existing tests
+  chore:    Changes to the build process or auxiliary tools
+  ci:       Changes to CI configuration files and scripts
+  build:    Changes that affect the build system or external dependencies
+
+Examples:
+  ✓ feat(core): add hypergraph node insertion
+  ✓ fix(memory): resolve pool allocator leak
+  ✓ docs: update API documentation
+  ✓ perf(traversal): optimize DFS algorithm
+
+Your commit message:
+  $commit_msg
+
+EOF
+    exit 1
+fi
+
+# Check commit message length
+first_line=$(echo "$commit_msg" | head -n1)
+if [ ${#first_line} -gt 72 ]; then
+    cat << EOF
+❌ Commit message first line too long (${#first_line} chars)!
+
+First line should be 72 characters or less.
+Current: $first_line
+
+EOF
+    exit 1
+fi
+
+# Check for imperative mood in description
+description=$(echo "$first_line" | sed -E 's/^[^:]+: //')
+if echo "$description" | grep -qE '^(added|fixed|updated|changed|removed)'; then
+    cat << EOF
+⚠️  Consider using imperative mood in commit description.
+
+Instead of: "added feature" → use: "add feature"
+Instead of: "fixed bug"    → use: "fix bug"
+
+Current: $description
+
+EOF
+    # Non-blocking warning
+fi
+
+echo "✅ Commit message format is valid"

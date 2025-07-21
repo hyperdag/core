@@ -98,6 +98,53 @@ install_tools() {
 # =============================================================================
 # Git Hook Installation
 # =============================================================================
+
+# Cross-platform function to create symlinks or copies
+install_hook() {
+    source_hook="$1"
+    target_hook="$2"
+    hook_name="$(basename "$source_hook")"
+    
+    # Remove existing hook if present
+    [ -f "$target_hook" ] && rm -f "$target_hook"
+    
+    # Try to create symlink first (preferred method)
+    if ln -s "../../scripts/git-hooks/$hook_name" "$target_hook" 2>/dev/null; then
+        echo "  ✓ Linked $hook_name"
+        return 0
+    fi
+    
+    # If symlink fails (Windows without developer mode), try copying
+    if cp "$source_hook" "$target_hook" 2>/dev/null; then
+        chmod +x "$target_hook"
+        echo "  ✓ Copied $hook_name (symlink not available)"
+        return 0
+    fi
+    
+    echo "  ❌ Failed to install $hook_name"
+    return 1
+}
+
+# Check if symlinks are supported (for Windows guidance)
+check_symlink_support() {
+    test_link_target="$PROJECT_ROOT/.git/test_symlink_target"
+    test_link_source="$PROJECT_ROOT/.git/test_symlink"
+    
+    # Create a test file
+    echo "test" > "$test_link_target"
+    
+    # Try to create a symlink
+    if ln -s test_symlink_target "$test_link_source" 2>/dev/null; then
+        # Clean up
+        rm -f "$test_link_source" "$test_link_target"
+        return 0
+    else
+        # Clean up
+        rm -f "$test_link_target"
+        return 1
+    fi
+}
+
 install_git_hooks() {
     cd "$PROJECT_ROOT"
     
@@ -106,129 +153,60 @@ install_git_hooks() {
         pre-commit uninstall >/dev/null 2>&1 || true
     fi
     
-    # Create our bash-based git hooks
-    cat > .git/hooks/pre-commit << 'EOF'
-#!/bin/sh
-# HyperDAG Pre-commit Hook
-# Runs essential quality checks before allowing commits
-
-set -eu
-
-# Load shared shell library (tools auto-configured)
-PROJECT_ROOT="$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)"
-. "$PROJECT_ROOT/scripts/shlib.sh"
-
-echo "🔍 Running pre-commit quality checks..."
-
-# Change to project root
-cd "$PROJECT_ROOT"
-
-# 1. Check code formatting
-echo "📝 Checking code formatting..."
-if ! ./scripts/run-clang-format.sh --check; then
-    echo "💡 Tip: Run './scripts/run-clang-format.sh --fix' to auto-fix formatting"
-    exit 1
-fi
-
-# 2. Scan for secrets in staged files
-echo "🔒 Scanning for secrets..."
-if ! ./scripts/run-gitleaks.sh --staged; then
-    exit 1
-fi
-
-# 3. Check version consistency
-echo "🔢 Checking version consistency..."
-if ! ./scripts/check-version-consistency.sh; then
-    exit 1
-fi
-
-# 4. Check include guards
-echo "🛡️  Checking include guards..."
-# Only check staged header files
-staged_headers=$(git diff --cached --name-only --diff-filter=ACM | grep '\.h$' || true)
-if [ -n "$staged_headers" ]; then
-    if ! echo "$staged_headers" | xargs ./scripts/check-include-guards.sh; then
-        exit 1
-    fi
-else
-    echo "✓ No header files to check"
-fi
-
-# 5. API naming conventions are checked by clang-tidy (more robust)
-echo "📋 API naming conventions checked by clang-tidy"
-
-# 6. Run quick tests (if any exist)
-echo "⚡ Running quick tests..."
-if ! ./scripts/run-quick-tests.sh; then
-    exit 1
-fi
-
-echo "✅ All pre-commit checks passed!"
-echo ""
-EOF
-
-    cat > .git/hooks/pre-push << 'EOF'
-#!/bin/sh
-# HyperDAG Pre-push Hook
-# Runs comprehensive quality checks before pushing
-
-set -eu
-
-# Load shared shell library (tools auto-configured)
-PROJECT_ROOT="$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)"
-. "$PROJECT_ROOT/scripts/shlib.sh"
-
-echo "🚀 Running pre-push quality checks..."
-
-# Change to project root
-cd "$PROJECT_ROOT"
-
-# 1. Run static analysis (if build exists)
-echo "🔍 Running static analysis..."
-if ! ./scripts/run-clang-tidy.sh --check; then
-    exit 1
-fi
-
-# 2. Run full security scan
-echo "🔒 Running full security scan..."
-if ! ./scripts/run-gitleaks.sh; then
-    exit 1
-fi
-
-# 3. Run test suite (if build exists)
-echo "🧪 Running test suite..."
-if [ -d "$PROJECT_ROOT/build" ]; then
-    if [ -f "$PROJECT_ROOT/build/Makefile" ] || [ -f "$PROJECT_ROOT/build/build.ninja" ]; then
-        echo "Building and testing..."
-        if ! cmake --build build; then
-            echo "❌ Build failed"
-            exit 1
-        fi
-        if ! ctest --test-dir build --output-on-failure; then
-            echo "❌ Tests failed"
-            exit 1
-        fi
-    else
-        echo "⚠️  Build directory exists but no build files found"
-        echo "Run: cmake -B build"
-    fi
-else
-    echo "⚠️  Build directory not found. Run: cmake -B build"
-    echo "Skipping build and test checks..."
-fi
-
-echo "✅ All pre-push checks passed!"
-echo "🎯 Ready to push to remote repository"
-EOF
-
-    # Make hooks executable
-    chmod +x .git/hooks/pre-commit .git/hooks/pre-push
+    echo "🔗 Installing git hooks..."
     
-    # Silent success - only show output if there were problems creating hooks
-    if [ ! -x .git/hooks/pre-commit ] || [ ! -x .git/hooks/pre-push ]; then
-        echo "❌ Failed to create or make git hooks executable"
+    # Check if symlinks are supported
+    if ! check_symlink_support; then
+        if [ "$PLATFORM" = "windows" ]; then
+            echo ""
+            yellow "⚠️  Symlinks not available on Windows"
+            echo "To enable symlinks on Windows (recommended):"
+            echo "1. Enable Developer Mode in Windows Settings"
+            echo "2. Or run Git Bash as Administrator"
+            echo "3. Or use: git config core.symlinks true"
+            echo ""
+            echo "Falling back to copying hooks (will need manual updates)..."
+            echo ""
+        fi
+    fi
+    
+    # Make sure git hooks directory exists
+    mkdir -p .git/hooks
+    
+    # Install each hook
+    hooks_installed=0
+    hooks_failed=0
+    
+    for hook_file in scripts/git-hooks/*; do
+        [ -f "$hook_file" ] || continue
+        hook_name="$(basename "$hook_file")"
+        target_hook=".git/hooks/$hook_name"
+        
+        if install_hook "$hook_file" "$target_hook"; then
+            hooks_installed=$((hooks_installed + 1))
+        else
+            hooks_failed=$((hooks_failed + 1))
+        fi
+    done
+    
+    echo "Installed $hooks_installed git hooks"
+    
+    if [ $hooks_failed -gt 0 ]; then
+        echo "❌ Failed to install $hooks_failed git hooks"
         return 1
     fi
+    
+    # Verify hooks are executable
+    for hook_file in scripts/git-hooks/*; do
+        [ -f "$hook_file" ] || continue
+        hook_name="$(basename "$hook_file")"
+        target_hook=".git/hooks/$hook_name"
+        
+        if [ ! -x "$target_hook" ]; then
+            echo "❌ Hook $hook_name is not executable"
+            return 1
+        fi
+    done
 }
 
 # =============================================================================
@@ -261,9 +239,20 @@ setup_git() {
     issues_found=0
     optional_improvements=0
 
+    # Platform-specific git configuration settings
+    if [ "$PLATFORM" = "windows" ]; then
+        # Windows: Convert LF to CRLF on checkout, CRLF to LF on commit
+        autocrlf_setting="true"
+        autocrlf_desc="convert_line_endings_for_Windows"
+    else
+        # Linux/macOS: Keep LF line endings, warn about CRLF
+        autocrlf_setting="input"
+        autocrlf_desc="preserve_LF_warn_about_CRLF"
+    fi
+    
     # Check optional git configuration settings
     optional_configs="
-        core.autocrlf:false:preserve_original_line_endings:git_config_--local_core.autocrlf_false
+        core.autocrlf:${autocrlf_setting}:${autocrlf_desc}:git_config_--local_core.autocrlf_${autocrlf_setting}
         core.filemode:true:track_executable_permissions:git_config_--local_core.filemode_true  
         pull.rebase:false:merge_instead_of_rebase_on_pull:git_config_--local_pull.rebase_false
         init.defaultBranch:main:modern_default_branch_name:git_config_--local_init.defaultBranch_main
