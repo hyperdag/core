@@ -32,27 +32,27 @@ HeaderFilterRegex: '(include|src)/.*\.(h|c)$'
 CheckOptions:
   # Naming conventions for HyperDAG
   - key: readability-identifier-naming.TypedefCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.TypedefSuffix
     value: '_t'
   - key: readability-identifier-naming.StructCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.UnionCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.EnumCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.EnumConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.EnumConstantPrefix
     value: 'HYPERDAG_'
   - key: readability-identifier-naming.FunctionCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.FunctionPrefix
     value: 'hyperdag_'
   - key: readability-identifier-naming.VariableCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.ParameterCase
-    value: snake_case
+    value: lower_case
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
   - key: readability-identifier-naming.MacroDefinitionPrefix
@@ -122,4 +122,4 @@ ExtraArgs:
   - '-Wno-gnu-zero-variadic-macro-arguments'  # Allow empty __VA_ARGS__
 
 # Performance: run checks in parallel
-Parallel: true
+# Parallel: true  # Not supported in this clang-tidy version
