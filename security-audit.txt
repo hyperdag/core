@@ -1,6 +1,0 @@
-=== Binary Security Analysis ===
-Security Features Check:
-✅ Stack canaries: ENABLED
-✅ PIE (Position Independent Executable): ENABLED
-✅ Debug symbols: STRIPPED
-❌ Semgrep security scan: MISSING

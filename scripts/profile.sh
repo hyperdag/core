@@ -63,16 +63,17 @@ profile_with_perf() {
         ./build-profile/bin/mg_benchmarks
 
     # Generate reports
-    perf report -i perf.data --stdio > perf-report.txt
-    perf annotate -i perf.data --stdio > perf-annotate.txt
+    mkdir -p .ignored
+    perf report -i perf.data --stdio > .ignored/perf-report.txt
+    perf annotate -i perf.data --stdio > .ignored/perf-annotate.txt
 
     # Generate flame graph if available
     if command -v flamegraph >/dev/null 2>&1; then
-        perf script -i perf.data | flamegraph > flamegraph.svg
-        echo "[INFO] Flame graph generated: flamegraph.svg"
+        perf script -i perf.data | flamegraph > .ignored/flamegraph.svg
+        echo "[INFO] Flame graph generated: .ignored/flamegraph.svg"
     fi
 
-    echo "[INFO] Perf reports generated: perf-report.txt, perf-annotate.txt"
+    echo "[INFO] Perf reports generated: .ignored/perf-report.txt, .ignored/perf-annotate.txt"
 }
 
 # Memory profiling with Valgrind
@@ -111,9 +112,10 @@ profile_with_gprof() {
     ./build-profile/bin/mg_benchmarks
 
     # Generate profile report
-    gprof ./build-profile/bin/mg_benchmarks gmon.out > gprof-report.txt
+    mkdir -p .ignored
+    gprof ./build-profile/bin/mg_benchmarks gmon.out > .ignored/gprof-report.txt
 
-    echo "[INFO] gprof report generated: gprof-report.txt"
+    echo "[INFO] gprof report generated: .ignored/gprof-report.txt"
 }
 
 # Benchmark timing analysis
@@ -136,8 +138,9 @@ benchmark_timing() {
     done
 
     # Calculate statistics
-    echo "Timing Results (Real User System MaxRSS):" > timing-analysis.txt
-    cat "$times_file" >> timing-analysis.txt
+    mkdir -p .ignored
+    echo "Timing Results (Real User System MaxRSS):" > .ignored/timing-analysis.txt
+    cat "$times_file" >> .ignored/timing-analysis.txt
 
     # Calculate averages (basic awk processing)
     awk '{
@@ -146,12 +149,12 @@ benchmark_timing() {
         printf "Averages over %d runs:\n", count
         printf "Real: %.3fs, User: %.3fs, System: %.3fs, Peak Memory: %.0fKB\n",
                real/count, user/count, sys/count, mem/count
-    }' "$times_file" >> timing-analysis.txt
+    }' "$times_file" >> .ignored/timing-analysis.txt
 
     # Clean up temporary file
     rm -f "$times_file"
 
-    echo "[INFO] Timing analysis saved to: timing-analysis.txt"
+    echo "[INFO] Timing analysis saved to: .ignored/timing-analysis.txt"
 }
 
 # Profile-Guided Optimization
@@ -186,9 +189,10 @@ run_pgo() {
         ./build-profile/bin/mg_benchmarks
         echo "=== With PGO ==="
         ./build-pgo-use/bin/mg_benchmarks
-    } > pgo-comparison.txt
+    mkdir -p .ignored
+    } > .ignored/pgo-comparison.txt
 
-    echo "[INFO] PGO comparison saved to: pgo-comparison.txt"
+    echo "[INFO] PGO comparison saved to: .ignored/pgo-comparison.txt"
 }
 
 # Fuzzing with address sanitizer

@@ -64,20 +64,21 @@ if [ -d "benchmarks" ] || [ -f "build/bin/mg_benchmarks" ]; then
             if mg_prompt "Would you like to capture baseline performance data now?"; then
                 echo "Capturing baseline performance data..."
                 if ./scripts/profile.sh timing; then
-                    mv timing-analysis.txt performance-baseline.txt
+                    mv .ignored/timing-analysis.txt performance-baseline.txt
                     mg_green "✅ Baseline performance data captured"
+                    mg_yellow "Note: Performance baseline is machine-specific and not tracked in git"
                 else
                     mg_red "❌ Failed to capture baseline data"
                     exit 1
                 fi
             else
                 mg_red "❌ Cannot proceed without performance baseline"
-                echo "Run: ./scripts/profile.sh timing && mv timing-analysis.txt performance-baseline.txt"
+                echo "Run: ./scripts/profile.sh timing && mv .ignored/timing-analysis.txt performance-baseline.txt"
                 exit 1
             fi
         else
             mg_red "❌ No performance baseline data (non-interactive mode)"
-            echo "Run: ./scripts/profile.sh timing && mv timing-analysis.txt performance-baseline.txt"
+            echo "Run: ./scripts/profile.sh timing && mv .ignored/timing-analysis.txt performance-baseline.txt"
             exit 1
         fi
     else
@@ -89,8 +90,8 @@ if [ -d "benchmarks" ] || [ -f "build/bin/mg_benchmarks" ]; then
         
         # Compare with baseline - would do statistical analysis in production
         echo "Comparing with baseline performance..."
-        if ! diff -u performance-baseline.txt timing-analysis.txt > performance-diff.txt 2>&1; then
-            mg_yellow "⚠️ Performance differences detected (review performance-diff.txt)"
+        if ! diff -u performance-baseline.txt .ignored/timing-analysis.txt > .ignored/performance-diff.txt 2>&1; then
+            mg_yellow "⚠️ Performance differences detected (review .ignored/performance-diff.txt)"
             # For now, don't fail on performance differences, just warn
         fi
     fi

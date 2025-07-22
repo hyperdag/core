@@ -37,6 +37,7 @@ DerivedData/
 
 # Build directories
 build/
+build-*/
 dist/
 bin/
 obj/
@@ -88,3 +89,6 @@ missing
 /core
 *.core
 vgcore.*
+
+# Performance baseline (machine-dependent, not tracked)
+performance-baseline.txt
