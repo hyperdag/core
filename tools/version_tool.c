@@ -3,44 +3,66 @@
  * Simple utility to display version information
  */
 
-#include "metagraph/result.h"
 #include "metagraph/version.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 
-metagraph_result_t metagraph_printf(const char *fmt, ...) {
-    METAGRAPH_CHECK_NULL(fmt);
+void metagraph_print_api_version(void) {
+    (void)printf("API Version: %d.%d.%d\n", metagraph_version_major(),
+                 metagraph_version_minor(), metagraph_version_patch());
 
-    va_list args;
-    va_start(args, fmt);
-    int result = vprintf(fmt, args);
-    va_end(args);
-
-    if (result < 0) {
-        return METAGRAPH_ERR(METAGRAPH_ERROR_IO_FAILURE,
-                             "printf failed with error code %d", result);
-    }
-
-    return METAGRAPH_OK();
+    (void)printf("Version String: %s\n", metagraph_version_string());
 }
 
-#define METAGRAPH_PRINT(fmt, ...)                                              \
-    METAGRAPH_CHECK(metagraph_printf(fmt, __VA_ARGS__));
+void metagraph_print_bundle_format(void) {
+    (void)printf("Bundle Format Version: %d\n",
+                 metagraph_bundle_format_version());
+    (void)printf("Bundle Format UUID: %s\n", metagraph_bundle_format_uuid());
+}
 
-metagraph_result_t metagraph_print_version(void) {
-    METAGRAPH_PRINT("Major: %d\n", METAGRAPH_VERSION_MAJOR);
-    METAGRAPH_PRINT("Minor: %d\n", METAGRAPH_VERSION_MINOR);
-    METAGRAPH_PRINT("Patch: %d\n", METAGRAPH_VERSION_PATCH);
-    return METAGRAPH_OK();
+void metagraph_print_build_info(void) {
+    (void)printf("Build Info: %s\n", metagraph_build_info());
+
+    const char *timestamp;
+    const char *commit_hash;
+    const char *branch;
+
+    metagraph_build_details(&timestamp, &commit_hash, &branch);
+
+    (void)printf("Build Timestamp: %s\n", timestamp ? timestamp : "N/A");
+
+    (void)printf("Commit Hash: %s\n", commit_hash ? commit_hash : "N/A");
+
+    (void)printf("Branch: %s\n", branch ? branch : "N/A");
+}
+
+void metagraph_print_features(void) {
+    // (void)printf("Features:\n");
+    // (void)printf("  Versioned Bundles: %s\n",
+    //                        METAGRAPH_FEATURE_VERSIONED_BUNDLES ? "Yes" :
+    //                        "No");
+    // (void)printf("  Delta Patches: %s\n",
+    //                        METAGRAPH_FEATURE_DELTA_PATCHES ? "Yes" : "No");
+    // (void)printf("  Compression V2: %s\n",
+    //                        METAGRAPH_FEATURE_COMPRESSION_V2 ? "Yes" : "No");
 }
 
 int main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    METAGRAPH_PRINT("MetaGraph %s\n", METAGRAPH_VERSION_STRING);
-    METAGRAPH_CHECK(metagraph_print_version());
+    (void)printf("MetaGraph Version Tool\n");
+
+    metagraph_print_api_version();
+
+    metagraph_print_bundle_format();
+
+    metagraph_print_build_info();
+
+    metagraph_print_features();
+
+    (void)printf("End of version information.\n");
 
     return 0;
 }
