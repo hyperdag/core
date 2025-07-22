@@ -5,6 +5,9 @@
  * This header provides compile-time and runtime version information
  * including API versions, bundle format compatibility, and build details.
  *
+ * NOTE: This file is manually managed. Use scripts/release.sh to update
+ * version information when preparing a new release.
+ *
  * @copyright Apache License 2.0 - see LICENSE file for details
  */
 
@@ -41,8 +44,8 @@ extern "C" {
 // Build Information (populated by CMake)
 // =============================================================================
 
-#define METAGRAPH_BUILD_TIMESTAMP "2025-07-22 20:14:47 UTC"
-#define METAGRAPH_BUILD_COMMIT_HASH "04f64976497f30fbbd5fca728f7d509893464991"
+#define METAGRAPH_BUILD_TIMESTAMP "1753216542"
+#define METAGRAPH_BUILD_COMMIT_HASH "b60468a7fdb4c1297c84ce070dfb301cfc8081d0"
 #define METAGRAPH_BUILD_BRANCH "feat/docker-dev-container-image"
 
 // Fallback to compiler macros if CMake variables not available

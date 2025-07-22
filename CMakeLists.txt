@@ -1,22 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 project(MetaGraph VERSION 0.1.0 LANGUAGES C)
 
-# Get build information
-string(TIMESTAMP BUILD_TIMESTAMP "%Y-%m-%d %H:%M:%S UTC" UTC)
-execute_process(
-    COMMAND git rev-parse HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_COMMIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-)
-execute_process(
-    COMMAND git rev-parse --abbrev-ref HEAD
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE GIT_BRANCH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET
-)
+# Build information is now managed by scripts/release.sh
+# and stored statically in include/metagraph/version.h
 
 # Critical policies for deterministic builds
 cmake_policy(SET CMP0135 NEW)  # Timestamp extraction in FetchContent
@@ -57,12 +43,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# Configure version header
-configure_file(
-    "${CMAKE_SOURCE_DIR}/include/metagraph/version.h.in"
-    "${CMAKE_SOURCE_DIR}/include/metagraph/version.h"
-    @ONLY
-)
+# Version header is now static - use scripts/release.sh to update it
 
 # Include compiler flags and sanitizers
 include(CompilerFlags)
