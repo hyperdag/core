@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Graph Traversal Engine implements efficient algorithms for navigating and analyzing meta-graph structures. This feature provides the algorithmic foundation for dependency resolution, asset discovery, and graph analysis operations that are central to Meta-Graph's capabilities.
+The Graph Traversal Engine implements efficient algorithms for navigating and analyzing meta-graph structures. This feature provides the algorithmic foundation for dependency resolution, asset discovery, and graph analysis operations that are central to MetaGraph's capabilities.
 
 Building on the origin story's insight that "everything is graphs," this engine provides high-performance traversal algorithms optimized for the sparse, hierarchical nature of asset dependency graphs.
 
@@ -573,4 +573,4 @@ static mg_result_t parallel_bfs_worker(
 - Performance benchmarks track optimization
 - Memory leak detection for all traversal paths
 
-This graph traversal engine provides the algorithmic foundation that enables efficient dependency resolution, build optimization, and analysis capabilities that are central to Meta-Graph's value proposition.
+This graph traversal engine provides the algorithmic foundation that enables efficient dependency resolution, build optimization, and analysis capabilities that are central to MetaGraph's value proposition.

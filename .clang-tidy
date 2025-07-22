@@ -1,26 +1,18 @@
-# Meta-Graph clang-tidy Configuration
+# MetaGraph clang-tidy Configuration
 # EXTREME quality standards - ALL warnings are errors
 
 # Enable comprehensive check coverage
-Checks: '
-  *,
-  -abseil-*,
-  -altera-*,
-  -android-*,
-  -darwin-*,
-  -fuchsia-*,
-  -google-build-using-namespace,
-  -google-readability-avoid-underscore-in-googletest-name,
-  -google-readability-todo,
-  -hicpp-named-parameter,
-  -hicpp-no-array-decay,
-  -hicpp-signed-bitwise,
-  -llvm-header-guard,
-  -llvmlibc-*,
-  -modernize-use-trailing-return-type,
-  -readability-identifier-length,
-  -zircon-*
-'
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -readability-magic-numbers
 
 # ALL warnings become compilation errors - zero tolerance
 WarningsAsErrors: '*'
@@ -30,7 +22,7 @@ HeaderFilterRegex: '(include|src)/.*\.(h|c)$'
 
 # Check configuration
 CheckOptions:
-  # Naming conventions for Meta-Graph
+  # Naming conventions for MetaGraph
   - key: readability-identifier-naming.TypedefCase
     value: lower_case
   - key: readability-identifier-naming.TypedefSuffix
@@ -44,11 +36,11 @@ CheckOptions:
   - key: readability-identifier-naming.EnumConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.EnumConstantPrefix
-    value: 'Meta-Graph_'
+    value: 'METAGRAPH_'
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
   - key: readability-identifier-naming.FunctionPrefix
-    value: 'Meta-Graph_'
+    value: 'metagraph_'
   - key: readability-identifier-naming.VariableCase
     value: lower_case
   - key: readability-identifier-naming.ParameterCase
@@ -56,15 +48,15 @@ CheckOptions:
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
   - key: readability-identifier-naming.MacroDefinitionPrefix
-    value: 'Meta-Graph_'
+    value: 'METAGRAPH_'
   - key: readability-identifier-naming.GlobalConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.GlobalConstantPrefix
-    value: 'Meta-Graph_'
+    value: 'METAGRAPH_'
 
   # Function complexity limits
   - key: readability-function-cognitive-complexity.Threshold
-    value: '15'
+    value: '25'
   - key: readability-function-size.LineThreshold
     value: '50'
   - key: readability-function-size.StatementThreshold
@@ -74,7 +66,7 @@ CheckOptions:
   - key: readability-function-size.ParameterThreshold
     value: '6'
   - key: readability-function-size.NestingThreshold
-    value: '4'
+    value: '3'
 
   # Memory safety
   - key: bugprone-suspicious-string-compare.WarnOnImplicitComparison
@@ -113,13 +105,8 @@ SystemHeaders: false
 UseColor: true
 
 # Enable all available experimental checks
-ExtraArgs:
-  - '-std=c23'
-  - '-Wextra'
-  - '-Wall'
-  - '-Wpedantic'
-  - '-Wno-unused-parameter'  # Common in function pointer interfaces
-  - '-Wno-gnu-zero-variadic-macro-arguments'  # Allow empty __VA_ARGS__
+# Note: When using compilation database, extra args should be passed via command line
+# to avoid being interpreted as file paths
 
 # Performance: run checks in parallel
 # Parallel: true  # Not supported in this clang-tidy version

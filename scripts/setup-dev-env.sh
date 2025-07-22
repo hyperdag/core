@@ -1,5 +1,5 @@
 #!/bin/sh
-# Meta-Graph Development Environment Setup Script
+# MetaGraph Development Environment Setup Script
 # Installs all required tools, dependencies, and configures git hooks
 
 set -eu
@@ -492,7 +492,7 @@ verify_setup() {
 # =============================================================================
 show_help() {
     cat << EOF
-Meta-Graph Development Environment Setup
+MetaGraph Development Environment Setup
 
 Usage: $0 [OPTIONS]
 

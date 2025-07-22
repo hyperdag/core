@@ -19,10 +19,10 @@ extern "C" {
 // API Version Information (from CMake project version)
 // =============================================================================
 
-#define METAGRAPH_API_VERSION_MAJOR 0
-#define METAGRAPH_API_VERSION_MINOR 1
-#define METAGRAPH_API_VERSION_PATCH 0
-#define METAGRAPH_API_VERSION_STRING "0.1.0"
+#define METAGRAPH_API_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define METAGRAPH_API_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define METAGRAPH_API_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define METAGRAPH_API_VERSION_STRING "@PROJECT_VERSION@"
 
 // Legacy compatibility (maps to API version)
 #define METAGRAPH_VERSION_MAJOR METAGRAPH_API_VERSION_MAJOR
@@ -41,9 +41,9 @@ extern "C" {
 // Build Information (populated by CMake)
 // =============================================================================
 
-#define METAGRAPH_BUILD_TIMESTAMP "2025-07-22 18:56:43 UTC"
-#define METAGRAPH_BUILD_COMMIT_HASH "bcc36236df31d9ed115387094949edb14a3af467"
-#define METAGRAPH_BUILD_BRANCH "feat/docker-dev-container-image"
+#define METAGRAPH_BUILD_TIMESTAMP "@BUILD_TIMESTAMP@"
+#define METAGRAPH_BUILD_COMMIT_HASH "@GIT_COMMIT_HASH@"
+#define METAGRAPH_BUILD_BRANCH "@GIT_BRANCH@"
 
 // Fallback to compiler macros if CMake variables not available
 #define METAGRAPH_BUILD_DATE __DATE__

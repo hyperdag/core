@@ -147,5 +147,8 @@
   "[cmake]": {
     "editor.tabSize": 2
   },
-  "workbench.colorTheme": "Cobalt2"
+  "workbench.colorTheme": "Cobalt2",
+  "cSpell.words": [
+    "METAGRAPH"
+  ]
 }

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Meta-Graph Directory Utilities
+# MetaGraph Directory Utilities
 # Directory management functions for scripts
 
 # --- Change Directory ---------------------------------------------------------

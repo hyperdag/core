@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Meta-Graph Output Utilities
+# MetaGraph Output Utilities
 # Functions for formatted output, colors, and error handling
 
 # Print error message and exit

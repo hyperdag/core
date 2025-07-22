@@ -30,19 +30,19 @@ if command -v gcc >/dev/null 2>&1; then
     done
 fi
 
-# Check VERSION file format
-if [ -f "VERSION" ]; then
-    echo "🔍 Validating VERSION file format..."
-    if ! grep -q "METAGRAPH_API_VERSION_MAJOR=" VERSION; then
-        echo "❌ VERSION file missing METAGRAPH_API_VERSION_MAJOR"
+# Check version header exists
+if [ -f "include/metagraph/version.h" ]; then
+    echo "🔍 Validating version header..."
+    if ! grep -q "#define METAGRAPH_API_VERSION_MAJOR" include/metagraph/version.h; then
+        echo "❌ version.h missing METAGRAPH_API_VERSION_MAJOR"
         exit 1
     fi
-    if ! grep -q "METAGRAPH_API_VERSION_MINOR=" VERSION; then
-        echo "❌ VERSION file missing METAGRAPH_API_VERSION_MINOR"
+    if ! grep -q "#define METAGRAPH_API_VERSION_MINOR" include/metagraph/version.h; then
+        echo "❌ version.h missing METAGRAPH_API_VERSION_MINOR"
         exit 1
     fi
-    if ! grep -q "METAGRAPH_API_VERSION_PATCH=" VERSION; then
-        echo "❌ VERSION file missing METAGRAPH_API_VERSION_PATCH"
+    if ! grep -q "#define METAGRAPH_API_VERSION_PATCH" include/metagraph/version.h; then
+        echo "❌ version.h missing METAGRAPH_API_VERSION_PATCH"
         exit 1
     fi
 fi

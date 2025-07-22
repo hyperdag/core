@@ -1,4 +1,4 @@
-# Meta-Graph Tools
+# MetaGraph Tools
 # Command-line utilities and development tools
 
 # Placeholder for future tools

@@ -32,6 +32,8 @@ set(METAGRAPH_WARNING_FLAGS
     -Wunused-macros
     -Wvla
     -Wwrite-strings
+    -Wno-unused-parameter  # Common in function pointer interfaces
+    -Wno-gnu-zero-variadic-macro-arguments  # Allow empty __VA_ARGS__
 )
 
 # Security hardening flags (platform-specific)

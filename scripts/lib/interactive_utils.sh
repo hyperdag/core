@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Meta-Graph Interactive Utilities
+# MetaGraph Interactive Utilities
 # Functions for user interaction and prompts
 
 # Check if we're running interactively

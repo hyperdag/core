@@ -3,12 +3,12 @@
 
 set -eu
 
-# Source the Meta-Graph library
+# Source the MetaGraph library
 . "$(dirname "$0")/mg.sh"
 
 print_header() {
     mg_blue "================================================"
-    mg_blue "🐚 Meta-Graph Shell Script Linting with shellcheck"
+    mg_blue "🐚 MetaGraph Shell Script Linting with shellcheck"
     mg_blue "================================================"
 }
 
@@ -58,7 +58,7 @@ main() {
         [ -r "$script" ] || continue
 
         files_checked=$((files_checked + 1))
-        
+
         # Run shellcheck with appropriate options
         if shellcheck \
             --shell=sh \

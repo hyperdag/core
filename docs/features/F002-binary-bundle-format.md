@@ -202,7 +202,7 @@ mg_result_t mg_bundle_get_metadata(
 
 ```mermaid
 graph TD
-    subgraph "Meta-Graph Bundle Format"
+    subgraph "MetaGraph Bundle Format"
         HEADER[Bundle Header<br/>magic, version, checksums]
         SECTION_INDEX[Section Index<br/>offsets and sizes]
 

@@ -1,4 +1,4 @@
-# Meta-Graph Third-Party Dependencies
+# MetaGraph Third-Party Dependencies
 # Pinned commit hashes with cryptographic verification
 
 include(FetchContent)

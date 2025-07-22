@@ -1,54 +1,44 @@
 {
-    "name": "Meta-Graph C23 Development",
-    "image": "ghcr.io/james/hyperdag-core/devcontainer:latest",
-
-    "features": {},
-
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-vscode.cpptools",
-                "ms-vscode.cpptools-extension-pack",
-                "ms-vscode.cmake-tools",
-                "twxs.cmake",
-                "notskm.clang-tidy",
-                "xaver.clang-format",
-                "eamodio.gitlens",
-                "editorconfig.editorconfig",
-                "vadimcn.vscode-lldb",
-                "cschlosser.doxdocgen",
-                "ms-azuretools.vscode-docker"
-            ],
-            "settings": {
-                "C_Cpp.default.cStandard": "c23",
-                "C_Cpp.default.compilerPath": "/usr/bin/clang",
-                "C_Cpp.default.intelliSenseMode": "linux-clang-x64",
-                "cmake.configureSettings": {
-                    "CMAKE_BUILD_TYPE": "Debug",
-                    "METAGRAPH_DEV": "ON",
-                    "METAGRAPH_SANITIZERS": "ON",
-                    "CMAKE_C_COMPILER": "/usr/bin/clang"
-                },
-                "terminal.integrated.defaultProfile.linux": "bash"
-            }
-        }
-    },
-
-    "mounts": [
-        "source=${localWorkspaceFolder}/.git,target=/workspace/.git,type=bind,consistency=cached"
-    ],
-
-    "workspaceFolder": "/workspace",
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
-
-    "forwardPorts": [],
-
-    "containerEnv": {
-        "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stats=1",
-        "UBSAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stacktrace=1",
-        "CC": "clang",
-        "CXX": "clang++"
-    },
-
-    "remoteUser": "root"
+  "name": "MetaGraph C23 Development",
+  "build": {
+    "dockerfile": "../Dockerfile.dev",
+    "context": "."
+  },
+  "features": {},
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cpptools-extension-pack",
+        "ms-vscode.cmake-tools",
+        "twxs.cmake",
+        "notskm.clang-tidy",
+        "xaver.clang-format",
+        "eamodio.gitlens",
+        "editorconfig.editorconfig",
+        "vadimcn.vscode-lldb",
+        "cschlosser.doxdocgen",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "C_Cpp.default.cStandard": "c23",
+        "C_Cpp.default.compilerPath": "/usr/bin/clang",
+        "C_Cpp.default.intelliSenseMode": "linux-clang-x64",
+        "cmake.configureSettings": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "METAGRAPH_DEV": "ON",
+          "METAGRAPH_SANITIZERS": "ON",
+          "CMAKE_C_COMPILER": "/usr/bin/clang"
+        },
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  },
+  "containerEnv": {
+    "ASAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stats=1",
+    "UBSAN_OPTIONS": "abort_on_error=1:halt_on_error=1:print_stacktrace=1",
+    "CC": "clang",
+    "CXX": "clang++"
+  },
+  "remoteUser": "root"
 }

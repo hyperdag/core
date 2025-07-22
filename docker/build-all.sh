@@ -84,7 +84,7 @@ test_config() {
             export UBSAN_OPTIONS='abort_on_error=1:halt_on_error=1:print_stacktrace=1'
 
             # Run unit tests if they exist
-            if [[ -f build-docker/bin/METAGRAPH_unit_tests ]]; then
+            if [[ -f build-docker/bin/mg_unit_tests ]]; then
                 ./build-docker/bin/mg_unit_tests
             fi
 
@@ -106,7 +106,7 @@ test_config() {
 
 # Main execution
 main() {
-    print_status "Starting Meta-Graph Docker build matrix"
+    print_status "Starting MetaGraph Docker build matrix"
     print_status "Testing ${#IMAGES[@]} images with ${#BUILD_TYPES[@]} build types and ${#SANITIZER_CONFIGS[@]} sanitizer configs"
 
     local total_tests=0

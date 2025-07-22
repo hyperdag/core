@@ -179,7 +179,7 @@ mg_result_t mg_graph_get_outgoing_edges(
 
 ```mermaid
 classDiagram
-    class Meta-GraphGraph {
+    class MetaGraphGraph {
         +mg_id_t id
         +uint32_t version
         +size_t node_count
@@ -194,7 +194,7 @@ classDiagram
         +find_node() mg_result_t
     }
 
-    class Meta-GraphNode {
+    class MetaGraphNode {
         +mg_id_t id
         +const char* name
         +uint32_t type
@@ -205,7 +205,7 @@ classDiagram
         +array_t* outgoing_edges
     }
 
-    class Meta-GraphEdge {
+    class MetaGraphEdge {
         +mg_id_t id
         +uint32_t type
         +float weight
@@ -224,17 +224,17 @@ classDiagram
         +remove() mg_result_t
     }
 
-    Meta-GraphGraph ||--o{ Meta-GraphNode : contains
-    Meta-GraphGraph ||--o{ Meta-GraphEdge : contains
-    Meta-GraphGraph ||--|| HashTable : uses
-    Meta-GraphEdge }o--o{ Meta-GraphNode : connects
+    MetaGraphGraph ||--o{ MetaGraphNode : contains
+    MetaGraphGraph ||--o{ MetaGraphEdge : contains
+    MetaGraphGraph ||--|| HashTable : uses
+    MetaGraphEdge }o--o{ MetaGraphNode : connects
 ```
 
 ## Memory Layout
 
 ```mermaid
 graph TD
-    subgraph "Meta-Graph Graph Memory Layout"
+    subgraph "MetaGraph Graph Memory Layout"
         HEADER[Graph Header<br/>id, version, counts]
         NODE_INDEX[Node Hash Table<br/>O(1) ID lookup]
         NODE_POOL[Node Memory Pool<br/>Fixed-size allocations]
@@ -348,4 +348,4 @@ graph TD
 - Valgrind clean memory operations
 - Thread safety validation with helgrind
 
-This feature provides the mathematical foundation that all other Meta-Graph features build upon, implementing the core insight from the origin story that "everything is graphs."
+This feature provides the mathematical foundation that all other MetaGraph features build upon, implementing the core insight from the origin story that "everything is graphs."

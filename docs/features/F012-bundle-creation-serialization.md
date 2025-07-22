@@ -2,9 +2,9 @@
 
 ## Feature Overview
 
-The Bundle Creation and Serialization feature provides a comprehensive builder API for constructing Meta-Graph bundles from assets and dependency information. This feature implements the final piece of the asset pipeline, transforming in-memory graph structures into the optimized binary format described in the origin story.
+The Bundle Creation and Serialization feature provides a comprehensive builder API for constructing MetaGraph bundles from assets and dependency information. This feature implements the final piece of the asset pipeline, transforming in-memory graph structures into the optimized binary format described in the origin story.
 
-This feature serves as the bridge between asset creation tools and the runtime Meta-Graph system, enabling the creation of production-ready bundles that leverage all the performance and integrity features of the core system.
+This feature serves as the bridge between asset creation tools and the runtime MetaGraph system, enabling the creation of production-ready bundles that leverage all the performance and integrity features of the core system.
 
 ## Priority
 **High** - Essential for practical bundle creation
@@ -592,4 +592,4 @@ sequenceDiagram
 - Error handling provides actionable diagnostic information
 - Documentation enables easy integration into build systems
 
-This bundle creation and serialization system completes the Meta-Graph pipeline, enabling the transformation of raw assets into optimized, integrity-verified bundles that leverage all the performance and reliability features of the core system.
+This bundle creation and serialization system completes the MetaGraph pipeline, enabling the transformation of raw assets into optimized, integrity-verified bundles that leverage all the performance and reliability features of the core system.

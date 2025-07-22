@@ -1,12 +1,12 @@
-# Meta-Graph Threat Model
+# MetaGraph Threat Model
 
 ## Executive Summary
 
-Meta-Graph processes untrusted binary bundles and user-provided graph data, making it a critical security boundary. This document identifies attack vectors, assets, trust boundaries, and mitigations for the Meta-Graph core library.
+MetaGraph processes untrusted binary bundles and user-provided graph data, making it a critical security boundary. This document identifies attack vectors, assets, trust boundaries, and mitigations for the MetaGraph core library.
 
 **Security Goals**: Confidentiality, Integrity, Availability
 **Primary Threats**: Malicious bundles, memory corruption, denial of service
-**Trust Boundary**: Meta-Graph library ↔ Bundle files and user input
+**Trust Boundary**: MetaGraph library ↔ Bundle files and user input
 
 ## Assets and Trust Boundaries
 
@@ -19,7 +19,7 @@ Meta-Graph processes untrusted binary bundles and user-provided graph data, maki
 ### Trust Boundaries
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Host Process  │────│  Meta-Graph Core  │────│  Bundle Files   │
+│   Host Process  │────│  MetaGraph Core  │────│  Bundle Files   │
 │   (Trusted)     │    │ (Trust Boundary)│    │  (Untrusted)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                 │

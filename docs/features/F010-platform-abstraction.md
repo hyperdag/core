@@ -2,9 +2,9 @@
 
 ## Feature Overview
 
-The Platform Abstraction layer provides a unified interface for platform-specific operations across Windows, macOS, Linux, and other target platforms. This layer isolates Meta-Graph's core algorithms from platform differences in file I/O, memory management, threading, and system calls.
+The Platform Abstraction layer provides a unified interface for platform-specific operations across Windows, macOS, Linux, and other target platforms. This layer isolates MetaGraph's core algorithms from platform differences in file I/O, memory management, threading, and system calls.
 
-This is the foundational layer that enables Meta-Graph to maintain a single codebase while leveraging platform-specific optimizations like DirectStorage on Windows, hardware acceleration on PlayStation 5, and memory mapping strategies across different operating systems.
+This is the foundational layer that enables MetaGraph to maintain a single codebase while leveraging platform-specific optimizations like DirectStorage on Windows, hardware acceleration on PlayStation 5, and memory mapping strategies across different operating systems.
 
 ## Priority
 **Foundation** - Required by all other features
@@ -17,7 +17,7 @@ None - This is the base layer
 ### F010.US001 - Cross-Platform File I/O
 **As a** system developer
 **I want** unified file I/O operations across platforms
-**So that** Meta-Graph can load bundles consistently regardless of operating system
+**So that** MetaGraph can load bundles consistently regardless of operating system
 
 **Prerequisites:**
 - None (foundation layer)
@@ -47,7 +47,7 @@ None - This is the base layer
 ### F010.US003 - Threading Primitives
 **As a** system developer
 **I want** cross-platform threading and synchronization
-**So that** Meta-Graph can leverage multicore systems safely
+**So that** MetaGraph can leverage multicore systems safely
 
 **Prerequisites:**
 - Platform threading model understanding
@@ -62,7 +62,7 @@ None - This is the base layer
 ### F010.US004 - System Information Access
 **As a** performance engineer
 **I want** to query system capabilities and resources
-**So that** Meta-Graph can optimize behavior for the target hardware
+**So that** MetaGraph can optimize behavior for the target hardware
 
 **Prerequisites:**
 - Platform capability detection mechanisms
@@ -233,7 +233,7 @@ double mg_timestamp_to_seconds(const mg_timestamp_t* timestamp);
 ```mermaid
 graph TD
     subgraph "Platform Abstraction Architecture"
-        API[Meta-Graph Platform API]
+        API[MetaGraph Platform API]
 
         subgraph "Platform Implementations"
             WIN[Windows Implementation]
@@ -433,4 +433,4 @@ graph TD
 - Thread safety validation with stress testing
 - Performance benchmarks for optimization tracking
 
-This platform abstraction layer provides the foundation that enables Meta-Graph to achieve high performance while maintaining portability across diverse target platforms.
+This platform abstraction layer provides the foundation that enables MetaGraph to achieve high performance while maintaining portability across diverse target platforms.

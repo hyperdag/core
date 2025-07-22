@@ -1,5 +1,5 @@
 #!/bin/sh
-# Meta-Graph commit-msg hook - Enforce conventional commit format
+# MetaGraph commit-msg hook - Enforce conventional commit format
 # This hook validates commit messages for consistency and clarity
 
 set -eu

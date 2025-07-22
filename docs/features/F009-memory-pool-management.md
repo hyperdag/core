@@ -556,4 +556,4 @@ sequenceDiagram
 - Stress testing validates performance under extreme load
 - Memory debugging tools help identify usage issues
 
-This memory pool management system provides the efficient, predictable memory allocation foundation that enables Meta-Graph to maintain high performance even under demanding workloads and resource constraints.
+This memory pool management system provides the efficient, predictable memory allocation foundation that enables MetaGraph to maintain high performance even under demanding workloads and resource constraints.

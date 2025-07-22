@@ -1,5 +1,5 @@
 #!/bin/sh
-# Comprehensive security audit script for Meta-Graph
+# Comprehensive security audit script for MetaGraph
 
 set -eu
 
@@ -11,7 +11,7 @@ NC='\033[0m'
 
 print_header() {
     printf "%s================================================%s\n" "${BLUE}" "${NC}"
-    printf "%s🛡️  Meta-Graph Security Audit Suite%s\n" "${BLUE}" "${NC}"
+    printf "%s🛡️  MetaGraph Security Audit Suite%s\n" "${BLUE}" "${NC}"
     printf "%s================================================%s\n" "${BLUE}" "${NC}"
 }
 
@@ -232,7 +232,7 @@ generate_report() {
     timestamp=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
     cat > security-report.md << EOF
-# Meta-Graph Security Audit Report
+# MetaGraph Security Audit Report
 
 **Generated:** $timestamp
 **Auditor:** Automated Security Audit Suite
@@ -240,7 +240,7 @@ generate_report() {
 
 ## Executive Summary
 
-This report contains the results of a comprehensive security audit of the Meta-Graph codebase.
+This report contains the results of a comprehensive security audit of the MetaGraph codebase.
 
 ## Detailed Findings
 

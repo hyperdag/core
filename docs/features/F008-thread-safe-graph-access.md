@@ -566,4 +566,4 @@ graph TD
 - System remains responsive under extreme load
 - Memory safety is maintained under all concurrency scenarios
 
-This thread-safe graph access system provides the concurrency foundation that enables Meta-Graph to scale efficiently across multiple CPU cores while maintaining data integrity and system reliability.
+This thread-safe graph access system provides the concurrency foundation that enables MetaGraph to scale efficiently across multiple CPU cores while maintaining data integrity and system reliability.

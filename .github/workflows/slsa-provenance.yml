@@ -106,8 +106,8 @@ jobs:
             "spdxVersion": "SPDX-2.3",
             "dataLicense": "CC0-1.0",
             "SPDXID": "SPDXRef-DOCUMENT",
-            "name": "Meta-Graph",
-            "documentNamespace": "https://github.com/Meta-Graph/meta-graph-core",
+            "name": "MetaGraph",
+            "documentNamespace": "https://github.com/MetaGraph/meta-graph-core",
             "creationInfo": {
               "created": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
               "creators": ["Tool: meta-graph-Build-System"]

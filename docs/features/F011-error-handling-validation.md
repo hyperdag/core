@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Error Handling and Validation system provides comprehensive, structured error reporting and data validation throughout Meta-Graph. This system enables robust error recovery, detailed diagnostics, and defensive programming practices that ensure reliability in production environments.
+The Error Handling and Validation system provides comprehensive, structured error reporting and data validation throughout MetaGraph. This system enables robust error recovery, detailed diagnostics, and defensive programming practices that ensure reliability in production environments.
 
 Following C23 best practices, this feature implements a result-based error handling model that makes error conditions explicit and provides rich context for debugging and monitoring.
 
@@ -344,7 +344,7 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant App as Application
-    participant API as Meta-Graph API
+    participant API as MetaGraph API
     participant Error as Error System
     participant Diag as Diagnostics
 
@@ -457,4 +457,4 @@ sequenceDiagram
 - Stress testing validates robustness
 - Documentation covers error handling patterns
 
-This error handling and validation system provides the robust foundation that enables Meta-Graph to maintain reliability and provide excellent debugging experiences in production environments.
+This error handling and validation system provides the robust foundation that enables MetaGraph to maintain reliability and provide excellent debugging experiences in production environments.

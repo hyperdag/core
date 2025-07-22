@@ -7,7 +7,12 @@ if(CLANG_TIDY_PROGRAM)
 
     # Enable clang-tidy for all targets in development mode
     if(METAGRAPH_DEV)
-        set(CMAKE_C_CLANG_TIDY ${CLANG_TIDY_PROGRAM})
+        # Ensure Unity build is disabled for clang-tidy compatibility
+        set(CMAKE_UNITY_BUILD OFF)
+        set(CMAKE_C_CLANG_TIDY ${CLANG_TIDY_PROGRAM} 
+            --config-file=${CMAKE_SOURCE_DIR}/.clang-tidy
+            --header-filter=.*
+            -p=${CMAKE_BINARY_DIR})
     endif()
 
     # Custom target for running clang-tidy manually

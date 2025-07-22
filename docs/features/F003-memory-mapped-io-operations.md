@@ -325,7 +325,7 @@ graph TD
         end
 
         subgraph "Unified API"
-            METAGRAPH_API[Meta-Graph Memory API]
+            METAGRAPH_API[MetaGraph Memory API]
         end
 
         WIN_CREATE --> METAGRAPH_API
@@ -492,4 +492,4 @@ graph TD
 - Performance regression testing
 - Stress testing validates robustness under load
 
-This memory-mapped I/O system provides the high-performance foundation that enables Meta-Graph to achieve the instant loading and minimal memory overhead that makes large-scale asset management practical.
+This memory-mapped I/O system provides the high-performance foundation that enables MetaGraph to achieve the instant loading and minimal memory overhead that makes large-scale asset management practical.

@@ -1,6 +1,6 @@
-# Meta-Graph Core Features
+# MetaGraph Core Features
 
-This directory contains the complete feature specification for Meta-Graph - the mathematical core that provides the foundation for TurtlGraph and other graph-based asset management systems.
+This directory contains the complete feature specification for MetaGraph - the mathematical core that provides the foundation for TurtlGraph and other graph-based asset management systems.
 
 ## Feature Overview
 
@@ -92,9 +92,9 @@ graph TD
     class F004,F008,F009,F012 high
 ```
 
-## Meta-Graph vs TurtlGraph Boundary
+## MetaGraph vs TurtlGraph Boundary
 
-### Meta-Graph Responsibilities
+### MetaGraph Responsibilities
 - Mathematical meta-graph data structures
 - Binary serialization and deserialization
 - Memory-mapped I/O operations
@@ -104,7 +104,7 @@ graph TD
 - Thread-safe concurrent access primitives
 - Error handling and validation
 
-### TurtlGraph Builds Upon Meta-Graph
+### TurtlGraph Builds Upon MetaGraph
 - Streaming and prefetching systems
 - Platform-specific optimizations (DirectStorage, PS5, mobile)
 - CDN integration and delta patching

@@ -1,6 +1,6 @@
-# Third-Party Library Recommendations for Meta-Graph
+# Third-Party Library Recommendations for MetaGraph
 
-This document provides opinionated recommendations for third-party C libraries to handle foundational components of Meta-Graph, allowing us to focus on the core meta-graph implementation rather than reinventing well-solved problems.
+This document provides opinionated recommendations for third-party C libraries to handle foundational components of MetaGraph, allowing us to focus on the core meta-graph implementation rather than reinventing well-solved problems.
 
 ## Selection Criteria
 
@@ -49,7 +49,7 @@ uint8_t final_hash[BLAKE3_OUT_LEN];
 blake3_hasher_finalize(&stream_hasher, final_hash, BLAKE3_OUT_LEN);
 ```
 
-#### Meta-Graph-Specific Pitfalls
+#### MetaGraph-Specific Pitfalls
 
 - **Large Bundle Streaming**: For multi-GB bundles, always use streaming API to avoid memory exhaustion
 - **Thread Safety**: `blake3_hasher` is not thread-safe; use separate hasher instances per thread
@@ -132,7 +132,7 @@ _Atomic(mg_node_t*) head_node = NULL;
 mg_node_t* old_head = __atomic_load(&head_node, __ATOMIC_ACQUIRE);
 ```
 
-#### Meta-Graph-Specific Pitfalls
+#### MetaGraph-Specific Pitfalls
 
 - **Memory Ordering**: Critical for lock-free graph algorithms; use `__ATOMIC_SEQ_CST` when unsure
 - **ABA Problem**: In lock-free node insertion/deletion, use generation counters or hazard pointers
@@ -222,7 +222,7 @@ void* arena_alloc(mg_arena_t* arena, size_t size, size_t align) {
 }
 ```
 
-#### Meta-Graph-Specific Pitfalls
+#### MetaGraph-Specific Pitfalls
 
 - **Thread-Local Heaps**: Use separate heaps for graph construction vs. traversal threads
 - **Arena Lifecycle**: Coordinate arena destruction with graph component lifecycles
@@ -314,7 +314,7 @@ HASH_ITER(hh, node_table, entry, tmp) {
 }
 ```
 
-#### Meta-Graph-Specific Pitfalls
+#### MetaGraph-Specific Pitfalls
 
 - **Memory Integration**: Replace malloc/free with mimalloc or arena allocation
 - **Hash Function**: Asset IDs may have patterns; consider custom hash function for better distribution
@@ -361,7 +361,7 @@ Hash tables are well-understood. Custom implementation could be optimized for as
 **Coverage**: File I/O, memory mapping, basic system info
 **Fit Rating**: ⭐⭐⭐⭐⭐ (5/5 stars)
 
-A focused abstraction layer that covers only Meta-Graph's specific needs without unnecessary complexity.
+A focused abstraction layer that covers only MetaGraph's specific needs without unnecessary complexity.
 
 #### Integration Guide
 
@@ -399,7 +399,7 @@ mg_result_t mg_mmap_file(const char* path, mg_mmap_t* map);
 mg_result_t mg_mmap_unmap(mg_mmap_t* map);
 ```
 
-#### Meta-Graph-Specific Pitfalls
+#### MetaGraph-Specific Pitfalls
 
 - **Error Code Mapping**: Ensure consistent error reporting across platforms
 - **Path Handling**: Normalize path separators and handle Unicode properly
@@ -501,7 +501,7 @@ mg_result_t mg_bundle_mmap(
 }
 ```
 
-#### Meta-Graph-Specific Pitfalls
+#### MetaGraph-Specific Pitfalls
 
 - **Large File Handling**: Ensure proper 64-bit offset handling for multi-GB bundles
 - **Memory Mapping Lifecycle**: Coordinate with graph pointer hydration carefully

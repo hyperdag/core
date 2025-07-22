@@ -1,5 +1,5 @@
 #!/bin/sh
-# Advanced performance profiling script for Meta-Graph
+# Advanced performance profiling script for MetaGraph
 
 set -eu
 
@@ -12,7 +12,7 @@ NC='\033[0m' # No Color
 
 print_header() {
     printf "%s===================================================\n" "$BLUE$NC"
-    printf "%s🚀 Meta-Graph Performance Profiling Suite\n" "$BLUE$NC"
+    printf "%s🚀 MetaGraph Performance Profiling Suite\n" "$BLUE$NC"
     printf "%s===================================================\n" "$BLUE$NC"
 }
 
@@ -138,7 +138,7 @@ benchmark_timing() {
     # Multiple runs for statistical significance
     runs=10
     times_file="timing-results.tmp"
-    
+
     # Clear the temporary file
     true > "$times_file"
 

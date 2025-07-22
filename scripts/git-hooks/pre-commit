@@ -1,5 +1,5 @@
 #!/bin/sh
-# Meta-Graph pre-commit hook - Extreme quality enforcement
+# MetaGraph pre-commit hook - Extreme quality enforcement
 # This hook runs before every commit to ensure code quality standards
 
 set -eu
@@ -18,7 +18,7 @@ git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|h|cpp|hpp)$' | w
     if [ -f "$file" ]; then
         clang-format -i "$file"
         git add "$file"
-        echo "  ✓ Formatted: $file"
+        mg_green "  ✓ Formatted: $file"
     fi
 done
 
@@ -32,42 +32,36 @@ git diff --cached --name-only --diff-filter=ACM | grep -E '\.(sh)$|^scripts/' | 
         else
             shell_type="sh"
         fi
-        
+
         if ! shellcheck --shell="$shell_type" --exclude=SC1091,SC2034 "$file"; then
-            echo "❌ shellcheck failed for: $file"
-            
+            mg_red "❌ shellcheck failed for: $file"
+
             exit 1
         fi
-        echo "  ✓ Clean: $file"
+        mg_green "  ✓ Clean: $file"
     fi
 done
 
 # Run quick static analysis on staged files
 echo "🔍 Running clang-tidy on staged files..."
-git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|cpp)$' | while read -r file; do
-    if [ -f "$file" ]; then
-        if ! clang-tidy "$file" --quiet; then
-            echo "❌ clang-tidy failed for: $file"
-            
-            exit 1
-        fi
-        echo "  ✓ Clean: $file"
-    fi
-done
+if ! "$PROJECT_ROOT/scripts/run-clang-tidy.sh" --check; then
+    mg_red "❌ clang-tidy failed"
+    exit 1
+fi
 
 # Check include guards
 echo "🛡️ Checking include guards..."
 if ! ./scripts/check-include-guards.sh; then
-    echo "❌ Include guard check failed"
-    
+    mg_red "❌ Include guard check failed"
+
     exit 1
 fi
 
 # Check version consistency
 echo "📋 Checking version consistency..."
 if ! ./scripts/check-version-consistency.sh; then
-    echo "❌ Version consistency check failed"
-    
+    mg_red "❌ Version consistency check failed"
+
     exit 1
 fi
 
@@ -75,12 +69,12 @@ fi
 if [ -d "build" ] && [ -f "build/Makefile" ]; then
     echo "🧪 Running quick tests..."
     if ! ./scripts/run-quick-tests.sh; then
-        echo "❌ Quick tests failed"
-        
+        mg_red "❌ Quick tests failed"
+
         exit 1
     fi
 fi
 
 
-echo "✅ All pre-commit checks passed!"
+mg_green "✅ All pre-commit checks passed!"
 echo "💡 Tip: Run 'make all' to ensure full build compatibility"

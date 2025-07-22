@@ -1,5 +1,5 @@
 #!/bin/sh
-# Meta-Graph pre-push hook - Comprehensive validation before sharing
+# MetaGraph pre-push hook - Comprehensive validation before sharing
 # This hook runs before pushing to ensure shared code meets extreme quality standards
 
 set -eu

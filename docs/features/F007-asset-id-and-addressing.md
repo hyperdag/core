@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Asset ID and Addressing system provides a unified, hierarchical identification scheme for assets within Meta-Graph bundles. This system enables efficient lookup, content-based addressing, and stable references that persist across bundle modifications and platform migrations.
+The Asset ID and Addressing system provides a unified, hierarchical identification scheme for assets within MetaGraph bundles. This system enables efficient lookup, content-based addressing, and stable references that persist across bundle modifications and platform migrations.
 
 Drawing from the origin story's insight about moving from JSON manifests to graph-based asset management, this feature implements a robust addressing scheme that supports both human-readable paths and cryptographic content hashes.
 

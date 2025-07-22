@@ -1,5 +1,5 @@
 #!/bin/sh
-# Meta-Graph clang-tidy wrapper script
+# MetaGraph clang-tidy wrapper script
 
 set -eu
 
@@ -13,33 +13,34 @@ COMPILE_COMMANDS="$PROJECT_ROOT/build/compile_commands.json"
 
 # Check if config exists
 if [ ! -f "$CONFIG_FILE" ]; then
-    echo "❌ .clang-tidy config not found at: $CONFIG_FILE"
+    mg_red "❌ .clang-tidy config not found at: $CONFIG_FILE"
     exit 1
 fi
 
 # Ensure compilation database exists
 ensure_compile_commands() {
     if [ ! -f "$COMPILE_COMMANDS" ]; then
-        echo "📁 Compilation database missing, generating it..."
+        mg_yellow "📁 Compilation database missing, generating it..."
         if [ ! -d "$PROJECT_ROOT/build" ]; then
             echo "🔧 Creating build directory..."
             mkdir -p "$PROJECT_ROOT/build"
         fi
-        
+
         echo "⚙️  Running CMake to generate compile_commands.json..."
         if ! cmake -B "$PROJECT_ROOT/build" \
             -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_UNITY_BUILD=OFF \
             -DMETAGRAPH_DEV=ON >/dev/null 2>&1; then
             mg_red "❌ Failed to generate compilation database with CMake"
             exit 1
         fi
-        
+
         if [ ! -f "$COMPILE_COMMANDS" ]; then
             mg_red "❌ CMake completed but compile_commands.json still missing"
             exit 1
         fi
-        
+
         mg_green "✅ Compilation database generated successfully"
     fi
 }
@@ -114,7 +115,7 @@ EOF
 
     file_count=$(wc -l < "$temp_file_list")
     if [ "$file_count" -eq 0 ]; then
-        echo "✓ No C source files found to analyze"
+        mg_yellow "✓ No C source files found to analyze"
         rm -f "$temp_file_list"
         return 0
     fi
@@ -126,14 +127,24 @@ EOF
         echo "Found $file_count C source files"
     fi
 
-    tidy_args="--config-file=$CONFIG_FILE"
+    # Build arguments array
+    set -- "--config-file=$CONFIG_FILE" "--header-filter=.*"
 
     if [ -f "$COMPILE_COMMANDS" ]; then
-        tidy_args="$tidy_args -p $PROJECT_ROOT/build"
+        set -- "$@" "-p" "$PROJECT_ROOT/build"
+    fi
+
+    # Add system headers for macOS if using LLVM clang-tidy
+    if [ "$(uname)" = "Darwin" ] && echo "$CLANG_TIDY" | grep -q "/opt/homebrew/opt/llvm"; then
+        # Get SDK path for system headers
+        SDK_PATH="$(xcrun --show-sdk-path 2>/dev/null || true)"
+        if [ -n "$SDK_PATH" ]; then
+            set -- "$@" "--extra-arg=-isysroot$SDK_PATH"
+        fi
     fi
 
     if [ "$fix_mode" = true ]; then
-        tidy_args="$tidy_args --fix --fix-errors"
+        set -- "$@" "--fix" "--fix-errors"
         mg_yellow "🔧 Running clang-tidy with auto-fix..."
     else
         echo "🔍 Running clang-tidy static analysis..."
@@ -146,7 +157,8 @@ EOF
             echo "Analyzing: $file"
         fi
 
-        if ! $CLANG_TIDY $tidy_args "$file"; then
+        # When using compilation database, put file after all options
+        if ! "$CLANG_TIDY" "$@" "$file" 2>&1; then
             issues=$((issues + 1))
             mg_red "❌ Issues found in: $file"
         elif [ "$verbose" = true ]; then

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Meta-Graph gitleaks wrapper script
+# MetaGraph gitleaks wrapper script
 
 set -eu
 

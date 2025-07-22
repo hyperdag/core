@@ -1,10 +1,10 @@
-# Meta-Graph Development Guide for Claude
+# MetaGraph Development Guide for Claude
 
 @import CONTRIBUTING.md
 @import docs/3rd-party.md
 @import docs/features/README.md
 
-This file contains AI-specific development context and standards for working on Meta-Graph with Claude Code.
+This file contains AI-specific development context and standards for working on MetaGraph with Claude Code.
 
 ## Project Overview for AI Development
 
@@ -40,7 +40,7 @@ This file contains AI-specific development context and standards for working on 
 ./scripts/setup-dev-env.sh
 
 # Development build
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMeta-Graph_DEV=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMetaGraph_DEV=ON
 
 # Quality validation
 ./scripts/run-clang-format.sh --fix
@@ -84,4 +84,4 @@ cmake --build build --target static-analysis
 
 ---
 
-*This file provides AI-specific context for developing Meta-Graph. For comprehensive development guidelines, build instructions, and contribution standards, see [CONTRIBUTING.md](CONTRIBUTING.md).*
+*This file provides AI-specific context for developing MetaGraph. For comprehensive development guidelines, build instructions, and contribution standards, see [CONTRIBUTING.md](CONTRIBUTING.md).*

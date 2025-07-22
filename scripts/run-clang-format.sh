@@ -1,5 +1,5 @@
 #!/bin/sh
-# Meta-Graph clang-format wrapper script
+# MetaGraph clang-format wrapper script
 
 set -eu
 
@@ -45,7 +45,7 @@ EOF
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
+            mg_red "Unknown option: $1"
             exit 1
             ;;
     esac
@@ -73,15 +73,15 @@ if [ "$check_mode" = true ]; then
         [ -z "$file" ] && continue
         # Force C language for .h files
         if ! "$CLANG_FORMAT" --dry-run --Werror --style=file --assume-filename="${file%.h}.c" "$file" >/dev/null 2>&1; then
-            echo "❌ Formatting issues in: $file"
+            mg_red "❌ Formatting issues in: $file"
             issues=$((issues + 1))
         elif [ "$verbose" = true ]; then
-            echo "✓ $file"
+            mg_green "✓ $file"
         fi
     done
 
     # Note: Due to subshell, we can't get the exact count, but any issues will show above
-    echo "✓ Format check complete"
+    mg_green "✓ Format check complete"
 
 elif [ "$fix_mode" = true ]; then
     echo "🔧 Fixing code formatting..."
@@ -97,5 +97,5 @@ elif [ "$fix_mode" = true ]; then
         "$CLANG_FORMAT" -i --style=file --assume-filename="${file%.h}.c" "$file"
     done
 
-    echo "✓ Formatting complete"
+    mg_green "✓ Formatting complete"
 fi

@@ -1,4 +1,4 @@
-# Meta-Graph Core Library
+# MetaGraph Core Library
 # Minimal implementation for CI validation
 
 # Add core library when we have source files

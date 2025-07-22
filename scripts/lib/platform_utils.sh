@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Meta-Graph Platform Detection Utilities
+# MetaGraph Platform Detection Utilities
 # Functions for detecting platform and package managers
 
 # --- package manager detection ----------------------------------------------

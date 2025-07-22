@@ -1,4 +1,4 @@
-# Meta-Graph Tests
+# MetaGraph Tests
 # Minimal test setup for CI validation
 
 # Create a basic test that always passes for now

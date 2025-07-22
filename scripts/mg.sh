@@ -1,13 +1,13 @@
 #!/bin/sh
 
-# Meta-Graph Meta-Graph Library
-# Modular shell functions for scripts in the Meta-Graph project
+# MetaGraph MetaGraph Library
+# Modular shell functions for scripts in the MetaGraph project
 
 # Find the scripts directory - this script should always be in the scripts/ directory
 # Handle both direct execution and sourcing from git hooks
 case "$(basename "$(pwd)")" in
     scripts) _MG_DIR="$(pwd)" ;;
-    *) 
+    *)
         # Find the project root and go to scripts from there
         if command -v git >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1; then
             _MG_DIR="$(git rev-parse --show-toplevel)/scripts"
@@ -32,7 +32,7 @@ esac
 
 # Source all modular utilities
 . "$_MG_DIR/lib/output_utils.sh"
-. "$_MG_DIR/lib/platform_utils.sh" 
+. "$_MG_DIR/lib/platform_utils.sh"
 . "$_MG_DIR/lib/directory_utils.sh"
 . "$_MG_DIR/lib/interactive_utils.sh"
 . "$_MG_DIR/lib/tool_detection.sh"

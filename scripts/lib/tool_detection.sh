@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Meta-Graph Tool Detection and Management
+# MetaGraph Tool Detection and Management
 # Functions for detecting, checking, and installing development tools
 
 # Note: Dependencies on output_utils.sh and platform_utils.sh
