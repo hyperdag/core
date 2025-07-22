@@ -1,16 +1,16 @@
-# HyperDAG Development Guide for Claude
+# Meta-Graph Development Guide for Claude
 
 @import CONTRIBUTING.md
 @import docs/3rd-party.md
 @import docs/features/README.md
 
-This file contains AI-specific development context and standards for working on HyperDAG with Claude Code.
+This file contains AI-specific development context and standards for working on Meta-Graph with Claude Code.
 
 ## Project Overview for AI Development
 
-**Architecture**: Complete (12 features specified)  
-**Implementation**: Ready to begin (foundation layer)  
-**Quality Standard**: Extreme - Zero tolerance for shortcuts  
+**Architecture**: Complete (12 features specified)
+**Implementation**: Ready to begin (foundation layer)
+**Quality Standard**: Extreme - Zero tolerance for shortcuts
 
 ### Key Architectural Decisions
 - **C23 Modern Practices**: Leverage cutting-edge language features
@@ -40,7 +40,7 @@ This file contains AI-specific development context and standards for working on 
 ./scripts/setup-dev-env.sh
 
 # Development build
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMeta-Graph_DEV=ON
 
 # Quality validation
 ./scripts/run-clang-format.sh --fix
@@ -84,4 +84,4 @@ cmake --build build --target static-analysis
 
 ---
 
-*This file provides AI-specific context for developing HyperDAG. For comprehensive development guidelines, build instructions, and contribution standards, see [CONTRIBUTING.md](CONTRIBUTING.md).*
+*This file provides AI-specific context for developing Meta-Graph. For comprehensive development guidelines, build instructions, and contribution standards, see [CONTRIBUTING.md](CONTRIBUTING.md).*

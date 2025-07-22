@@ -1,16 +1,16 @@
 #!/bin/sh
-# HyperDAG pre-commit hook - Extreme quality enforcement
+# Meta-Graph pre-commit hook - Extreme quality enforcement
 # This hook runs before every commit to ensure code quality standards
 
 set -eu
 
 # Import shared utilities
-. "$(git rev-parse --show-toplevel)/scripts/shlib.sh"
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+. ./scripts/mg.sh
 
 echo "🔧 Running pre-commit quality checks..."
-
-PROJECT_ROOT="$(git rev-parse --show-toplevel)"
-pushd "$PROJECT_ROOT" >/dev/null
+cd "$PROJECT_ROOT" >/dev/null
 
 # Format all staged C/C++ files
 echo "📝 Formatting staged files..."
@@ -22,13 +22,33 @@ git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|h|cpp|hpp)$' | w
     fi
 done
 
+# Run shellcheck on staged shell scripts
+echo "🐚 Running shellcheck on staged shell scripts..."
+git diff --cached --name-only --diff-filter=ACM | grep -E '\.(sh)$|^scripts/' | while read -r file; do
+    if [ -f "$file" ] && (head -1 "$file" | grep -q '^#!/.*sh' 2>/dev/null); then
+        # Determine shell type from shebang
+        if head -1 "$file" | grep -q bash; then
+            shell_type="bash"
+        else
+            shell_type="sh"
+        fi
+        
+        if ! shellcheck --shell="$shell_type" --exclude=SC1091,SC2034 "$file"; then
+            echo "❌ shellcheck failed for: $file"
+            
+            exit 1
+        fi
+        echo "  ✓ Clean: $file"
+    fi
+done
+
 # Run quick static analysis on staged files
 echo "🔍 Running clang-tidy on staged files..."
 git diff --cached --name-only --diff-filter=ACM | grep -E '\.(c|cpp)$' | while read -r file; do
     if [ -f "$file" ]; then
         if ! clang-tidy "$file" --quiet; then
             echo "❌ clang-tidy failed for: $file"
-            popd >/dev/null
+            
             exit 1
         fi
         echo "  ✓ Clean: $file"
@@ -39,7 +59,7 @@ done
 echo "🛡️ Checking include guards..."
 if ! ./scripts/check-include-guards.sh; then
     echo "❌ Include guard check failed"
-    popd >/dev/null
+    
     exit 1
 fi
 
@@ -47,7 +67,7 @@ fi
 echo "📋 Checking version consistency..."
 if ! ./scripts/check-version-consistency.sh; then
     echo "❌ Version consistency check failed"
-    popd >/dev/null
+    
     exit 1
 fi
 
@@ -56,11 +76,11 @@ if [ -d "build" ] && [ -f "build/Makefile" ]; then
     echo "🧪 Running quick tests..."
     if ! ./scripts/run-quick-tests.sh; then
         echo "❌ Quick tests failed"
-        popd >/dev/null
+        
         exit 1
     fi
 fi
 
-popd >/dev/null
+
 echo "✅ All pre-commit checks passed!"
 echo "💡 Tip: Run 'make all' to ensure full build compatibility"

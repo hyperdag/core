@@ -2,9 +2,9 @@
 
 ## Feature Overview
 
-The Bundle Creation and Serialization feature provides a comprehensive builder API for constructing HyperDAG bundles from assets and dependency information. This feature implements the final piece of the asset pipeline, transforming in-memory graph structures into the optimized binary format described in the origin story.
+The Bundle Creation and Serialization feature provides a comprehensive builder API for constructing Meta-Graph bundles from assets and dependency information. This feature implements the final piece of the asset pipeline, transforming in-memory graph structures into the optimized binary format described in the origin story.
 
-This feature serves as the bridge between asset creation tools and the runtime HyperDAG system, enabling the creation of production-ready bundles that leverage all the performance and integrity features of the core system.
+This feature serves as the bridge between asset creation tools and the runtime Meta-Graph system, enabling the creation of production-ready bundles that leverage all the performance and integrity features of the core system.
 
 ## Priority
 **High** - Essential for practical bundle creation
@@ -19,12 +19,12 @@ This feature serves as the bridge between asset creation tools and the runtime H
 ## User Stories
 
 ### F012.US001 - Bundle Builder Interface
-**As a** build system developer  
-**I want** a fluent builder API for creating bundles  
-**So that** I can programmatically construct bundles from various asset sources  
+**As a** build system developer
+**I want** a fluent builder API for creating bundles
+**So that** I can programmatically construct bundles from various asset sources
 
 **Prerequisites:**
-- Core hypergraph data structures (F.001)
+- Core meta-graph data structures (F.001)
 - Binary bundle format specification (F.002)
 
 **Acceptance Criteria:**
@@ -35,9 +35,9 @@ This feature serves as the bridge between asset creation tools and the runtime H
 - Progress reporting for large bundle creation
 
 ### F012.US002 - Asset Import and Processing
-**As a** content pipeline developer  
-**I want** automatic asset import with metadata extraction  
-**So that** assets are properly categorized and optimized during bundle creation  
+**As a** content pipeline developer
+**I want** automatic asset import with metadata extraction
+**So that** assets are properly categorized and optimized during bundle creation
 
 **Prerequisites:**
 - Asset type detection capabilities
@@ -51,9 +51,9 @@ This feature serves as the bridge between asset creation tools and the runtime H
 - Batch processing for large asset collections
 
 ### F012.US003 - Dependency Analysis and Optimization
-**As a** performance engineer  
-**I want** automatic dependency analysis and bundle optimization  
-**So that** bundles are structured for optimal loading performance  
+**As a** performance engineer
+**I want** automatic dependency analysis and bundle optimization
+**So that** bundles are structured for optimal loading performance
 
 **Prerequisites:**
 - Dependency resolution algorithms (F.006)
@@ -67,9 +67,9 @@ This feature serves as the bridge between asset creation tools and the runtime H
 - Performance estimation and reporting
 
 ### F012.US004 - Streaming Bundle Generation
-**As a** build system developer  
-**I want** streaming bundle generation for large asset collections  
-**So that** memory usage remains bounded during bundle creation  
+**As a** build system developer
+**I want** streaming bundle generation for large asset collections
+**So that** memory usage remains bounded during bundle creation
 
 **Prerequisites:**
 - Streaming I/O capabilities
@@ -83,9 +83,9 @@ This feature serves as the bridge between asset creation tools and the runtime H
 - Parallel processing where possible
 
 ### F012.US005 - Bundle Validation and Verification
-**As a** quality assurance engineer  
-**I want** comprehensive bundle validation before deployment  
-**So that** only correct and optimized bundles reach production  
+**As a** quality assurance engineer
+**I want** comprehensive bundle validation before deployment
+**So that** only correct and optimized bundles reach production
 
 **Prerequisites:**
 - Bundle integrity verification (F.004)
@@ -102,7 +102,7 @@ This feature serves as the bridge between asset creation tools and the runtime H
 
 ```c
 // Bundle builder handle
-typedef struct hyperdag_bundle_builder hyperdag_bundle_builder_t;
+typedef struct mg_bundle_builder mg_bundle_builder_t;
 
 // Builder configuration
 typedef struct {
@@ -114,74 +114,74 @@ typedef struct {
     bool validate_dependencies;    // Validate dependency consistency
     size_t max_memory_usage;       // Maximum memory usage during build
     const char* temp_directory;    // Temporary file directory
-} hyperdag_builder_config_t;
+} mg_builder_config_t;
 
 // Bundle builder creation and destruction
-hyperdag_result_t hyperdag_bundle_builder_create(
-    const hyperdag_builder_config_t* config,
-    hyperdag_bundle_builder_t** out_builder
+mg_result_t mg_bundle_builder_create(
+    const mg_builder_config_t* config,
+    mg_bundle_builder_t** out_builder
 );
 
-hyperdag_result_t hyperdag_bundle_builder_destroy(
-    hyperdag_bundle_builder_t* builder
+mg_result_t mg_bundle_builder_destroy(
+    mg_bundle_builder_t* builder
 );
 
 // Asset addition methods
-hyperdag_result_t hyperdag_builder_add_asset_from_file(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_add_asset_from_file(
+    mg_bundle_builder_t* builder,
     const char* file_path,
     const char* asset_path,
-    hyperdag_asset_id_t* out_asset_id
+    mg_asset_id_t* out_asset_id
 );
 
-hyperdag_result_t hyperdag_builder_add_asset_from_memory(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_add_asset_from_memory(
+    mg_bundle_builder_t* builder,
     const void* data,
     size_t data_size,
     const char* asset_path,
-    const hyperdag_asset_metadata_t* metadata,
-    hyperdag_asset_id_t* out_asset_id
+    const mg_asset_metadata_t* metadata,
+    mg_asset_id_t* out_asset_id
 );
 
-hyperdag_result_t hyperdag_builder_add_asset_from_stream(
-    hyperdag_bundle_builder_t* builder,
-    hyperdag_file_t* stream,
+mg_result_t mg_builder_add_asset_from_stream(
+    mg_bundle_builder_t* builder,
+    mg_file_t* stream,
     const char* asset_path,
-    const hyperdag_asset_metadata_t* metadata,
-    hyperdag_asset_id_t* out_asset_id
+    const mg_asset_metadata_t* metadata,
+    mg_asset_id_t* out_asset_id
 );
 
 // Directory and batch processing
-hyperdag_result_t hyperdag_builder_add_directory(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_add_directory(
+    mg_bundle_builder_t* builder,
     const char* directory_path,
     const char* base_asset_path,
     bool recursive
 );
 
-hyperdag_result_t hyperdag_builder_add_asset_list(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_add_asset_list(
+    mg_bundle_builder_t* builder,
     const char** file_paths,
     const char** asset_paths,
     size_t count
 );
 
 // Dependency management
-hyperdag_result_t hyperdag_builder_add_dependency(
-    hyperdag_bundle_builder_t* builder,
-    hyperdag_asset_id_t from_asset,
-    hyperdag_asset_id_t to_asset,
+mg_result_t mg_builder_add_dependency(
+    mg_bundle_builder_t* builder,
+    mg_asset_id_t from_asset,
+    mg_asset_id_t to_asset,
     uint32_t dependency_type
 );
 
-hyperdag_result_t hyperdag_builder_remove_dependency(
-    hyperdag_bundle_builder_t* builder,
-    hyperdag_asset_id_t from_asset,
-    hyperdag_asset_id_t to_asset
+mg_result_t mg_builder_remove_dependency(
+    mg_bundle_builder_t* builder,
+    mg_asset_id_t from_asset,
+    mg_asset_id_t to_asset
 );
 
-hyperdag_result_t hyperdag_builder_auto_detect_dependencies(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_auto_detect_dependencies(
+    mg_bundle_builder_t* builder,
     bool enable_content_analysis
 );
 
@@ -191,24 +191,24 @@ typedef struct {
     const char* version;
     const char** input_extensions;
     const char** output_extensions;
-    
-    hyperdag_result_t (*process)(
+
+    mg_result_t (*process)(
         const void* input_data,
         size_t input_size,
-        const hyperdag_asset_metadata_t* input_metadata,
+        const mg_asset_metadata_t* input_metadata,
         void** output_data,
         size_t* output_size,
-        hyperdag_asset_metadata_t** output_metadata
+        mg_asset_metadata_t** output_metadata
     );
-} hyperdag_asset_processor_t;
+} mg_asset_processor_t;
 
-hyperdag_result_t hyperdag_builder_register_processor(
-    hyperdag_bundle_builder_t* builder,
-    const hyperdag_asset_processor_t* processor
+mg_result_t mg_builder_register_processor(
+    mg_bundle_builder_t* builder,
+    const mg_asset_processor_t* processor
 );
 
-hyperdag_result_t hyperdag_builder_process_assets(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_process_assets(
+    mg_bundle_builder_t* builder,
     const char* processor_name,
     const char** asset_patterns,
     size_t pattern_count
@@ -221,11 +221,11 @@ typedef struct {
     bool merge_small_assets;        // Merge small assets for efficiency
     bool compress_assets;           // Apply asset-specific compression
     uint32_t target_chunk_size;     // Target chunk size for optimization
-} hyperdag_optimization_config_t;
+} mg_optimization_config_t;
 
-hyperdag_result_t hyperdag_builder_optimize(
-    hyperdag_bundle_builder_t* builder,
-    const hyperdag_optimization_config_t* config
+mg_result_t mg_builder_optimize(
+    mg_bundle_builder_t* builder,
+    const mg_optimization_config_t* config
 );
 
 // Progress monitoring
@@ -236,32 +236,32 @@ typedef struct {
     uint64_t total_bytes;           // Total bytes to process
     double completion_percentage;   // Completion percentage (0-100)
     const char* current_operation;  // Current operation description
-} hyperdag_build_progress_t;
+} mg_build_progress_t;
 
-typedef void (*hyperdag_progress_callback_t)(
-    const hyperdag_build_progress_t* progress,
+typedef void (*mg_progress_callback_t)(
+    const mg_build_progress_t* progress,
     void* user_data
 );
 
-hyperdag_result_t hyperdag_builder_set_progress_callback(
-    hyperdag_bundle_builder_t* builder,
-    hyperdag_progress_callback_t callback,
+mg_result_t mg_builder_set_progress_callback(
+    mg_bundle_builder_t* builder,
+    mg_progress_callback_t callback,
     void* user_data
 );
 
 // Bundle generation
-hyperdag_result_t hyperdag_builder_build_to_file(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_build_to_file(
+    mg_bundle_builder_t* builder,
     const char* output_path
 );
 
-hyperdag_result_t hyperdag_builder_build_to_stream(
-    hyperdag_bundle_builder_t* builder,
-    hyperdag_file_t* output_stream
+mg_result_t mg_builder_build_to_stream(
+    mg_bundle_builder_t* builder,
+    mg_file_t* output_stream
 );
 
-hyperdag_result_t hyperdag_builder_build_to_memory(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_build_to_memory(
+    mg_bundle_builder_t* builder,
     void** out_data,
     size_t* out_size
 );
@@ -278,25 +278,25 @@ typedef struct {
     double compression_ratio;       // Compression ratio achieved
     uint32_t max_dependency_depth;  // Maximum dependency depth
     double estimated_load_time_ms;  // Estimated loading time
-} hyperdag_bundle_analysis_t;
+} mg_bundle_analysis_t;
 
-hyperdag_result_t hyperdag_builder_analyze(
-    const hyperdag_bundle_builder_t* builder,
-    hyperdag_bundle_analysis_t* out_analysis
+mg_result_t mg_builder_analyze(
+    const mg_bundle_builder_t* builder,
+    mg_bundle_analysis_t* out_analysis
 );
 
-hyperdag_result_t hyperdag_builder_validate(
-    const hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_validate(
+    const mg_bundle_builder_t* builder,
     uint32_t validation_flags
 );
 
 // Validation flags
-#define HYPERDAG_VALIDATE_DEPENDENCIES  (1 << 0)
-#define HYPERDAG_VALIDATE_ASSETS         (1 << 1)
-#define HYPERDAG_VALIDATE_METADATA       (1 << 2)
-#define HYPERDAG_VALIDATE_PERFORMANCE    (1 << 3)
-#define HYPERDAG_VALIDATE_INTEGRITY      (1 << 4)
-#define HYPERDAG_VALIDATE_ALL            (0xFFFFFFFF)
+#define METAGRAPH_VALIDATE_DEPENDENCIES  (1 << 0)
+#define METAGRAPH_VALIDATE_ASSETS         (1 << 1)
+#define METAGRAPH_VALIDATE_METADATA       (1 << 2)
+#define METAGRAPH_VALIDATE_PERFORMANCE    (1 << 3)
+#define METAGRAPH_VALIDATE_INTEGRITY      (1 << 4)
+#define METAGRAPH_VALIDATE_ALL            (0xFFFFFFFF)
 
 // Asset metadata extraction
 typedef struct {
@@ -305,7 +305,7 @@ typedef struct {
     const char* format;             // Format string (PNG, JPEG, etc.)
     uint32_t bit_depth;             // Bits per channel
     bool has_alpha;                 // Whether image has alpha channel
-} hyperdag_image_metadata_t;
+} mg_image_metadata_t;
 
 typedef struct {
     uint32_t sample_rate;           // Audio sample rate
@@ -314,7 +314,7 @@ typedef struct {
     double duration_seconds;        // Audio duration
     const char* format;             // Format string (WAV, OGG, etc.)
     const char* codec;              // Codec used
-} hyperdag_audio_metadata_t;
+} mg_audio_metadata_t;
 
 typedef struct {
     uint32_t vertex_count;          // Number of vertices
@@ -323,45 +323,45 @@ typedef struct {
     bool has_normals;               // Whether model has normals
     bool has_texcoords;             // Whether model has texture coordinates
     const char* format;             // Format string (GLTF, FBX, etc.)
-} hyperdag_model_metadata_t;
+} mg_model_metadata_t;
 
-hyperdag_result_t hyperdag_extract_image_metadata(
+mg_result_t mg_extract_image_metadata(
     const void* image_data,
     size_t data_size,
-    hyperdag_image_metadata_t* out_metadata
+    mg_image_metadata_t* out_metadata
 );
 
-hyperdag_result_t hyperdag_extract_audio_metadata(
+mg_result_t mg_extract_audio_metadata(
     const void* audio_data,
     size_t data_size,
-    hyperdag_audio_metadata_t* out_metadata
+    mg_audio_metadata_t* out_metadata
 );
 
-hyperdag_result_t hyperdag_extract_model_metadata(
+mg_result_t mg_extract_model_metadata(
     const void* model_data,
     size_t data_size,
-    hyperdag_model_metadata_t* out_metadata
+    mg_model_metadata_t* out_metadata
 );
 
 // Incremental building
-typedef struct hyperdag_incremental_context hyperdag_incremental_context_t;
+typedef struct mg_incremental_context mg_incremental_context_t;
 
-hyperdag_result_t hyperdag_incremental_context_create(
+mg_result_t mg_incremental_context_create(
     const char* cache_directory,
-    hyperdag_incremental_context_t** out_context
+    mg_incremental_context_t** out_context
 );
 
-hyperdag_result_t hyperdag_incremental_context_destroy(
-    hyperdag_incremental_context_t* context
+mg_result_t mg_incremental_context_destroy(
+    mg_incremental_context_t* context
 );
 
-hyperdag_result_t hyperdag_builder_enable_incremental(
-    hyperdag_bundle_builder_t* builder,
-    hyperdag_incremental_context_t* context
+mg_result_t mg_builder_enable_incremental(
+    mg_bundle_builder_t* builder,
+    mg_incremental_context_t* context
 );
 
-hyperdag_result_t hyperdag_builder_check_changes(
-    hyperdag_bundle_builder_t* builder,
+mg_result_t mg_builder_check_changes(
+    mg_bundle_builder_t* builder,
     bool* out_has_changes
 );
 ```
@@ -377,42 +377,42 @@ graph TD
             STREAMS[Data Streams]
             MEMORY[Memory Buffers]
         end
-        
+
         subgraph "Asset Processing"
             DETECT[Type Detection]
             METADATA[Metadata Extraction]
             PROCESS[Asset Processing]
             VALIDATE[Asset Validation]
         end
-        
+
         subgraph "Graph Construction"
             ADD_ASSETS[Add Assets to Graph]
             DEPS[Dependency Analysis]
             RESOLVE[Dependency Resolution]
             OPTIMIZE[Graph Optimization]
         end
-        
+
         subgraph "Serialization"
             LAYOUT[Memory Layout]
             COMPRESS[Compression]
             INTEGRITY[Integrity Hashes]
             OUTPUT[Bundle Output]
         end
-        
+
         FILES --> DETECT
         DIRS --> DETECT
         STREAMS --> DETECT
         MEMORY --> DETECT
-        
+
         DETECT --> METADATA
         METADATA --> PROCESS
         PROCESS --> VALIDATE
-        
+
         VALIDATE --> ADD_ASSETS
         ADD_ASSETS --> DEPS
         DEPS --> RESOLVE
         RESOLVE --> OPTIMIZE
-        
+
         OPTIMIZE --> LAYOUT
         LAYOUT --> COMPRESS
         COMPRESS --> INTEGRITY
@@ -430,7 +430,7 @@ graph TD
             FORMAT[Format Detection]
             SIZE[Size Analysis]
         end
-        
+
         subgraph "Processing Plugins"
             IMG_PROC[Image Processor<br/>Resize, compress, format conversion]
             AUDIO_PROC[Audio Processor<br/>Sample rate, codec conversion]
@@ -438,25 +438,25 @@ graph TD
             SHADER_PROC[Shader Processor<br/>Compilation, optimization]
             CUSTOM[Custom Processors<br/>User-defined processing]
         end
-        
+
         subgraph "Output Generation"
             OPTIMIZED[Optimized Assets]
             METADATA_GEN[Generated Metadata]
             DEPS_GEN[Generated Dependencies]
         end
-        
+
         CONTENT --> IMG_PROC
         FORMAT --> AUDIO_PROC
         SIZE --> MODEL_PROC
         CONTENT --> SHADER_PROC
         FORMAT --> CUSTOM
-        
+
         IMG_PROC --> OPTIMIZED
         AUDIO_PROC --> OPTIMIZED
         MODEL_PROC --> OPTIMIZED
         SHADER_PROC --> OPTIMIZED
         CUSTOM --> OPTIMIZED
-        
+
         OPTIMIZED --> METADATA_GEN
         METADATA_GEN --> DEPS_GEN
     end
@@ -471,20 +471,20 @@ sequenceDiagram
     participant Graph as Graph Builder
     participant Serializer as Bundle Serializer
     participant Output as Output Stream
-    
+
     Builder->>Asset: process_asset_batch(assets)
     Asset->>Asset: extract_metadata()
     Asset->>Asset: optimize_assets()
     Asset->>Builder: processed_assets
-    
+
     Builder->>Graph: add_assets(processed_assets)
     Graph->>Graph: build_dependency_graph()
     Graph->>Graph: optimize_graph_layout()
     Graph->>Builder: graph_ready
-    
+
     Builder->>Serializer: begin_streaming_serialization()
     Serializer->>Output: write_bundle_header()
-    
+
     loop For each graph section
         Serializer->>Graph: get_next_section()
         Graph->>Serializer: section_data
@@ -492,7 +492,7 @@ sequenceDiagram
         Serializer->>Serializer: compute_section_hash()
         Serializer->>Output: write_section(data, hash)
     end
-    
+
     Serializer->>Serializer: compute_bundle_hash()
     Serializer->>Output: finalize_bundle(bundle_hash)
     Serializer->>Builder: serialization_complete
@@ -592,4 +592,4 @@ sequenceDiagram
 - Error handling provides actionable diagnostic information
 - Documentation enables easy integration into build systems
 
-This bundle creation and serialization system completes the HyperDAG pipeline, enabling the transformation of raw assets into optimized, integrity-verified bundles that leverage all the performance and reliability features of the core system.
+This bundle creation and serialization system completes the Meta-Graph pipeline, enabling the transformation of raw assets into optimized, integrity-verified bundles that leverage all the performance and reliability features of the core system.

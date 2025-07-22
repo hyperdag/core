@@ -1,18 +1,18 @@
-# HyperDAG - Mathematical Hypergraph Foundation for Asset Management
+# METAGRAPH - Mathematical Hypergraph Foundation for Asset Management
 
 > **This is a WIP!**
 
-[![CI](https://github.com/hyperdag/hyperdag-core/workflows/CI/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
-[![Security](https://github.com/hyperdag/hyperdag-core/workflows/Security/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
+[![CI](https://github.com/METAGRAPH/METAGRAPH-core/workflows/CI/badge.svg)](https://github.com/METAGRAPH/METAGRAPH-core/actions)
+[![Security](https://github.com/METAGRAPH/METAGRAPH-core/workflows/Security/badge.svg)](https://github.com/METAGRAPH/METAGRAPH-core/actions)
 [![SLSA](https://slsa.dev/images/gh-badge-level1.svg)](https://slsa.dev)
 
-A high-performance C23 library providing mathematical hypergraph foundations for complex asset dependency management. HyperDAG enables hyperedges that connect multiple nodes simultaneously, representing rich N-to-M relationships impossible with traditional graphs.
+A high-performance C23 library providing mathematical meta-graph foundations for complex asset dependency management. METAGRAPH enables hyperedges that connect multiple nodes simultaneously, representing rich N-to-M relationships impossible with traditional graphs.
 
-## What is HyperDAG?
+## What is METAGRAPH?
 
 > _Graphs. All. The. Way. Down._
 
-HyperDAG implements the core mathematical structure underlying TurtlGraph's asset management system. It provides:
+METAGRAPH implements the core mathematical structure underlying TurtlGraph's asset management system. It provides:
 
 - **🔗 Hypergraph Mathematics**: Hyperedges connecting multiple nodes (e.g., "this material depends on these 3 textures and 2 shaders")
 - **💾 Memory-Mapped Bundles**: Zero-copy binary format with cryptographic integrity
@@ -24,7 +24,7 @@ HyperDAG implements the core mathematical structure underlying TurtlGraph's asse
 
 ```mermaid
 graph TD
-    subgraph "HyperDAG Core System"
+    subgraph "METAGRAPH Core System"
         subgraph "Foundation"
             F010[Platform Abstraction]
             F011[Error Handling]
@@ -59,7 +59,7 @@ graph TD
 
 ## Core Features
 
-### 🎯 Hypergraph Mathematics ([F.001](docs/features/F001-core-hypergraph-data-model.md))
+### 🎯 Hypergraph Mathematics ([F.001](docs/features/F001-core-meta-graph-data-model.md))
 
 - **Hypernodes**: Assets with 128-bit content-addressed IDs
 - **Hyperedges**: Connect N sources to M targets with typed relationships
@@ -86,14 +86,14 @@ graph TD
 
 ## Quick Start
 
-> **Note**: HyperDAG is currently in architectural design phase. Implementation begins with foundation layer.
+> **Note**: METAGRAPH is currently in architectural design phase. Implementation begins with foundation layer.
 
 ### Architecture Complete ✅
 
 ```bash
 # Review comprehensive feature specifications
 ls docs/features/
-# F001-core-hypergraph-data-model.md
+# F001-core-meta-graph-data-model.md
 # F002-binary-bundle-format.md
 # ... (12 total features)
 
@@ -104,46 +104,46 @@ cat docs/3rd-party.md
 ### Planned API (Implementation Pending)
 
 ```c
-#include "hyperdag/hyperdag.h"
+#include "METAGRAPH/METAGRAPH.h"
 
 int main() {
-    // Create hypergraph with memory pool
-    hyperdag_graph_config_t config = {
+    // Create meta-graph with memory pool
+    METAGRAPH_graph_config_t config = {
         .initial_node_capacity = 10000,
         .enable_concurrent_access = true,
         .memory_pool_size = 64 * 1024 * 1024  // 64MB
     };
 
-    hyperdag_graph_t* graph;
-    hyperdag_result_t result = hyperdag_graph_create(&config, &graph);
-    if (result != HYPERDAG_SUCCESS) return 1;
+    METAGRAPH_graph_t* graph;
+    METAGRAPH_result_t result = METAGRAPH_graph_create(&config, &graph);
+    if (result != METAGRAPH_SUCCESS) return 1;
 
     // Add nodes (assets)
-    hyperdag_id_t texture_id, shader_id, material_id;
+    METAGRAPH_id_t texture_id, shader_id, material_id;
 
-    hyperdag_node_metadata_t texture_meta = {
+    METAGRAPH_node_metadata_t texture_meta = {
         .name = "brick_diffuse.png",
-        .type = HYPERDAG_ASSET_TYPE_TEXTURE,
+        .type = METAGRAPH_ASSET_TYPE_TEXTURE,
         .data_size = 2048 * 2048 * 4,
         .hash = compute_asset_hash(texture_data)
     };
-    hyperdag_graph_add_node(graph, &texture_meta, &texture_id);
+    METAGRAPH_graph_add_node(graph, &texture_meta, &texture_id);
 
     // Create hyperedge: material depends on texture + shader
-    hyperdag_edge_metadata_t edge_meta = {
-        .type = HYPERDAG_EDGE_TYPE_DEPENDENCY,
+    METAGRAPH_edge_metadata_t edge_meta = {
+        .type = METAGRAPH_EDGE_TYPE_DEPENDENCY,
         .weight = 1.0f,
         .node_count = 3,
-        .nodes = (hyperdag_id_t[]){material_id, texture_id, shader_id}
+        .nodes = (METAGRAPH_id_t[]){material_id, texture_id, shader_id}
     };
-    hyperdag_graph_add_edge(graph, &edge_meta, NULL);
+    METAGRAPH_graph_add_edge(graph, &edge_meta, NULL);
 
     // Dependency resolution
-    hyperdag_id_t* sorted_assets;
+    METAGRAPH_id_t* sorted_assets;
     size_t asset_count;
-    hyperdag_dependency_resolve(graph, &sorted_assets, &asset_count);
+    METAGRAPH_dependency_resolve(graph, &sorted_assets, &asset_count);
 
-    hyperdag_graph_destroy(graph);
+    METAGRAPH_graph_destroy(graph);
     return 0;
 }
 ```
@@ -160,7 +160,7 @@ int main() {
 ### 🔄 Next Phase (Ready to Start)
 
 - **Foundation Layer**: Platform abstraction and error handling ([F.010](docs/features/F010-platform-abstraction.md), [F.011](docs/features/F011-error-handling-validation.md))
-- **Core Implementation**: Hypergraph data structures ([F.001](docs/features/F001-core-hypergraph-data-model.md))
+- **Core Implementation**: Hypergraph data structures ([F.001](docs/features/F001-core-meta-graph-data-model.md))
 - **Memory Management**: Object pools and arenas ([F.009](docs/features/F009-memory-pool-management.md))
 
 ## Technology Stack
@@ -178,7 +178,7 @@ int main() {
 
 - **Platform Abstraction**: Thin wrapper for file I/O and memory mapping
 - **I/O Layer**: DirectStorage (Windows) and io_uring (Linux) optimization
-- **Memory Pools**: Specialized allocators for hypergraph patterns
+- **Memory Pools**: Specialized allocators for meta-graph patterns
 
 ## Building
 
@@ -194,7 +194,7 @@ int main() {
 # Automated development environment setup
 ./scripts/setup-dev-env.sh
 
-# Or verify existing environment  
+# Or verify existing environment
 ./scripts/setup-dev-env.sh --verify
 
 # Check what tools are missing
@@ -216,7 +216,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 
 # Development with all sanitizers
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON -DHYPERDAG_SANITIZERS=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMETAGRAPH_DEV=ON -DMETAGRAPH_SANITIZERS=ON
 
 # Static analysis
 cmake --build build --target static-analysis
@@ -250,11 +250,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines and b
 - **API Reference**: Generated from implementation (pending)
 - **Performance Guide**: Optimization recommendations (pending)
 
-## HyperDAG vs TurtlGraph
+## METAGRAPH vs TurtlGraph
 
-**HyperDAG** (This Repository):
+**METAGRAPH** (This Repository):
 
-- Mathematical hypergraph foundation
+- Mathematical meta-graph foundation
 - Binary bundle format and I/O
 - Memory management and concurrency primitives
 - Pure C23 library with minimal dependencies
@@ -311,4 +311,4 @@ Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
 ---
 
-_HyperDAG: The mathematical foundation enabling "everything is graphs" for modern asset management._
+_METAGRAPH: The mathematical foundation enabling "everything is graphs" for modern asset management._

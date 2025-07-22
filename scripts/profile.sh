@@ -1,7 +1,7 @@
-#!/bin/bash
-# Advanced performance profiling script for HyperDAG
+#!/bin/sh
+# Advanced performance profiling script for Meta-Graph
 
-set -euo pipefail
+set -eu
 
 # Colors for output
 RED='\033[0;31m'
@@ -11,36 +11,40 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 print_header() {
-    echo -e "${BLUE}===================================================${NC}"
-    echo -e "${BLUE}🚀 HyperDAG Performance Profiling Suite${NC}"
-    echo -e "${BLUE}===================================================${NC}"
+    printf "%s===================================================\n" "$BLUE$NC"
+    printf "%s🚀 Meta-Graph Performance Profiling Suite\n" "$BLUE$NC"
+    printf "%s===================================================\n" "$BLUE$NC"
 }
 
 print_status() {
-    echo -e "${GREEN}[INFO]${NC} $1"
+    printf "%s[INFO]%s %s\n" "$GREEN" "$NC" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARN]${NC} $1"
+    printf "%s[WARN]%s %s\n" "$YELLOW" "$NC" "$1"
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    printf "%s[ERROR]%s %s\n" "$RED" "$NC" "$1"
 }
 
 # Check if required tools are available
 check_dependencies() {
-    local deps=("perf" "valgrind" "gprof" "time")
-    local missing=()
-    
-    for dep in "${deps[@]}"; do
+    deps="perf valgrind gprof time"
+    missing=""
+
+    for dep in $deps; do
         if ! command -v "$dep" >/dev/null 2>&1; then
-            missing+=("$dep")
+            if [ -z "$missing" ]; then
+                missing="$dep"
+            else
+                missing="$missing $dep"
+            fi
         fi
     done
-    
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        print_warning "Missing dependencies: ${missing[*]}"
+
+    if [ -n "$missing" ]; then
+        print_warning "Missing dependencies: $missing"
         print_status "Install with: sudo apt-get install linux-perf valgrind gprof time"
         print_status "On macOS: brew install valgrind (perf not available)"
     fi
@@ -49,46 +53,47 @@ check_dependencies() {
 # Build optimized version for profiling
 build_for_profiling() {
     print_status "Building optimized version with profiling symbols..."
-    
+
     cmake -B build-profile \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-        -DHYPERDAG_PGO=ON \
+        -DMETAGRAPH_PGO=ON \
         -DCMAKE_C_FLAGS="-pg -fno-omit-frame-pointer" \
         -DCMAKE_EXE_LINKER_FLAGS="-pg"
-        
+
     cmake --build build-profile --parallel
 }
 
 # Performance profiling with perf (Linux only)
 profile_with_perf() {
-    if [[ "$OSTYPE" != "linux-gnu"* ]]; then
+    # Portable OS detection
+    if [ "$(uname -s)" != "Linux" ]; then
         print_warning "perf profiling is only available on Linux"
         return
     fi
-    
+
     print_status "🔥 Running perf profiling..."
-    
+
     # Record performance data
     perf record -g --call-graph=dwarf -o perf.data \
-        ./build-profile/bin/hyperdag_benchmarks
-    
+        ./build-profile/bin/mg_benchmarks
+
     # Generate reports
     perf report -i perf.data --stdio > perf-report.txt
     perf annotate -i perf.data --stdio > perf-annotate.txt
-    
+
     # Generate flame graph if available
     if command -v flamegraph >/dev/null 2>&1; then
         perf script -i perf.data | flamegraph > flamegraph.svg
         print_status "Flame graph generated: flamegraph.svg"
     fi
-    
+
     print_status "Perf reports generated: perf-report.txt, perf-annotate.txt"
 }
 
 # Memory profiling with Valgrind
 profile_with_valgrind() {
     print_status "🧠 Running Valgrind memory profiling..."
-    
+
     # Memcheck for memory errors
     valgrind --tool=memcheck \
         --leak-check=full \
@@ -96,132 +101,141 @@ profile_with_valgrind() {
         --track-origins=yes \
         --verbose \
         --log-file=valgrind-memcheck.log \
-        ./build-profile/bin/hyperdag_benchmarks
-    
+        ./build-profile/bin/mg_benchmarks
+
     # Cachegrind for cache profiling
     valgrind --tool=cachegrind \
         --cache-sim=yes \
         --branch-sim=yes \
         --cachegrind-out-file=cachegrind.out \
-        ./build-profile/bin/hyperdag_benchmarks
-    
+        ./build-profile/bin/mg_benchmarks
+
     # Callgrind for call graph profiling
     valgrind --tool=callgrind \
         --callgrind-out-file=callgrind.out \
-        ./build-profile/bin/hyperdag_benchmarks
-    
+        ./build-profile/bin/mg_benchmarks
+
     print_status "Valgrind reports generated: valgrind-memcheck.log, cachegrind.out, callgrind.out"
 }
 
 # CPU profiling with gprof
 profile_with_gprof() {
     print_status "📊 Running gprof CPU profiling..."
-    
+
     # Run the program to generate gmon.out
-    ./build-profile/bin/hyperdag_benchmarks
-    
+    ./build-profile/bin/mg_benchmarks
+
     # Generate profile report
-    gprof ./build-profile/bin/hyperdag_benchmarks gmon.out > gprof-report.txt
-    
+    gprof ./build-profile/bin/mg_benchmarks gmon.out > gprof-report.txt
+
     print_status "gprof report generated: gprof-report.txt"
 }
 
 # Benchmark timing analysis
 benchmark_timing() {
     print_status "⏱️  Running detailed timing analysis..."
-    
+
     # Multiple runs for statistical significance
-    local runs=10
-    local times=()
+    runs=10
+    times_file="timing-results.tmp"
     
-    for ((i=1; i<=runs; i++)); do
+    # Clear the temporary file
+    true > "$times_file"
+
+    i=1
+    while [ $i -le $runs ]; do
         print_status "Run $i/$runs..."
-        local time_result
-        time_result=$(/usr/bin/time -f "%e %U %S %M" ./build-profile/bin/hyperdag_benchmarks 2>&1 >/dev/null | tail -1)
-        times+=("$time_result")
+        time_result=$(/usr/bin/time -f "%e %U %S %M" ./build-profile/bin/mg_benchmarks 2>&1 >/dev/null | tail -1)
+        printf '%s\n' "$time_result" >> "$times_file"
+        i=$((i + 1))
     done
-    
+
     # Calculate statistics
     echo "Timing Results (Real User System MaxRSS):" > timing-analysis.txt
-    printf '%s\n' "${times[@]}" >> timing-analysis.txt
-    
+    cat "$times_file" >> timing-analysis.txt
+
     # Calculate averages (basic awk processing)
     awk '{
         real+=$1; user+=$2; sys+=$3; mem+=$4; count++
     } END {
         printf "Averages over %d runs:\n", count
-        printf "Real: %.3fs, User: %.3fs, System: %.3fs, Peak Memory: %.0fKB\n", 
+        printf "Real: %.3fs, User: %.3fs, System: %.3fs, Peak Memory: %.0fKB\n",
                real/count, user/count, sys/count, mem/count
-    }' timing-analysis.txt >> timing-analysis.txt
-    
+    }' "$times_file" >> timing-analysis.txt
+
+    # Clean up temporary file
+    rm -f "$times_file"
+
     print_status "Timing analysis saved to: timing-analysis.txt"
 }
 
 # Profile-Guided Optimization
 run_pgo() {
     print_status "🎯 Running Profile-Guided Optimization..."
-    
+
     # Phase 1: Generate profile data
     cmake -B build-pgo-gen \
         -DCMAKE_BUILD_TYPE=Release \
-        -DHYPERDAG_PGO=ON \
+        -DMETAGRAPH_PGO=ON \
         -DCMAKE_C_FLAGS="-fprofile-generate" \
         -DCMAKE_EXE_LINKER_FLAGS="-fprofile-generate"
-    
+
     cmake --build build-pgo-gen --parallel
-    
+
     # Run benchmarks to generate profile data
-    ./build-pgo-gen/bin/hyperdag_benchmarks
-    
+    ./build-pgo-gen/bin/mg_benchmarks
+
     # Phase 2: Use profile data for optimization
     cmake -B build-pgo-use \
         -DCMAKE_BUILD_TYPE=Release \
-        -DHYPERDAG_PGO_USE=ON \
+        -DMETAGRAPH_PGO_USE=ON \
         -DCMAKE_C_FLAGS="-fprofile-use" \
         -DCMAKE_EXE_LINKER_FLAGS="-fprofile-use"
-    
+
     cmake --build build-pgo-use --parallel
-    
+
     # Compare performance
     print_status "Comparing PGO vs non-PGO performance..."
-    echo "=== Without PGO ===" > pgo-comparison.txt
-    ./build-profile/bin/hyperdag_benchmarks >> pgo-comparison.txt
-    echo "=== With PGO ===" >> pgo-comparison.txt
-    ./build-pgo-use/bin/hyperdag_benchmarks >> pgo-comparison.txt
-    
+    {
+        echo "=== Without PGO ==="
+        ./build-profile/bin/mg_benchmarks
+        echo "=== With PGO ==="
+        ./build-pgo-use/bin/mg_benchmarks
+    } > pgo-comparison.txt
+
     print_status "PGO comparison saved to: pgo-comparison.txt"
 }
 
 # Fuzzing with address sanitizer
 run_fuzzing() {
     print_status "🐛 Running fuzzing tests..."
-    
+
     # Build fuzzing targets
     cmake -B build-fuzz \
         -DCMAKE_BUILD_TYPE=Debug \
-        -DHYPERDAG_FUZZING=ON \
+        -DMETAGRAPH_FUZZING=ON \
         -DCMAKE_C_COMPILER=clang
-    
+
     cmake --build build-fuzz --parallel
-    
+
     # Create corpus directories
-    mkdir -p fuzz-corpus/{graph,node-ops}
-    
+    mkdir -p fuzz-corpus/graph fuzz-corpus/node-ops
+
     # Run fuzzing for a short time (production would run longer)
     timeout 60 ./build-fuzz/tests/fuzz/fuzz_graph -max_total_time=60 fuzz-corpus/graph/ || true
     timeout 60 ./build-fuzz/tests/fuzz/fuzz_node_ops -max_total_time=60 fuzz-corpus/node-ops/ || true
-    
+
     print_status "Fuzzing completed. Corpus saved in fuzz-corpus/"
 }
 
 # Main execution
 main() {
     print_header
-    
-    local profile_type="${1:-all}"
-    
+
+    profile_type="${1:-all}"
+
     check_dependencies
-    
+
     case "$profile_type" in
         "perf")
             build_for_profiling
@@ -248,7 +262,7 @@ main() {
         "all")
             build_for_profiling
             benchmark_timing
-            if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+            if [ "$(uname -s)" = "Linux" ]; then
                 profile_with_perf
             fi
             profile_with_valgrind
@@ -261,11 +275,13 @@ main() {
             exit 1
             ;;
     esac
-    
+
     print_status "✅ Profiling complete! Check generated reports."
 }
 
 # Run if called directly
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
-fi
+case "$0" in
+    */profile.sh|profile.sh)
+        main "$@"
+        ;;
+esac

@@ -3,7 +3,7 @@
 # The "Nuclear Option" - Maximum Strictness
 
 # Common warning flags for GCC/Clang
-set(HYPERDAG_WARNING_FLAGS
+set(METAGRAPH_WARNING_FLAGS
     -Wall
     -Wextra
     -Wpedantic
@@ -35,7 +35,7 @@ set(HYPERDAG_WARNING_FLAGS
 )
 
 # Security hardening flags (platform-specific)
-set(HYPERDAG_SECURITY_FLAGS
+set(METAGRAPH_SECURITY_FLAGS
     -D_FORTIFY_SOURCE=3
     -fstack-protector-strong
     -fPIE
@@ -43,7 +43,7 @@ set(HYPERDAG_SECURITY_FLAGS
 
 # Platform-specific security flags
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    list(APPEND HYPERDAG_SECURITY_FLAGS
+    list(APPEND METAGRAPH_SECURITY_FLAGS
         -fstack-clash-protection
         -fcf-protection=full
     )
@@ -56,7 +56,7 @@ endif()
 
 # Compiler-specific flags
 if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-    list(APPEND HYPERDAG_WARNING_FLAGS
+    list(APPEND METAGRAPH_WARNING_FLAGS
         -Wduplicated-branches
         -Wduplicated-cond
         -Wlogical-op
@@ -69,45 +69,46 @@ if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
         -Wvector-operation-performance
     )
 elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-    list(APPEND HYPERDAG_WARNING_FLAGS
+    list(APPEND METAGRAPH_WARNING_FLAGS
         -Wthread-safety
         -Wthread-safety-beta
     )
-    
+
     # Filter out Apple Clang unsupported warnings
-    if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang" OR (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
+    if(CMAKE_C_COMPILER_ID STREQUAL "AppleClang" OR
+      (CMAKE_C_COMPILER_ID STREQUAL "Clang" AND CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
         # Apple Clang doesn't support some warnings that regular Clang does
-        list(REMOVE_ITEM HYPERDAG_WARNING_FLAGS
+        list(REMOVE_ITEM METAGRAPH_WARNING_FLAGS
             -Wcast-align=strict
             -Wformat-overflow=2
             -Wformat-truncation=2
             -Wimplicit-fallthrough=5
         )
         # Add simpler versions that Apple Clang supports
-        list(APPEND HYPERDAG_WARNING_FLAGS
+        list(APPEND METAGRAPH_WARNING_FLAGS
             -Wcast-align
             -Wimplicit-fallthrough
         )
     endif()
-    
+
     # Clang-specific sanitizers
-    if(HYPERDAG_SANITIZERS)
+    if(METAGRAPH_SANITIZERS)
         # safe-stack is not supported on all platforms
         if(NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-            list(APPEND HYPERDAG_SECURITY_FLAGS
+            list(APPEND METAGRAPH_SECURITY_FLAGS
                 -fsanitize=safe-stack
             )
         endif()
-        
+
         # CFI requires LTO
         if(CMAKE_INTERPROCEDURAL_OPTIMIZATION)
-            list(APPEND HYPERDAG_SECURITY_FLAGS
+            list(APPEND METAGRAPH_SECURITY_FLAGS
                 -fsanitize=cfi
             )
         endif()
     endif()
 elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-    set(HYPERDAG_WARNING_FLAGS
+    set(METAGRAPH_WARNING_FLAGS
         /W4
         /permissive-
         /analyze
@@ -115,8 +116,8 @@ elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
         /external:anglebrackets
         /external:W0
     )
-    
-    set(HYPERDAG_SECURITY_FLAGS
+
+    set(METAGRAPH_SECURITY_FLAGS
         /guard:cf
         /Qspectre
         /sdl
@@ -124,11 +125,11 @@ elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 # Apply warning flags to all targets
-add_compile_options(${HYPERDAG_WARNING_FLAGS})
-add_compile_options(${HYPERDAG_SECURITY_FLAGS})
+add_compile_options(${METAGRAPH_WARNING_FLAGS})
+add_compile_options(${METAGRAPH_SECURITY_FLAGS})
 
 # Warnings as errors in development mode
-if(HYPERDAG_DEV OR HYPERDAG_WERROR)
+if(METAGRAPH_DEV OR METAGRAPH_WERROR)
     if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
         add_compile_options(/WX)
     else()
@@ -142,7 +143,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
         add_compile_options(/O2)
     else()
         add_compile_options(-O3)
-        
+
         # Architecture-specific optimizations
         if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
             add_compile_options(-march=x86-64-v3)  # Reproducible baseline (AVX2+FMA)
@@ -154,13 +155,13 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
                 add_compile_options(-march=armv8.2-a)  # Generic ARM64
             endif()
         endif()
-        
+
         # LTO and linker plugin
         add_compile_options(-flto=auto)
         if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
             add_compile_options(-fuse-linker-plugin)
         endif()
-        
+
         # Linker flags for release (platform-specific)
         add_link_options(-pie)
         if(CMAKE_SYSTEM_NAME STREQUAL "Linux")

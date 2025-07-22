@@ -1,4 +1,4 @@
-# HyperDAG clang-tidy Configuration
+# Meta-Graph clang-tidy Configuration
 # EXTREME quality standards - ALL warnings are errors
 
 # Enable comprehensive check coverage
@@ -30,7 +30,7 @@ HeaderFilterRegex: '(include|src)/.*\.(h|c)$'
 
 # Check configuration
 CheckOptions:
-  # Naming conventions for HyperDAG
+  # Naming conventions for Meta-Graph
   - key: readability-identifier-naming.TypedefCase
     value: lower_case
   - key: readability-identifier-naming.TypedefSuffix
@@ -44,11 +44,11 @@ CheckOptions:
   - key: readability-identifier-naming.EnumConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.EnumConstantPrefix
-    value: 'HYPERDAG_'
+    value: 'Meta-Graph_'
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
   - key: readability-identifier-naming.FunctionPrefix
-    value: 'hyperdag_'
+    value: 'Meta-Graph_'
   - key: readability-identifier-naming.VariableCase
     value: lower_case
   - key: readability-identifier-naming.ParameterCase
@@ -56,12 +56,12 @@ CheckOptions:
   - key: readability-identifier-naming.MacroDefinitionCase
     value: UPPER_CASE
   - key: readability-identifier-naming.MacroDefinitionPrefix
-    value: 'HYPERDAG_'
+    value: 'Meta-Graph_'
   - key: readability-identifier-naming.GlobalConstantCase
     value: UPPER_CASE
   - key: readability-identifier-naming.GlobalConstantPrefix
-    value: 'HYPERDAG_'
-  
+    value: 'Meta-Graph_'
+
   # Function complexity limits
   - key: readability-function-cognitive-complexity.Threshold
     value: '15'
@@ -75,7 +75,7 @@ CheckOptions:
     value: '6'
   - key: readability-function-size.NestingThreshold
     value: '4'
-  
+
   # Memory safety
   - key: bugprone-suspicious-string-compare.WarnOnImplicitComparison
     value: true
@@ -83,13 +83,13 @@ CheckOptions:
     value: true
   - key: cert-err33-c.CheckedFunctions
     value: '::aligned_alloc;::calloc;::clock;::fclose;::ferror;::fflush;::fgetc;::fgetpos;::fgets;::fgetwc;::fopen;::fprintf;::fputc;::fputs;::fputwc;::fread;::freopen;::fscanf;::fseek;::fsetpos;::ftell;::fwprintf;::fwrite;::fwscanf;::getc;::getchar;::gets;::getwc;::getwchar;::gmtime;::localtime;::malloc;::mbrtowc;::mbsrtowcs;::mbstowcs;::memchr;::mktime;::printf;::putc;::putchar;::puts;::putwc;::putwchar;::raise;::realloc;::remove;::rename;::scanf;::setlocale;::setvbuf;::signal;::snprintf;::sprintf;::sscanf;::strchr;::strerror_s;::strftime;::strpbrk;::strrchr;::strstr;::strtod;::strtof;::strtoimax;::strtok;::strtol;::strtoll;::strtoul;::strtoull;::strtoumax;::strxfrm;::swprintf;::swscanf;::time;::tmpfile;::tmpnam;::ungetc;::ungetwc;::vfprintf;::vfscanf;::vfwprintf;::vfwscanf;::vprintf;::vscanf;::vsnprintf;::vsprintf;::vsscanf;::vswprintf;::vswscanf;::vwprintf;::vwscanf;::wcrtomb;::wcschr;::wcsftime;::wcspbrk;::wcsrchr;::wcsrtombs;::wcsstr;::wcstod;::wcstof;::wcstoimax;::wcstok;::wcstol;::wcstoll;::wcstombs;::wcstoul;::wcstoull;::wcstoumax;::wcsxfrm;::wctob;::wmemchr;::wprintf;::wscanf'
-  
+
   # Performance
   - key: performance-move-const-arg.CheckTriviallyCopyableMove
     value: false
   - key: performance-no-automatic-move.AllowedTypes
     value: ''
-  
+
   # Modernize to C23
   - key: modernize-replace-auto-ptr.IncludeStyle
     value: google
@@ -97,11 +97,11 @@ CheckOptions:
     value: '5'
   - key: modernize-use-auto.RemoveStars
     value: false
-  
+
   # Portability
   - key: portability-restrict-system-includes.Includes
     value: '*'
-  
+
   # Thread safety
   - key: misc-misplaced-const.CheckPrimitiveCasts
     value: true

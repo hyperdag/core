@@ -19,7 +19,7 @@ echo "📋 Running basic sanity checks..."
 HEADER_CHECK=0
 if command -v gcc >/dev/null 2>&1; then
     echo "🔍 Checking header compilation..."
-    for header in include/hyperdag/*.h; do
+    for header in include/mg/*.h; do
         if [ -f "$header" ]; then
             echo "  Checking: $header"
             if ! gcc -std=c23 -fsyntax-only -I include "$header" 2>/dev/null; then
@@ -33,16 +33,16 @@ fi
 # Check VERSION file format
 if [ -f "VERSION" ]; then
     echo "🔍 Validating VERSION file format..."
-    if ! grep -q "HYPERDAG_API_VERSION_MAJOR=" VERSION; then
-        echo "❌ VERSION file missing HYPERDAG_API_VERSION_MAJOR"
+    if ! grep -q "METAGRAPH_API_VERSION_MAJOR=" VERSION; then
+        echo "❌ VERSION file missing METAGRAPH_API_VERSION_MAJOR"
         exit 1
     fi
-    if ! grep -q "HYPERDAG_API_VERSION_MINOR=" VERSION; then
-        echo "❌ VERSION file missing HYPERDAG_API_VERSION_MINOR"
+    if ! grep -q "METAGRAPH_API_VERSION_MINOR=" VERSION; then
+        echo "❌ VERSION file missing METAGRAPH_API_VERSION_MINOR"
         exit 1
     fi
-    if ! grep -q "HYPERDAG_API_VERSION_PATCH=" VERSION; then
-        echo "❌ VERSION file missing HYPERDAG_API_VERSION_PATCH"
+    if ! grep -q "METAGRAPH_API_VERSION_PATCH=" VERSION; then
+        echo "❌ VERSION file missing METAGRAPH_API_VERSION_PATCH"
         exit 1
     fi
 fi
@@ -50,8 +50,8 @@ fi
 # Check feature specification consistency
 if [ -d "docs/features" ]; then
     echo "🔍 Checking feature specification consistency..."
-    FEATURE_COUNT=$(find docs/features -name "F*.md" | wc -l)
-    if [ $FEATURE_COUNT -gt 0 ]; then
+    FEATURE_COUNT="$(find docs/features -name "F*.md" | wc -l)"
+    if [ "$FEATURE_COUNT" -gt 0 ]; then
         echo "  Found $FEATURE_COUNT feature specifications"
 
         # Check that README.md in features exists and references all features
@@ -67,13 +67,13 @@ if [ -d "docs/features" ]; then
 fi
 
 # Check result.h error code consistency
-if [ -f "include/hyperdag/result.h" ]; then
+if [ -f "include/mg/result.h" ]; then
     echo "🔍 Checking error code consistency..."
-    if ! grep -q "HYPERDAG_SUCCESS" include/hyperdag/result.h; then
+    if ! grep -q "HYPERDAG_SUCCESS" include/mg/result.h; then
         echo "❌ Missing HYPERDAG_SUCCESS in result.h"
         exit 1
     fi
-    if ! grep -q "HYP_OK()" include/hyperdag/result.h; then
+    if ! grep -q "HYP_OK()" include/mg/result.h; then
         echo "❌ Missing HYP_OK() macro in result.h"
         exit 1
     fi

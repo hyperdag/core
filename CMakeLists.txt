@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-project(HYPERDAG VERSION 1.0.0 LANGUAGES C)
+project(MetaGraph VERSION 1.0.0 LANGUAGES C)
 
 # Critical policies for deterministic builds
 cmake_policy(SET CMP0135 NEW)  # Timestamp extraction in FetchContent
@@ -16,12 +16,12 @@ set(CMAKE_UNITY_BUILD_BATCH_SIZE 16)  # Optimal for incremental builds
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 
 # Development mode flag
-option(HYPERDAG_DEV "Enable development mode (warnings as errors)" OFF)
-option(HYPERDAG_SANITIZERS "Enable sanitizers in debug builds" OFF)
-option(HYPERDAG_WERROR "Treat warnings as errors" OFF)
-option(HYPERDAG_FUZZING "Enable fuzzing targets" OFF)
-option(HYPERDAG_BUILD_TESTS "Build unit tests" ON)
-option(HYPERDAG_BUILD_EXAMPLES "Build examples" OFF)
+option(METAGRAPH_DEV "Enable development mode (warnings as errors)" OFF)
+option(METAGRAPH_SANITIZERS "Enable sanitizers in debug builds" OFF)
+option(METAGRAPH_WERROR "Treat warnings as errors" OFF)
+option(METAGRAPH_FUZZING "Enable fuzzing targets" OFF)
+option(METAGRAPH_BUILD_TESTS "Build unit tests" ON)
+option(METAGRAPH_BUILD_EXAMPLES "Build examples" OFF)
 
 # Include custom CMake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -49,7 +49,7 @@ include(StaticAnalysis)
 add_subdirectory(src)
 
 # Enable testing
-if(HYPERDAG_BUILD_TESTS)
+if(METAGRAPH_BUILD_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()

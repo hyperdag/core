@@ -1,6 +1,6 @@
-# Contributing to HyperDAG
+# Contributing to METAGRAPH
 
-Welcome to HyperDAG! This guide covers everything you need to know to contribute to this high-performance C23 hypergraph library.
+Welcome to METAGRAPH! This guide covers everything you need to know to contribute to this high-performance C23 mg-core library.
 
 ## Quick Start
 
@@ -36,7 +36,7 @@ The DevContainer provides:
 
 ```bash
 # Development build with all checks
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON -DHYPERDAG_SANITIZERS=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMETAGRAPH_DEV=ON -DMETAGRAPH_SANITIZERS=ON
 cmake --build build
 
 # Run tests
@@ -82,45 +82,45 @@ cmake --build build --target static-analysis
 ### Modern C23 Features - USE THEM
 ```c
 // ✅ C23 auto keyword for type inference
-auto result = hyperdag_graph_create(&config, &graph);
+auto result = METAGRAPH_graph_create(&config, &graph);
 
 // ✅ typeof operator for generic programming
 #define GENERIC_POOL_ALLOC(pool, type) \
-    ((type*)hyperdag_pool_alloc(pool, sizeof(type), _Alignof(type)))
+    ((type*)METAGRAPH_pool_alloc(pool, sizeof(type), _Alignof(type)))
 
 // ✅ [[attributes]] for compiler optimization hints
-[[nodiscard]] hyperdag_result_t hyperdag_graph_add_node(
-    hyperdag_graph_t* restrict graph,
-    const hyperdag_node_metadata_t* restrict metadata,
-    hyperdag_node_t** restrict out_node
+[[nodiscard]] METAGRAPH_result_t METAGRAPH_graph_add_node(
+    METAGRAPH_graph_t* restrict graph,
+    const METAGRAPH_node_metadata_t* restrict metadata,
+    METAGRAPH_node_t** restrict out_node
 );
 
 // ✅ Designated initializers for clear configuration
-hyperdag_pool_config_t pool_config = {
-    .type = HYPERDAG_POOL_TYPE_OBJECT,
+METAGRAPH_pool_config_t pool_config = {
+    .type = METAGRAPH_POOL_TYPE_OBJECT,
     .initial_size = 64 * 1024,
     .max_size = 16 * 1024 * 1024,
-    .alignment = _Alignof(hyperdag_node_t),
+    .alignment = _Alignof(METAGRAPH_node_t),
     .allow_growth = true
 };
 
 // ✅ _BitInt for precise bit widths
-typedef _BitInt(128) hyperdag_id_t;
+typedef _BitInt(128) METAGRAPH_id_t;
 
 // ✅ constexpr for compile-time constants
-constexpr size_t HYPERDAG_MAX_NODES = 1ULL << 32;
+constexpr size_t METAGRAPH_MAX_NODES = 1ULL << 32;
 
 // ✅ _Static_assert for compile-time validation
-_Static_assert(sizeof(hyperdag_id_t) == 16, 
+_Static_assert(sizeof(METAGRAPH_id_t) == 16,
     "Asset ID must be exactly 128 bits");
 ```
 
 ### Memory Safety Excellence
 ```c
 // ✅ restrict qualifiers for optimization and safety
-void hyperdag_copy_nodes(
-    const hyperdag_node_t* restrict source,
-    hyperdag_node_t* restrict dest,
+void METAGRAPH_copy_nodes(
+    const METAGRAPH_node_t* restrict source,
+    METAGRAPH_node_t* restrict dest,
     size_t count
 ) {
     // Compiler can optimize knowing no aliasing
@@ -132,20 +132,20 @@ void hyperdag_copy_nodes(
 // ✅ _Alignas for optimal memory layout
 typedef struct alignas(_Alignof(max_align_t)) {
     _Atomic(uint64_t) reference_count;
-    hyperdag_id_t id;
+    METAGRAPH_id_t id;
     // Perfectly aligned for atomic operations
-} hyperdag_node_header_t;
+} METAGRAPH_node_header_t;
 
 // ✅ Flexible array members for variable-size structures
 typedef struct {
     size_t node_count;
     float weight;
-    hyperdag_id_t nodes[];  // C99 flexible array member
-} hyperdag_hyperedge_t;
+    METAGRAPH_id_t nodes[];  // C99 flexible array member
+} METAGRAPH_hyperedge_t;
 
 // ✅ Proper cleanup with __attribute__((cleanup))
-__attribute__((cleanup(hyperdag_graph_cleanup)))
-hyperdag_graph_t* graph = NULL;
+__attribute__((cleanup(METAGRAPH_graph_cleanup)))
+METAGRAPH_graph_t* graph = NULL;
 ```
 
 ### Atomic Programming Excellence
@@ -155,26 +155,26 @@ hyperdag_graph_t* graph = NULL;
 
 typedef struct {
     _Atomic(uint64_t) node_count;
-    _Atomic(hyperdag_node_t*) head_node;
+    _Atomic(METAGRAPH_node_t*) head_node;
     _Atomic(bool) is_valid;
-} hyperdag_concurrent_graph_t;
+} METAGRAPH_concurrent_graph_t;
 
 // ✅ Lock-free programming with proper memory ordering
-bool hyperdag_lockfree_insert_node(
-    hyperdag_concurrent_graph_t* graph,
-    hyperdag_node_t* new_node
+bool METAGRAPH_lockfree_insert_node(
+    METAGRAPH_concurrent_graph_t* graph,
+    METAGRAPH_node_t* new_node
 ) {
-    hyperdag_node_t* expected = atomic_load_explicit(
+    METAGRAPH_node_t* expected = atomic_load_explicit(
         &graph->head_node, memory_order_acquire
     );
-    
+
     do {
         new_node->next = expected;
     } while (!atomic_compare_exchange_weak_explicit(
         &graph->head_node, &expected, new_node,
         memory_order_release, memory_order_relaxed
     ));
-    
+
     atomic_fetch_add_explicit(&graph->node_count, 1, memory_order_relaxed);
     return true;
 }
@@ -192,39 +192,39 @@ bool hyperdag_lockfree_insert_node(
 ### Test Structure Standards
 ```c
 // ✅ Test naming convention: test_[module]_[function]_[scenario]
-void test_hyperdag_graph_add_node_success(void) {
+void test_METAGRAPH_graph_add_node_success(void) {
     // Arrange
-    hyperdag_graph_config_t config = {
+    METAGRAPH_graph_config_t config = {
         .initial_node_capacity = 16,
         .enable_concurrent_access = false
     };
-    hyperdag_graph_t* graph = NULL;
-    cr_assert_eq(hyperdag_graph_create(&config, &graph), HYPERDAG_SUCCESS);
-    
+    METAGRAPH_graph_t* graph = NULL;
+    cr_assert_eq(METAGRAPH_graph_create(&config, &graph), METAGRAPH_SUCCESS);
+
     // Act
-    hyperdag_node_metadata_t metadata = {
+    METAGRAPH_node_metadata_t metadata = {
         .name = "test_asset.png",
-        .type = HYPERDAG_ASSET_TYPE_TEXTURE,
+        .type = METAGRAPH_ASSET_TYPE_TEXTURE,
         .data_size = 4096
     };
-    hyperdag_node_t* node = NULL;
-    hyperdag_result_t result = hyperdag_graph_add_node(graph, &metadata, &node);
-    
+    METAGRAPH_node_t* node = NULL;
+    METAGRAPH_result_t result = METAGRAPH_graph_add_node(graph, &metadata, &node);
+
     // Assert
-    cr_assert_eq(result, HYPERDAG_SUCCESS);
+    cr_assert_eq(result, METAGRAPH_SUCCESS);
     cr_assert_not_null(node);
-    cr_assert_eq(hyperdag_graph_get_node_count(graph), 1);
-    
+    cr_assert_eq(METAGRAPH_graph_get_node_count(graph), 1);
+
     // Cleanup
-    hyperdag_graph_destroy(graph);
+    METAGRAPH_graph_destroy(graph);
 }
 
 // ✅ Property-based testing for edge cases
-void test_hyperdag_graph_stress_many_nodes(void) {
+void test_METAGRAPH_graph_stress_many_nodes(void) {
     const size_t NODE_COUNT = 100000;
-    
-    hyperdag_graph_t* graph = create_test_graph();
-    
+
+    METAGRAPH_graph_t* graph = create_test_graph();
+
     // Add many nodes and verify graph remains consistent
     for (size_t i = 0; i < NODE_COUNT; ++i) {
         add_random_node(graph);
@@ -232,9 +232,9 @@ void test_hyperdag_graph_stress_many_nodes(void) {
             cr_assert(validate_graph_invariants(graph));
         }
     }
-    
-    cr_assert_eq(hyperdag_graph_get_node_count(graph), NODE_COUNT);
-    hyperdag_graph_destroy(graph);
+
+    cr_assert_eq(METAGRAPH_graph_get_node_count(graph), NODE_COUNT);
+    METAGRAPH_graph_destroy(graph);
 }
 ```
 
@@ -296,7 +296,7 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 
 # Development build with all checks
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON -DHYPERDAG_SANITIZERS=ON
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMETAGRAPH_DEV=ON -DMETAGRAPH_SANITIZERS=ON
 
 # Static analysis
 cmake --build build --target static-analysis
@@ -315,10 +315,10 @@ cmake --build build --target static-analysis
 ctest --test-dir build --output-on-failure
 
 # Unit tests with sanitizers
-ASAN_OPTIONS="abort_on_error=1" ./build/bin/hyperdag_unit_tests
+ASAN_OPTIONS="abort_on_error=1" ./build/bin/METAGRAPH_unit_tests
 
 # Fuzzing campaign
-cmake -DHYPERDAG_FUZZING=ON -B build-fuzz
+cmake -DMETAGRAPH_FUZZING=ON -B build-fuzz
 ./build-fuzz/tests/fuzz/fuzz_graph -max_total_time=3600
 ```
 
@@ -353,18 +353,18 @@ HeaderFilterRegex: '(include|src)/.*\.(h|hpp)$'
 ### Required Compiler Flags
 ```cmake
 # CMakeLists.txt - MANDATORY compiler flags
-target_compile_options(hyperdag PRIVATE
+target_compile_options(METAGRAPH PRIVATE
     # Maximum warning level
     $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-Wall -Wextra -Wpedantic -Werror>
     $<$<COMPILE_LANG_AND_ID:C,MSVC>:/W4 /WX>
-    
+
     # C23 specific warnings
     $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-Wc23-extensions>
-    
+
     # Security hardening
     $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-D_FORTIFY_SOURCE=2>
     $<$<COMPILE_LANG_AND_ID:C,GNU,Clang>:-fstack-protector-strong>
-    
+
     # Performance optimization
     $<$<CONFIG:Release>:-O3 -DNDEBUG -flto>
     $<$<CONFIG:Debug>:-O0 -g3 -fsanitize=address,undefined>
@@ -377,19 +377,19 @@ target_compile_options(hyperdag PRIVATE
 ```c
 // ✅ Every performance-critical function must have benchmarks
 CRITERION_BENCHMARK(bench_node_lookup) {
-    hyperdag_graph_t* graph = create_benchmark_graph(100000);
-    hyperdag_id_t random_ids[1000];
+    METAGRAPH_graph_t* graph = create_benchmark_graph(100000);
+    METAGRAPH_id_t random_ids[1000];
     generate_random_ids(random_ids, 1000);
-    
+
     criterion_start_timer();
-    
+
     for (int i = 0; i < 1000; ++i) {
-        hyperdag_node_t* node;
-        hyperdag_graph_find_node(graph, random_ids[i], &node);
+        METAGRAPH_node_t* node;
+        METAGRAPH_graph_find_node(graph, random_ids[i], &node);
     }
-    
+
     criterion_stop_timer();
-    hyperdag_graph_destroy(graph);
+    METAGRAPH_graph_destroy(graph);
 }
 ```
 
@@ -398,16 +398,16 @@ CRITERION_BENCHMARK(bench_node_lookup) {
 // ✅ Data structure layout optimized for cache lines
 typedef struct alignas(64) {  // Cache line aligned
     _Atomic(uint64_t) reference_count;  // Hot data first
-    hyperdag_id_t id;
+    METAGRAPH_id_t id;
     uint32_t type;
     uint32_t flags;
     // Cold data after hot data
     const char* name;
     void* user_data;
-} hyperdag_node_t;
+} METAGRAPH_node_t;
 
 // ✅ Memory prefetching for traversal
-void hyperdag_prefetch_next_nodes(hyperdag_node_t** nodes, size_t count) {
+void METAGRAPH_prefetch_next_nodes(METAGRAPH_node_t** nodes, size_t count) {
     for (size_t i = 0; i < count; ++i) {
         __builtin_prefetch(nodes[i], 0, 3);  // Prefetch for read, high temporal locality
     }
@@ -420,34 +420,34 @@ void hyperdag_prefetch_next_nodes(hyperdag_node_t** nodes, size_t count) {
 ```c
 // ✅ Comprehensive error handling with context
 typedef enum {
-    HYPERDAG_SUCCESS = 0,
-    HYPERDAG_ERROR_OUT_OF_MEMORY,
-    HYPERDAG_ERROR_INVALID_ARGUMENT,
-    HYPERDAG_ERROR_NODE_NOT_FOUND,
-    HYPERDAG_ERROR_CIRCULAR_DEPENDENCY,
-    HYPERDAG_ERROR_IO_FAILURE,
-    HYPERDAG_ERROR_CORRUPTION_DETECTED,
-    HYPERDAG_ERROR_CONCURRENT_MODIFICATION
-} hyperdag_result_t;
+    METAGRAPH_SUCCESS = 0,
+    METAGRAPH_ERROR_OUT_OF_MEMORY,
+    METAGRAPH_ERROR_INVALID_ARGUMENT,
+    METAGRAPH_ERROR_NODE_NOT_FOUND,
+    METAGRAPH_ERROR_CIRCULAR_DEPENDENCY,
+    METAGRAPH_ERROR_IO_FAILURE,
+    METAGRAPH_ERROR_CORRUPTION_DETECTED,
+    METAGRAPH_ERROR_CONCURRENT_MODIFICATION
+} METAGRAPH_result_t;
 
 // ✅ Error context for debugging
 typedef struct {
-    hyperdag_result_t code;
+    METAGRAPH_result_t code;
     const char* file;
     int line;
     const char* function;
     char message[256];
-} hyperdag_error_context_t;
+} METAGRAPH_error_context_t;
 
-#define HYPERDAG_RETURN_ERROR(code, ...) \
-    return hyperdag_set_error_context((code), __FILE__, __LINE__, __func__, __VA_ARGS__)
+#define METAGRAPH_RETURN_ERROR(code, ...) \
+    return METAGRAPH_set_error_context((code), __FILE__, __LINE__, __func__, __VA_ARGS__)
 ```
 
 ## 📋 Implementation Roadmap
 
 ### Phase 1: Foundation (Weeks 1-2)
 - Platform abstraction and error handling ([F.010](docs/features/F010-platform-abstraction.md), [F.011](docs/features/F011-error-handling-validation.md))
-- Core hypergraph data structures ([F.001](docs/features/F001-core-hypergraph-data-model.md))
+- Core meta-graph data structures ([F.001](docs/features/F001-core-meta-graph-data-model.md))
 - Memory pool management ([F.009](docs/features/F009-memory-pool-management.md))
 
 ### Phase 2: I/O System (Weeks 3-5)
@@ -471,13 +471,13 @@ typedef struct {
    ```bash
    # Format code
    ./scripts/run-clang-format.sh --fix
-   
+
    # Run all tests with sanitizers
    ctest --test-dir build --output-on-failure
-   
+
    # Static analysis
    cmake --build build --target static-analysis
-   
+
    # Security scan
    ./scripts/run-gitleaks.sh
    ```
@@ -486,7 +486,7 @@ typedef struct {
    ```bash
    # Test POSIX compliance
    ./scripts/check-posix-compliance.sh
-   
+
    # Docker matrix testing
    ./docker/build-all.sh
    ```
@@ -495,7 +495,7 @@ typedef struct {
    ```bash
    # Run benchmarks
    ./scripts/run-benchmarks.sh
-   
+
    # Memory profiling
    ./scripts/profile.sh memory
    ```
@@ -530,4 +530,4 @@ typedef struct {
 
 ---
 
-Thank you for contributing to HyperDAG! Together we're building the mathematical foundation for next-generation asset management.
+Thank you for contributing to METAGRAPH! Together we're building the mathematical foundation for next-generation asset management.

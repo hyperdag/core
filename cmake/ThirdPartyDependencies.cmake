@@ -1,4 +1,4 @@
-# HyperDAG Third-Party Dependencies
+# Meta-Graph Third-Party Dependencies
 # Pinned commit hashes with cryptographic verification
 
 include(FetchContent)
@@ -33,7 +33,7 @@ set(BLAKE3_BUILD_EXAMPLES OFF CACHE BOOL "Disable examples")
 set(BLAKE3_BUILD_TESTING OFF CACHE BOOL "Disable tests")
 
 # =============================================================================
-# mimalloc - High-Performance Memory Allocator  
+# mimalloc - High-Performance Memory Allocator
 # Repository: https://github.com/microsoft/mimalloc
 # =============================================================================
 set(MIMALLOC_GIT_REPOSITORY "https://github.com/microsoft/mimalloc.git")
@@ -78,10 +78,10 @@ FetchContent_Declare(
 
 # =============================================================================
 # tinycthread - C11 Threading Compatibility
-# Repository: https://github.com/tinycthread/tinycthread  
+# Repository: https://github.com/tinycthread/tinycthread
 # =============================================================================
 set(TINYCTHREAD_GIT_REPOSITORY "https://github.com/tinycthread/tinycthread.git")
-set(TINYCTHREAD_GIT_TAG "v1.2")  # Latest stable release  
+set(TINYCTHREAD_GIT_TAG "v1.2")  # Latest stable release
 set(TINYCTHREAD_GIT_COMMIT_HASH "79b97a8a5c6c7f2e27d7ba0dd59b9ef3b9f0e0b3")
 
 message(STATUS "Fetching tinycthread ${TINYCTHREAD_GIT_TAG} (${TINYCTHREAD_GIT_COMMIT_HASH})")
@@ -97,7 +97,7 @@ FetchContent_Declare(
 # Criterion - Testing Framework (Development Only)
 # Repository: https://github.com/Snaipe/Criterion
 # =============================================================================
-if(HYPERDAG_BUILD_TESTS)
+if(METAGRAPH_BUILD_TESTS)
     set(CRITERION_GIT_REPOSITORY "https://github.com/Snaipe/Criterion.git")
     set(CRITERION_GIT_TAG "v2.4.2")  # Latest stable release
     set(CRITERION_GIT_COMMIT_HASH "3b3c4ba5aad5b5a8e1a2b0d8b9a7b6c5d4e3f2a1")
@@ -129,26 +129,26 @@ function(verify_git_commit NAME EXPECTED_HASH)
         OUTPUT_STRIP_TRAILING_WHITESPACE
         RESULT_VARIABLE GIT_RESULT
     )
-    
+
     if(NOT GIT_RESULT EQUAL 0)
         message(FATAL_ERROR "Failed to get git commit hash for ${NAME}")
     endif()
-    
+
     if(NOT "${ACTUAL_HASH}" STREQUAL "${EXPECTED_HASH}")
-        message(FATAL_ERROR 
+        message(FATAL_ERROR
             "Git commit hash mismatch for ${NAME}:\n"
             "  Expected: ${EXPECTED_HASH}\n"
             "  Actual:   ${ACTUAL_HASH}\n"
             "This indicates a potential supply chain attack or configuration error.")
     endif()
-    
+
     message(STATUS "✓ Verified ${NAME} commit hash: ${ACTUAL_HASH}")
 endfunction()
 
 # Fetch all dependencies
 FetchContent_MakeAvailable(blake3 mimalloc uthash tinycthread)
 
-if(HYPERDAG_BUILD_TESTS)
+if(METAGRAPH_BUILD_TESTS)
     FetchContent_MakeAvailable(criterion)
 endif()
 
@@ -158,7 +158,7 @@ verify_git_commit(mimalloc ${MIMALLOC_GIT_COMMIT_HASH})
 verify_git_commit(uthash ${UTHASH_GIT_COMMIT_HASH})
 verify_git_commit(tinycthread ${TINYCTHREAD_GIT_COMMIT_HASH})
 
-if(HYPERDAG_BUILD_TESTS)
+if(METAGRAPH_BUILD_TESTS)
     verify_git_commit(criterion ${CRITERION_GIT_COMMIT_HASH})
 endif()
 
@@ -167,15 +167,15 @@ endif()
 # =============================================================================
 
 # Create interface target for header-only libraries
-add_library(hyperdag_third_party_headers INTERFACE)
+add_library(METAGRAPH_third_party_headers INTERFACE)
 
-target_include_directories(hyperdag_third_party_headers INTERFACE
+target_include_directories(METAGRAPH_third_party_headers INTERFACE
     "${uthash_SOURCE_DIR}/src"           # uthash headers
     "${tinycthread_SOURCE_DIR}"          # tinycthread headers
 )
 
 # BLAKE3 and mimalloc are linked libraries, not header-only
-# They will be linked directly to hyperdag target
+# They will be linked directly to METAGRAPH target
 
 # =============================================================================
 # Supply Chain Security Notes
@@ -187,7 +187,7 @@ target_include_directories(hyperdag_third_party_headers INTERFACE
 # To update dependencies:
 # 1. Review security advisories for the new version
 # 2. Update GIT_TAG and GIT_COMMIT_HASH variables
-# 3. Test thoroughly with new versions  
+# 3. Test thoroughly with new versions
 # 4. Update this file with new hashes
 # 5. Document changes in CHANGELOG.md
 #

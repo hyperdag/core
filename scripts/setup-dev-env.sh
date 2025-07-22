@@ -1,45 +1,45 @@
 #!/bin/sh
-# HyperDAG Development Environment Setup Script
+# Meta-Graph Development Environment Setup Script
 # Installs all required tools, dependencies, and configures git hooks
 
 set -eu
 
 # Load shared shell library
-PROJECT_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
-. "$PROJECT_ROOT/scripts/shlib.sh"
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
 
-PLATFORM="$(get_platform)"
-PACKAGE_MANAGER="$(detect_package_manager)"
+PLATFORM="$(mg_get_platform)"
+PACKAGE_MANAGER="$(mg_detect_package_manager)"
 
 # =============================================================================
 # Tool Installation
 # =============================================================================
-check_tools() {
+mg_tool_exists_check() {
     # List of required tools with descriptions
-    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner"
-    
+    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner shellcheck:Shell_script_linter"
+
     missing_tools=""
-    
+
     # Check each tool silently
     for tool_spec in $TOOLS_TO_CHECK; do
         tool_name="${tool_spec%:*}"
         tool_desc="${tool_spec#*:}"
         tool_desc="$(echo "$tool_desc" | sed 's/_/ /g')"
-        
-        if ! check_tool "$tool_name" >/dev/null 2>&1; then
+
+        if ! mg_tool_exists "$tool_name" >/dev/null 2>&1; then
             if [ -z "$missing_tools" ]; then
                 echo ""
-                red "❌ Missing required development tools:"
+                mg_red "❌ Missing required development tools:"
             fi
             echo "  • $tool_name ($tool_desc)"
             if [ "$PACKAGE_MANAGER" != "unknown" ]; then
-                install_cmd="$(get_install_command "$tool_name")"
+                install_cmd="$(mg_get_install_command "$tool_name")"
                 echo "    Install with: $install_cmd"
             fi
             missing_tools="$missing_tools $tool_name"
         fi
     done
-    
+
     if [ -n "$missing_tools" ]; then
         echo ""
         echo "To install missing tools:"
@@ -55,41 +55,41 @@ check_tools() {
         fi
         return 1
     fi
-    
+
     # Silent success - only show output if there were problems
     return 0
 }
 
 install_tools() {
     # SECURITY: Only allow installation in interactive mode
-    if ! is_interactive; then
+    if ! mg_is_interactive; then
         echo "❌ Running in non-interactive mode - cannot install tools"
         echo "Use --verify or --dry-run to check what's missing"
         return 1
     fi
-    
-    # Tools are already in PATH thanks to automatic setup in shlib.sh
-    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner"
-    
+
+    # Tools are already in PATH thanks to automatic setup in mg.sh
+    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner shellcheck:Shell_script_linter"
+
     tools_prompted=false
-    
+
     # Check each tool and offer to install if missing
     for tool_spec in $TOOLS_TO_CHECK; do
         tool_name="${tool_spec%:*}"
         tool_desc="${tool_spec#*:}"
         tool_desc="$(echo "$tool_desc" | sed 's/_/ /g')"
-        
-        if ! check_tool "$tool_name" >/dev/null 2>&1; then
+
+        if ! mg_tool_exists "$tool_name" >/dev/null 2>&1; then
             if [ "$tools_prompted" = false ]; then
                 echo ""
-                yellow "🔧 Missing development tools - installation available:"
+                mg_yellow "🔧 Missing development tools - installation available:"
                 tools_prompted=true
             fi
             echo ""
             echo "• $tool_name ($tool_desc)"
-            install_cmd="$(get_install_command "$tool_name")"
-            if ! prompt_install_tool "$tool_name" "$install_cmd" "$tool_desc"; then
-                yellow "  ⚠️  Skipping $tool_name - some features may not work"
+            install_cmd="$(mg_get_install_command "$tool_name")"
+            if ! mg_prompt_install_tool "$tool_name" "$install_cmd" "$tool_desc"; then
+                mg_yellow "  ⚠️  Skipping $tool_name - some features may not work"
             fi
         fi
     done
@@ -104,24 +104,32 @@ install_hook() {
     source_hook="$1"
     target_hook="$2"
     hook_name="$(basename "$source_hook")"
-    
+
     # Remove existing hook if present
-    [ -f "$target_hook" ] && rm -f "$target_hook"
-    
+    if [ -f "$target_hook" ]; then
+        mg_red "Git hook $hook_name already exists!"
+        echo "Please remove it manually before installing new hooks."
+        return 1
+    fi
+
     # Try to create symlink first (preferred method)
     if ln -s "../../scripts/git-hooks/$hook_name" "$target_hook" 2>/dev/null; then
-        echo "  ✓ Linked $hook_name"
+        mg_green "  ✓ Linked $hook_name"
         return 0
     fi
-    
+
     # If symlink fails (Windows without developer mode), try copying
-    if cp "$source_hook" "$target_hook" 2>/dev/null; then
+    # Prompt user to copy instead
+    mg_yellow "  ⚠️  Symlinks not supported, copying $hook_name instead"
+    mg_prompt_and_execute "Copy $hook_name to .git/hooks?" "cp \"$source_hook\" \"$target_hook\""
+    result=$?
+    if [ $result -gt 0 ]; then
         chmod +x "$target_hook"
-        echo "  ✓ Copied $hook_name (symlink not available)"
+        mg_green "  ✓ Copied $hook_name (symlink not available)"
         return 0
     fi
-    
-    echo "  ❌ Failed to install $hook_name"
+
+    mg_red "  ❌ Failed to install $hook_name"
     return 1
 }
 
@@ -129,10 +137,10 @@ install_hook() {
 check_symlink_support() {
     test_link_target="$PROJECT_ROOT/.git/test_symlink_target"
     test_link_source="$PROJECT_ROOT/.git/test_symlink"
-    
+
     # Create a test file
     echo "test" > "$test_link_target"
-    
+
     # Try to create a symlink
     if ln -s test_symlink_target "$test_link_source" 2>/dev/null; then
         # Clean up
@@ -146,64 +154,58 @@ check_symlink_support() {
 }
 
 install_git_hooks() {
+
     cd "$PROJECT_ROOT"
-    
-    # Remove any Python pre-commit installation first
-    if command -v pre-commit >/dev/null 2>&1; then
-        pre-commit uninstall >/dev/null 2>&1 || true
-    fi
-    
     echo "🔗 Installing git hooks..."
-    
+
     # Check if symlinks are supported
     if ! check_symlink_support; then
         if [ "$PLATFORM" = "windows" ]; then
             echo ""
-            yellow "⚠️  Symlinks not available on Windows"
+            mg_yellow "⚠️  Symlinks not available on Windows"
             echo "To enable symlinks on Windows (recommended):"
             echo "1. Enable Developer Mode in Windows Settings"
             echo "2. Or run Git Bash as Administrator"
             echo "3. Or use: git config core.symlinks true"
             echo ""
-            echo "Falling back to copying hooks (will need manual updates)..."
-            echo ""
+            return 1
         fi
     fi
-    
+
     # Make sure git hooks directory exists
     mkdir -p .git/hooks
-    
+
     # Install each hook
     hooks_installed=0
     hooks_failed=0
-    
+
     for hook_file in scripts/git-hooks/*; do
         [ -f "$hook_file" ] || continue
         hook_name="$(basename "$hook_file")"
         target_hook=".git/hooks/$hook_name"
-        
+
         if install_hook "$hook_file" "$target_hook"; then
             hooks_installed=$((hooks_installed + 1))
         else
             hooks_failed=$((hooks_failed + 1))
         fi
     done
-    
+
     echo "Installed $hooks_installed git hooks"
-    
+
     if [ $hooks_failed -gt 0 ]; then
-        echo "❌ Failed to install $hooks_failed git hooks"
+        mg_red "❌ Failed to install $hooks_failed git hooks"
         return 1
     fi
-    
+
     # Verify hooks are executable
     for hook_file in scripts/git-hooks/*; do
         [ -f "$hook_file" ] || continue
         hook_name="$(basename "$hook_file")"
         target_hook=".git/hooks/$hook_name"
-        
+
         if [ ! -x "$target_hook" ]; then
-            echo "❌ Hook $hook_name is not executable"
+            mg_red "❌ Hook $hook_name is not executable"
             return 1
         fi
     done
@@ -220,11 +222,11 @@ prompt_git_config() {
     recommended_value="$3"
     description="$4"
     git_command="$5"
-    
+
     echo ""
     echo "• $setting_name"
     echo "  Current: $current_value → Recommended: $recommended_value ($description)"
-    prompt_yn "Set $setting_name = $recommended_value?" "Y" true
+    mg_prompt_yn "Set $setting_name = $recommended_value?" "Y" true
     result=$?
     case $result in
         0) eval "$git_command" ;;
@@ -235,7 +237,7 @@ prompt_git_config() {
 
 setup_git() {
     cd "$PROJECT_ROOT"
-    
+
     issues_found=0
     optional_improvements=0
 
@@ -249,28 +251,28 @@ setup_git() {
         autocrlf_setting="input"
         autocrlf_desc="preserve_LF_warn_about_CRLF"
     fi
-    
+
     # Check optional git configuration settings
     optional_configs="
         core.autocrlf:${autocrlf_setting}:${autocrlf_desc}:git_config_--local_core.autocrlf_${autocrlf_setting}
-        core.filemode:true:track_executable_permissions:git_config_--local_core.filemode_true  
+        core.filemode:true:track_executable_permissions:git_config_--local_core.filemode_true
         pull.rebase:false:merge_instead_of_rebase_on_pull:git_config_--local_pull.rebase_false
         init.defaultBranch:main:modern_default_branch_name:git_config_--local_init.defaultBranch_main
     "
-    
+
     for config_line in $optional_configs; do
         [ -z "$config_line" ] && continue
-        
+
         setting=$(echo "$config_line" | cut -d: -f1)
-        expected=$(echo "$config_line" | cut -d: -f2) 
+        expected=$(echo "$config_line" | cut -d: -f2)
         description=$(echo "$config_line" | cut -d: -f3 | sed 's/_/ /g')
         command=$(echo "$config_line" | cut -d: -f4 | sed 's/_/ /g')
-        
-        current=$(git config --local "$setting" 2>/dev/null || echo "unset")
+
+        current=$(git config --"$setting" 2>/dev/null || echo "unset")
         if [ "$current" != "$expected" ]; then
             if [ $optional_improvements -eq 0 ]; then
                 echo ""
-                yellow "🔧 Optional git configuration improvements available:"
+                mg_yellow "🔧 Optional git configuration improvements available:"
             fi
             prompt_git_config "$setting" "$current" "$expected" "$description" "$command"
             optional_improvements=$((optional_improvements + 1))
@@ -278,37 +280,37 @@ setup_git() {
     done
 
     # 5. REQUIRED: Check git commit signing
-    current_gpgsign=$(git config --local commit.gpgsign 2>/dev/null || echo "unset")
-    current_signingkey=$(git config --local user.signingkey 2>/dev/null || echo "unset")
-    
+    current_gpgsign=$(git config --commit.gpgsign 2>/dev/null || echo "unset")
+    current_signingkey=$(git config --user.signingkey 2>/dev/null || echo "unset")
+
     if [ "$current_gpgsign" != "true" ] || [ "$current_signingkey" = "unset" ]; then
         echo ""
-        red "🔒 REQUIRED: Git Commit Signing (NOT CONFIGURED)"
+        mg_red "🔒 REQUIRED: Git Commit Signing (NOT CONFIGURED)"
         echo "Signed commits are mandatory for security and authenticity."
         echo "Current gpgsign: $current_gpgsign"
         echo "Current signing key: $current_signingkey"
         echo ""
-        red "❌ Git commit signing is not properly configured!"
+        mg_red "❌ Git commit signing is not properly configured!"
         echo ""
         echo "To set up commit signing:"
         echo "1. Generate a GPG key: gpg --full-generate-key"
         echo "2. List keys: gpg --list-secret-keys --keyid-format=long"
-        echo "3. Configure git: git config --local user.signingkey YOUR_KEY_ID"
-        echo "4. Enable signing: git config --local commit.gpgsign true"
+        echo "3. Configure git: git config --user.signingkey YOUR_KEY_ID"
+        echo "4. Enable signing: git config --commit.gpgsign true"
         echo ""
-        prompt_yn "Do you want to configure commit signing now?" "Y" true
+        mg_prompt_yn "Do you want to configure commit signing now?" "Y" true
         result=$?
         case $result in
-            0) 
+            0)
                 echo "Please follow the steps above to configure GPG signing."
                 echo "After setting up GPG, run this script again to verify."
                 return 1
                 ;;
             1)
                 echo ""
-                red "⚠️  WARNING: Proceeding without commit signing is not recommended!"
-                red "All commits should be signed for security verification."
-                prompt_yn "Continue anyway?" "N" true
+                mg_red "⚠️  WARNING: Proceeding without commit signing is not recommended!"
+                mg_red "All commits should be signed for security verification."
+                mg_prompt_yn "Continue anyway?" "N" true
                 continue_result=$?
                 case $continue_result in
                     0) echo "⚠️  Continuing without signing (not recommended)" ;;
@@ -320,35 +322,35 @@ setup_git() {
         issues_found=$((issues_found + 1))
     fi
 
-    # Check git aliases (check if any are missing) - OPTIONAL  
+    # Check git aliases (check if any are missing) - OPTIONAL
     aliases_needed=""
     for alias in st:status co:checkout br:branch ci:commit; do
         alias_name="${alias%:*}"
         alias_cmd="${alias#*:}"
-        current_alias=$(git config --local alias.$alias_name 2>/dev/null || echo "unset")
+        current_alias=$(git config --alias."${alias_name}" 2>/dev/null || echo "unset")
         if [ "$current_alias" != "$alias_cmd" ]; then
             aliases_needed="$aliases_needed $alias_name"
         fi
     done
-    
+
     if [ -n "$aliases_needed" ]; then
         if [ $optional_improvements -eq 0 ]; then
             echo ""
-            yellow "🔧 Optional git configuration improvements available:"
+            mg_yellow "🔧 Optional git configuration improvements available:"
         fi
         echo ""
-        yellow "• Git aliases (convenience shortcuts)"
+        mg_yellow "• Git aliases (convenience shortcuts)"
         echo "  Missing aliases:$aliases_needed (st=status, co=checkout, br=branch, ci=commit, etc.)"
-        prompt_yn "Add helpful git aliases?" "Y" true
+        mg_prompt_yn "Add helpful git aliases?" "Y" true
         result=$?
         case $result in
-            0) git config --local alias.st status
-               git config --local alias.co checkout
-               git config --local alias.br branch
-               git config --local alias.ci commit
-               git config --local alias.unstage 'reset HEAD --'
-               git config --local alias.last 'log -1 HEAD'
-               git config --local alias.visual '!gitk' ;;
+            0) git config --alias.st status
+               git config --alias.co checkout
+               git config --alias.br branch
+               git config --alias.ci commit
+               git config --alias.unstage 'reset HEAD --'
+               git config --alias.last 'log -1 HEAD'
+               git config --alias.visual '!gitk' ;;
             1) echo "  Skipped" ;;
             2) echo "Setup cancelled."; return 1 ;;
         esac
@@ -368,9 +370,9 @@ setup_build_system() {
     # Configure CMake for development (silently unless there's an error)
     if ! cmake -B build \
         -DCMAKE_BUILD_TYPE=Debug \
-        -DHYPERDAG_DEV=ON \
-        -DHYPERDAG_SANITIZERS=ON \
-        -DHYPERDAG_BUILD_TESTS=ON \
+        -DMETAGRAPH_DEV=ON \
+        -DMETAGRAPH_SANITIZERS=ON \
+        -DMETAGRAPH_BUILD_TESTS=ON \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
         -G Ninja >/dev/null 2>&1; then
         echo "❌ CMake configuration failed"
@@ -410,9 +412,9 @@ with open('$PROJECT_ROOT/.vscode/extensions.json', 'r') as f:
 # =============================================================================
 # Tool Version Verification
 # =============================================================================
-check_tool_versions() {
+mg_tool_exists_versions() {
     version_warnings=""
-    
+
     # Check clang-format version (need 15+ for C23 support)
     if command -v clang-format >/dev/null 2>&1; then
         CLANG_FORMAT_VERSION=$(clang-format --version | grep -o '[0-9]\+\.[0-9]\+' | head -1)
@@ -421,22 +423,22 @@ check_tool_versions() {
             version_warnings="$version_warnings\n  • clang-format $CLANG_FORMAT_VERSION is old (need 15+ for C23) - consider updating"
         fi
     fi
-    
+
     # Check cmake version (need 3.28+ for C23)
     if command -v cmake >/dev/null 2>&1; then
         CMAKE_VERSION=$(cmake --version | grep -o '[0-9]\+\.[0-9]\+\.[0-9]\+' | head -1)
         CMAKE_MAJOR=$(echo "$CMAKE_VERSION" | cut -d. -f1)
         CMAKE_MINOR=$(echo "$CMAKE_VERSION" | cut -d. -f2)
-        if [ "$CMAKE_MAJOR" -lt 3 ] || [ "$CMAKE_MAJOR" -eq 3 -a "$CMAKE_MINOR" -lt 28 ]; then
+        if [ "$CMAKE_MAJOR" -lt 3 ] || { [ "$CMAKE_MAJOR" -eq 3 ] && [ "$CMAKE_MINOR" -lt 28 ]; }; then
             version_warnings="$version_warnings\n  • cmake $CMAKE_VERSION is old (need 3.28+ for C23) - consider updating"
         fi
     fi
-    
+
     # Only show output if there are version warnings
     if [ -n "$version_warnings" ]; then
         echo ""
-        yellow "⚠️  Tool version warnings:"
-        echo -e "$version_warnings"
+        mg_yellow "⚠️  Tool version warnings:"
+        printf "%s\n" "$version_warnings"
         echo ""
     fi
 }
@@ -447,7 +449,7 @@ check_tool_versions() {
 verify_setup() {
     # Check required tools (POSIX-compliant)
     REQUIRED_TOOLS="cmake ninja clang clang-format clang-tidy git gitleaks"
-    
+
     missing_tools=""
     verification_issues=""
 
@@ -475,8 +477,8 @@ verify_setup() {
     # Only show output if there are verification issues
     if [ -n "$verification_issues" ]; then
         echo ""
-        red "❌ Development environment verification failed:"
-        echo -e "$verification_issues"
+        mg_red "❌ Development environment verification failed:"
+        printf "%s\n" "$verification_issues"
         echo ""
         echo "Run the setup script with appropriate flags to resolve these issues."
         exit 1
@@ -490,7 +492,7 @@ verify_setup() {
 # =============================================================================
 show_help() {
     cat << EOF
-HyperDAG Development Environment Setup
+Meta-Graph Development Environment Setup
 
 Usage: $0 [OPTIONS]
 
@@ -602,10 +604,10 @@ main() {
 
     # Execute setup steps
     if [ "$dry_run" = true ]; then
-        check_tools
+        mg_tool_exists_check
         exit $?
     fi
-    
+
     if [ "$verify_only" = true ]; then
         verify_setup
         exit 0
@@ -616,7 +618,7 @@ main() {
     fi
 
     # Always check tool versions for C23 compatibility
-    check_tool_versions
+    mg_tool_exists_versions
 
     if [ "$setup_git_config" = true ]; then
         if ! setup_git; then
@@ -639,7 +641,7 @@ main() {
     # Only show next steps if we actually performed setup actions
     if [ "$install_deps" = true ] || [ "$setup_git_config" = true ] || [ "$setup_build" = true ] || [ "$setup_vscode_config" = true ]; then
         echo ""
-        green "✅ Development environment setup complete!"
+        mg_green "✅ Development environment setup complete!"
         echo ""
         echo "🎯 Next steps:"
         echo "1. Run 'cmake --build build' to build the project"

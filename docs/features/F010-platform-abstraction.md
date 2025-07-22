@@ -2,9 +2,9 @@
 
 ## Feature Overview
 
-The Platform Abstraction layer provides a unified interface for platform-specific operations across Windows, macOS, Linux, and other target platforms. This layer isolates HyperDAG's core algorithms from platform differences in file I/O, memory management, threading, and system calls.
+The Platform Abstraction layer provides a unified interface for platform-specific operations across Windows, macOS, Linux, and other target platforms. This layer isolates Meta-Graph's core algorithms from platform differences in file I/O, memory management, threading, and system calls.
 
-This is the foundational layer that enables HyperDAG to maintain a single codebase while leveraging platform-specific optimizations like DirectStorage on Windows, hardware acceleration on PlayStation 5, and memory mapping strategies across different operating systems.
+This is the foundational layer that enables Meta-Graph to maintain a single codebase while leveraging platform-specific optimizations like DirectStorage on Windows, hardware acceleration on PlayStation 5, and memory mapping strategies across different operating systems.
 
 ## Priority
 **Foundation** - Required by all other features
@@ -15,9 +15,9 @@ None - This is the base layer
 ## User Stories
 
 ### F010.US001 - Cross-Platform File I/O
-**As a** system developer  
-**I want** unified file I/O operations across platforms  
-**So that** HyperDAG can load bundles consistently regardless of operating system  
+**As a** system developer
+**I want** unified file I/O operations across platforms
+**So that** Meta-Graph can load bundles consistently regardless of operating system
 
 **Prerequisites:**
 - None (foundation layer)
@@ -30,9 +30,9 @@ None - This is the base layer
 - Large file support (>4GB) on all platforms
 
 ### F010.US002 - Memory Management Abstraction
-**As a** system developer  
-**I want** platform-neutral memory allocation primitives  
-**So that** memory management is consistent and optimized per platform  
+**As a** system developer
+**I want** platform-neutral memory allocation primitives
+**So that** memory management is consistent and optimized per platform
 
 **Prerequisites:**
 - Understanding of target platform memory models
@@ -45,9 +45,9 @@ None - This is the base layer
 - Memory pressure monitoring and callbacks
 
 ### F010.US003 - Threading Primitives
-**As a** system developer  
-**I want** cross-platform threading and synchronization  
-**So that** HyperDAG can leverage multicore systems safely  
+**As a** system developer
+**I want** cross-platform threading and synchronization
+**So that** Meta-Graph can leverage multicore systems safely
 
 **Prerequisites:**
 - Platform threading model understanding
@@ -60,9 +60,9 @@ None - This is the base layer
 - CPU core count detection and affinity setting
 
 ### F010.US004 - System Information Access
-**As a** performance engineer  
-**I want** to query system capabilities and resources  
-**So that** HyperDAG can optimize behavior for the target hardware  
+**As a** performance engineer
+**I want** to query system capabilities and resources
+**So that** Meta-Graph can optimize behavior for the target hardware
 
 **Prerequisites:**
 - Platform capability detection mechanisms
@@ -75,9 +75,9 @@ None - This is the base layer
 - Hardware acceleration capability detection
 
 ### F010.US005 - High-Resolution Timing
-**As a** performance engineer  
-**I want** accurate timing and profiling capabilities  
-**So that** performance can be measured and optimized consistently  
+**As a** performance engineer
+**I want** accurate timing and profiling capabilities
+**So that** performance can be measured and optimized consistently
 
 **Prerequisites:**
 - Platform high-resolution timer access
@@ -98,51 +98,51 @@ typedef struct {
     bool enable_numa_awareness;
     size_t thread_pool_size;
     const char* temp_directory;
-} hyperdag_platform_config_t;
+} mg_platform_config_t;
 
-hyperdag_result_t hyperdag_platform_init(const hyperdag_platform_config_t* config);
-hyperdag_result_t hyperdag_platform_cleanup(void);
+mg_result_t mg_platform_init(const mg_platform_config_t* config);
+mg_result_t mg_platform_cleanup(void);
 
 // File I/O abstraction
-typedef struct hyperdag_file hyperdag_file_t;
+typedef struct mg_file mg_file_t;
 
 typedef enum {
-    HYPERDAG_FILE_READ = 1,
-    HYPERDAG_FILE_WRITE = 2,
-    HYPERDAG_FILE_CREATE = 4,
-    HYPERDAG_FILE_EXCLUSIVE = 8
-} hyperdag_file_flags_t;
+    METAGRAPH_FILE_READ = 1,
+    METAGRAPH_FILE_WRITE = 2,
+    METAGRAPH_FILE_CREATE = 4,
+    METAGRAPH_FILE_EXCLUSIVE = 8
+} mg_file_flags_t;
 
-hyperdag_result_t hyperdag_file_open(
+mg_result_t mg_file_open(
     const char* path,
-    hyperdag_file_flags_t flags,
-    hyperdag_file_t** out_file
+    mg_file_flags_t flags,
+    mg_file_t** out_file
 );
 
-hyperdag_result_t hyperdag_file_close(hyperdag_file_t* file);
+mg_result_t mg_file_close(mg_file_t* file);
 
-hyperdag_result_t hyperdag_file_read(
-    hyperdag_file_t* file,
+mg_result_t mg_file_read(
+    mg_file_t* file,
     void* buffer,
     size_t size,
     size_t* bytes_read
 );
 
-hyperdag_result_t hyperdag_file_write(
-    hyperdag_file_t* file,
+mg_result_t mg_file_write(
+    mg_file_t* file,
     const void* buffer,
     size_t size,
     size_t* bytes_written
 );
 
-hyperdag_result_t hyperdag_file_seek(
-    hyperdag_file_t* file,
+mg_result_t mg_file_seek(
+    mg_file_t* file,
     int64_t offset,
     int whence
 );
 
-hyperdag_result_t hyperdag_file_get_size(
-    hyperdag_file_t* file,
+mg_result_t mg_file_get_size(
+    mg_file_t* file,
     uint64_t* out_size
 );
 
@@ -151,55 +151,55 @@ typedef struct {
     void* address;
     size_t size;
     bool is_writable;
-} hyperdag_memory_map_t;
+} mg_memory_map_t;
 
-hyperdag_result_t hyperdag_file_map_memory(
-    hyperdag_file_t* file,
+mg_result_t mg_file_map_memory(
+    mg_file_t* file,
     uint64_t offset,
     size_t size,
     bool writable,
-    hyperdag_memory_map_t* out_map
+    mg_memory_map_t* out_map
 );
 
-hyperdag_result_t hyperdag_memory_unmap(hyperdag_memory_map_t* map);
+mg_result_t mg_memory_unmap(mg_memory_map_t* map);
 
 // Memory allocation
-hyperdag_result_t hyperdag_malloc(size_t size, void** out_ptr);
-hyperdag_result_t hyperdag_free(void* ptr);
-hyperdag_result_t hyperdag_aligned_malloc(size_t size, size_t alignment, void** out_ptr);
-hyperdag_result_t hyperdag_realloc(void* ptr, size_t new_size, void** out_ptr);
+mg_result_t mg_malloc(size_t size, void** out_ptr);
+mg_result_t mg_free(void* ptr);
+mg_result_t mg_aligned_malloc(size_t size, size_t alignment, void** out_ptr);
+mg_result_t mg_realloc(void* ptr, size_t new_size, void** out_ptr);
 
 // Threading
-typedef struct hyperdag_thread hyperdag_thread_t;
-typedef struct hyperdag_mutex hyperdag_mutex_t;
-typedef struct hyperdag_condition hyperdag_condition_t;
+typedef struct mg_thread mg_thread_t;
+typedef struct mg_mutex mg_mutex_t;
+typedef struct mg_condition mg_condition_t;
 
-typedef void* (*hyperdag_thread_func_t)(void* arg);
+typedef void* (*mg_thread_func_t)(void* arg);
 
-hyperdag_result_t hyperdag_thread_create(
-    hyperdag_thread_func_t func,
+mg_result_t mg_thread_create(
+    mg_thread_func_t func,
     void* arg,
-    hyperdag_thread_t** out_thread
+    mg_thread_t** out_thread
 );
 
-hyperdag_result_t hyperdag_thread_join(hyperdag_thread_t* thread, void** out_result);
-hyperdag_result_t hyperdag_thread_detach(hyperdag_thread_t* thread);
+mg_result_t mg_thread_join(mg_thread_t* thread, void** out_result);
+mg_result_t mg_thread_detach(mg_thread_t* thread);
 
-hyperdag_result_t hyperdag_mutex_create(hyperdag_mutex_t** out_mutex);
-hyperdag_result_t hyperdag_mutex_destroy(hyperdag_mutex_t* mutex);
-hyperdag_result_t hyperdag_mutex_lock(hyperdag_mutex_t* mutex);
-hyperdag_result_t hyperdag_mutex_unlock(hyperdag_mutex_t* mutex);
-hyperdag_result_t hyperdag_mutex_trylock(hyperdag_mutex_t* mutex);
+mg_result_t mg_mutex_create(mg_mutex_t** out_mutex);
+mg_result_t mg_mutex_destroy(mg_mutex_t* mutex);
+mg_result_t mg_mutex_lock(mg_mutex_t* mutex);
+mg_result_t mg_mutex_unlock(mg_mutex_t* mutex);
+mg_result_t mg_mutex_trylock(mg_mutex_t* mutex);
 
 // Atomic operations
-typedef struct { volatile int value; } hyperdag_atomic_int_t;
-typedef struct { volatile void* value; } hyperdag_atomic_ptr_t;
+typedef struct { volatile int value; } mg_atomic_int_t;
+typedef struct { volatile void* value; } mg_atomic_ptr_t;
 
-int hyperdag_atomic_load_int(const hyperdag_atomic_int_t* atomic);
-void hyperdag_atomic_store_int(hyperdag_atomic_int_t* atomic, int value);
-int hyperdag_atomic_exchange_int(hyperdag_atomic_int_t* atomic, int value);
-bool hyperdag_atomic_compare_exchange_int(
-    hyperdag_atomic_int_t* atomic,
+int mg_atomic_load_int(const mg_atomic_int_t* atomic);
+void mg_atomic_store_int(mg_atomic_int_t* atomic, int value);
+int mg_atomic_exchange_int(mg_atomic_int_t* atomic, int value);
+bool mg_atomic_compare_exchange_int(
+    mg_atomic_int_t* atomic,
     int* expected,
     int desired
 );
@@ -214,18 +214,18 @@ typedef struct {
     bool has_sse;
     bool has_avx;
     bool has_avx512;
-} hyperdag_system_info_t;
+} mg_system_info_t;
 
-hyperdag_result_t hyperdag_get_system_info(hyperdag_system_info_t* out_info);
+mg_result_t mg_get_system_info(mg_system_info_t* out_info);
 
 // High-resolution timing
 typedef struct {
     uint64_t ticks;
     uint64_t frequency;
-} hyperdag_timestamp_t;
+} mg_timestamp_t;
 
-hyperdag_result_t hyperdag_get_timestamp(hyperdag_timestamp_t* out_timestamp);
-double hyperdag_timestamp_to_seconds(const hyperdag_timestamp_t* timestamp);
+mg_result_t mg_get_timestamp(mg_timestamp_t* out_timestamp);
+double mg_timestamp_to_seconds(const mg_timestamp_t* timestamp);
 ```
 
 ## Platform-Specific Implementation Strategy
@@ -233,27 +233,27 @@ double hyperdag_timestamp_to_seconds(const hyperdag_timestamp_t* timestamp);
 ```mermaid
 graph TD
     subgraph "Platform Abstraction Architecture"
-        API[HyperDAG Platform API]
-        
+        API[Meta-Graph Platform API]
+
         subgraph "Platform Implementations"
             WIN[Windows Implementation]
             POSIX[POSIX Implementation]
             MACOS[macOS Implementation]
             LINUX[Linux Implementation]
         end
-        
+
         subgraph "Platform-Specific Features"
             DS[DirectStorage]
             MMAP[mmap/madvise]
             KQUEUE[kqueue/epoll]
             NUMA[NUMA Awareness]
         end
-        
+
         API --> WIN
         API --> POSIX
         API --> MACOS
         API --> LINUX
-        
+
         WIN --> DS
         POSIX --> MMAP
         MACOS --> KQUEUE
@@ -265,7 +265,7 @@ graph TD
 
 ### Windows
 ```c
-#ifdef HYPERDAG_PLATFORM_WINDOWS
+#ifdef METAGRAPH_PLATFORM_WINDOWS
 // Use DirectStorage for high-performance I/O
 typedef struct {
     ID3D12Device* device;
@@ -273,7 +273,7 @@ typedef struct {
     DSTORAGE_QUEUE* dstorage_queue;
 } windows_platform_data_t;
 
-hyperdag_result_t hyperdag_windows_enable_directstorage(
+mg_result_t mg_windows_enable_directstorage(
     ID3D12Device* device
 );
 #endif
@@ -281,7 +281,7 @@ hyperdag_result_t hyperdag_windows_enable_directstorage(
 
 ### Linux
 ```c
-#ifdef HYPERDAG_PLATFORM_LINUX
+#ifdef METAGRAPH_PLATFORM_LINUX
 // Use io_uring for async I/O
 typedef struct {
     struct io_uring ring;
@@ -289,13 +289,13 @@ typedef struct {
     void* ring_mem;
 } linux_platform_data_t;
 
-hyperdag_result_t hyperdag_linux_init_io_uring(void);
+mg_result_t mg_linux_init_io_uring(void);
 #endif
 ```
 
 ### macOS
 ```c
-#ifdef HYPERDAG_PLATFORM_MACOS
+#ifdef METAGRAPH_PLATFORM_MACOS
 // Use kqueue for event notification
 typedef struct {
     int kqueue_fd;
@@ -303,7 +303,7 @@ typedef struct {
     size_t event_count;
 } macos_platform_data_t;
 
-hyperdag_result_t hyperdag_macos_init_kqueue(void);
+mg_result_t mg_macos_init_kqueue(void);
 #endif
 ```
 
@@ -316,23 +316,23 @@ graph TD
         POOLS[Memory Pools]
         MMAP[Memory Mapped Files]
         STACK[Thread Stacks]
-        
+
         subgraph "Allocation Strategies"
             SMALL[Small Objects<br/><256 bytes]
             MEDIUM[Medium Objects<br/>256B - 64KB]
             LARGE[Large Objects<br/>>64KB]
         end
-        
+
         SMALL --> POOLS
         MEDIUM --> HEAP
         LARGE --> MMAP
-        
+
         subgraph "Platform Optimizations"
             HUGEPAGES[Huge Pages]
             NUMA_LOCAL[NUMA-Local Allocation]
             CACHE_ALIGN[Cache-Line Alignment]
         end
-        
+
         POOLS --> CACHE_ALIGN
         HEAP --> NUMA_LOCAL
         MMAP --> HUGEPAGES
@@ -433,4 +433,4 @@ graph TD
 - Thread safety validation with stress testing
 - Performance benchmarks for optimization tracking
 
-This platform abstraction layer provides the foundation that enables HyperDAG to achieve high performance while maintaining portability across diverse target platforms.
+This platform abstraction layer provides the foundation that enables Meta-Graph to achieve high performance while maintaining portability across diverse target platforms.

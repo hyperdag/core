@@ -1,11 +1,11 @@
 #!/bin/sh
-# HyperDAG clang-format wrapper script
+# Meta-Graph clang-format wrapper script
 
 set -eu
 
 # Load shared shell library (tools auto-configured)
-PROJECT_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
-. "$PROJECT_ROOT/scripts/shlib.sh"
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
 
 CLANG_FORMAT=$(command -v clang-format)
 
@@ -65,7 +65,7 @@ fi
 
 if [ "$check_mode" = true ]; then
     echo "🔍 Checking code formatting..."
-    
+
     issues=0
     find "$PROJECT_ROOT" \( -name '*.c' -o -name '*.h' \) -print | \
     grep -v /build/ | grep -v /third_party/ | grep -v /external/ | \
@@ -79,13 +79,13 @@ if [ "$check_mode" = true ]; then
             echo "✓ $file"
         fi
     done
-    
+
     # Note: Due to subshell, we can't get the exact count, but any issues will show above
     echo "✓ Format check complete"
-    
+
 elif [ "$fix_mode" = true ]; then
     echo "🔧 Fixing code formatting..."
-    
+
     find "$PROJECT_ROOT" \( -name '*.c' -o -name '*.h' \) -print | \
     grep -v /build/ | grep -v /third_party/ | grep -v /external/ | \
     while IFS= read -r file; do
@@ -96,6 +96,6 @@ elif [ "$fix_mode" = true ]; then
         # Force C language for .h files
         "$CLANG_FORMAT" -i --style=file --assume-filename="${file%.h}.c" "$file"
     done
-    
+
     echo "✓ Formatting complete"
 fi

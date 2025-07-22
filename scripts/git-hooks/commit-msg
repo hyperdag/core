@@ -1,5 +1,5 @@
 #!/bin/sh
-# HyperDAG commit-msg hook - Enforce conventional commit format
+# Meta-Graph commit-msg hook - Enforce conventional commit format
 # This hook validates commit messages for consistency and clarity
 
 set -eu
@@ -9,7 +9,7 @@ commit_msg=$(cat "$commit_file")
 
 # Check for conventional commit format
 # Pattern: type(optional scope): description
-# Examples: feat(core): add hypergraph structure, fix(memory): resolve leak in pool allocator
+# Examples: feat(core): add meta-graph structure, fix(memory): resolve leak in pool allocator
 
 if ! echo "$commit_msg" | grep -qE '^(feat|fix|docs|style|refactor|perf|test|chore|ci|build)(\(.+\))?: .{1,50}'; then
     cat << EOF
@@ -31,7 +31,7 @@ Valid types:
   build:    Changes that affect the build system or external dependencies
 
 Examples:
-  ✓ feat(core): add hypergraph node insertion
+  ✓ feat(core): add meta-graph node insertion
   ✓ fix(memory): resolve pool allocator leak
   ✓ docs: update API documentation
   ✓ perf(traversal): optimize DFS algorithm

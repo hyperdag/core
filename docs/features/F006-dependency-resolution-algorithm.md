@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Dependency Resolution Algorithm implements intelligent ordering and loading strategies for asset dependencies within hypergraphs. This feature builds upon the graph traversal engine to provide practical dependency management, including conflict resolution, circular dependency handling, and optimal loading order computation.
+The Dependency Resolution Algorithm implements intelligent ordering and loading strategies for asset dependencies within meta-graphs. This feature builds upon the graph traversal engine to provide practical dependency management, including conflict resolution, circular dependency handling, and optimal loading order computation.
 
 This feature realizes the origin story's vision of moving from manual JSON manifest management to automatic, intelligent dependency resolution that scales to complex asset relationships.
 
@@ -17,9 +17,9 @@ This feature realizes the origin story's vision of moving from manual JSON manif
 ## User Stories
 
 ### F006.US001 - Automatic Dependency Resolution
-**As a** asset pipeline developer  
-**I want** automatic resolution of asset dependencies  
-**So that** I don't have to manually manage complex dependency chains  
+**As a** asset pipeline developer
+**I want** automatic resolution of asset dependencies
+**So that** I don't have to manually manage complex dependency chains
 
 **Prerequisites:**
 - Hypergraph with dependency relationships (F.001)
@@ -33,9 +33,9 @@ This feature realizes the origin story's vision of moving from manual JSON manif
 - Reports resolution statistics and performance metrics
 
 ### F006.US002 - Circular Dependency Detection and Handling
-**As a** build system developer  
-**I want** detection and resolution of circular dependencies  
-**So that** builds don't fail due to unresolvable dependency cycles  
+**As a** build system developer
+**I want** detection and resolution of circular dependencies
+**So that** builds don't fail due to unresolvable dependency cycles
 
 **Prerequisites:**
 - Cycle detection algorithms (F.005)
@@ -49,9 +49,9 @@ This feature realizes the origin story's vision of moving from manual JSON manif
 - Supports manual cycle breaking through configuration
 
 ### F006.US003 - Dependency Conflict Resolution
-**As a** content creator  
-**I want** automatic resolution of dependency conflicts  
-**So that** multiple assets can safely depend on different versions of the same resource  
+**As a** content creator
+**I want** automatic resolution of dependency conflicts
+**So that** multiple assets can safely depend on different versions of the same resource
 
 **Prerequisites:**
 - Asset versioning and identification system (F.007)
@@ -65,9 +65,9 @@ This feature realizes the origin story's vision of moving from manual JSON manif
 - Maintains compatibility with legacy assets
 
 ### F006.US004 - Incremental Dependency Updates
-**As a** live service developer  
-**I want** incremental dependency resolution for dynamic updates  
-**So that** asset changes can be deployed without full rebuilds  
+**As a** live service developer
+**I want** incremental dependency resolution for dynamic updates
+**So that** asset changes can be deployed without full rebuilds
 
 **Prerequisites:**
 - Incremental graph algorithms
@@ -81,9 +81,9 @@ This feature realizes the origin story's vision of moving from manual JSON manif
 - Provides rollback capabilities for failed updates
 
 ### F006.US005 - Parallel Dependency Loading
-**As a** performance engineer  
-**I want** parallel loading of independent dependencies  
-**So that** asset loading time is minimized on multi-core systems  
+**As a** performance engineer
+**I want** parallel loading of independent dependencies
+**So that** asset loading time is minimized on multi-core systems
 
 **Prerequisites:**
 - Parallel graph algorithms (F.005)
@@ -101,119 +101,119 @@ This feature realizes the origin story's vision of moving from manual JSON manif
 ```c
 // Dependency resolution context
 typedef struct {
-    hyperdag_graph_t* graph;
+    mg_graph_t* graph;
     uint32_t max_depth;              // Maximum dependency depth
     uint32_t max_resolution_time_ms; // Maximum time for resolution
     bool allow_cycles;               // Whether to allow circular dependencies
     bool parallel_loading;           // Enable parallel dependency loading
     uint32_t thread_count;           // Number of worker threads
-} hyperdag_dependency_config_t;
+} mg_dependency_config_t;
 
 // Resolution result
 typedef struct {
-    hyperdag_id_t* load_order;       // Assets in dependency order
+    mg_id_t* load_order;       // Assets in dependency order
     size_t load_order_count;         // Number of assets in load order
-    hyperdag_id_t* failed_assets;    // Assets that failed to resolve
+    mg_id_t* failed_assets;    // Assets that failed to resolve
     size_t failed_count;             // Number of failed assets
-    hyperdag_id_t** cycles;          // Detected circular dependencies
+    mg_id_t** cycles;          // Detected circular dependencies
     size_t* cycle_lengths;           // Length of each cycle
     size_t cycle_count;              // Number of cycles detected
     double resolution_time_ms;       // Time taken for resolution
-} hyperdag_resolution_result_t;
+} mg_resolution_result_t;
 
 // Dependency resolution
-hyperdag_result_t hyperdag_resolve_dependencies(
-    const hyperdag_dependency_config_t* config,
-    const hyperdag_id_t* root_assets,
+mg_result_t mg_resolve_dependencies(
+    const mg_dependency_config_t* config,
+    const mg_id_t* root_assets,
     size_t root_count,
-    hyperdag_resolution_result_t* out_result
+    mg_resolution_result_t* out_result
 );
 
-hyperdag_result_t hyperdag_resolution_result_destroy(
-    hyperdag_resolution_result_t* result
+mg_result_t mg_resolution_result_destroy(
+    mg_resolution_result_t* result
 );
 
 // Incremental dependency resolution
-typedef struct hyperdag_dependency_context hyperdag_dependency_context_t;
+typedef struct mg_dependency_context mg_dependency_context_t;
 
-hyperdag_result_t hyperdag_dependency_context_create(
-    const hyperdag_dependency_config_t* config,
-    hyperdag_dependency_context_t** out_context
+mg_result_t mg_dependency_context_create(
+    const mg_dependency_config_t* config,
+    mg_dependency_context_t** out_context
 );
 
-hyperdag_result_t hyperdag_dependency_context_destroy(
-    hyperdag_dependency_context_t* context
+mg_result_t mg_dependency_context_destroy(
+    mg_dependency_context_t* context
 );
 
-hyperdag_result_t hyperdag_dependency_update_asset(
-    hyperdag_dependency_context_t* context,
-    hyperdag_id_t asset_id,
-    const hyperdag_id_t* new_dependencies,
+mg_result_t mg_dependency_update_asset(
+    mg_dependency_context_t* context,
+    mg_id_t asset_id,
+    const mg_id_t* new_dependencies,
     size_t dependency_count
 );
 
-hyperdag_result_t hyperdag_dependency_resolve_incremental(
-    hyperdag_dependency_context_t* context,
-    const hyperdag_id_t* changed_assets,
+mg_result_t mg_dependency_resolve_incremental(
+    mg_dependency_context_t* context,
+    const mg_id_t* changed_assets,
     size_t changed_count,
-    hyperdag_resolution_result_t* out_result
+    mg_resolution_result_t* out_result
 );
 
 // Conflict resolution
 typedef enum {
-    HYPERDAG_CONFLICT_STRATEGY_LATEST,     // Use latest version
-    HYPERDAG_CONFLICT_STRATEGY_SPECIFIC,   // Use specific version
-    HYPERDAG_CONFLICT_STRATEGY_MANUAL,     // Require manual resolution
-    HYPERDAG_CONFLICT_STRATEGY_FAIL        // Fail on conflicts
-} hyperdag_conflict_strategy_t;
+    METAGRAPH_CONFLICT_STRATEGY_LATEST,     // Use latest version
+    METAGRAPH_CONFLICT_STRATEGY_SPECIFIC,   // Use specific version
+    METAGRAPH_CONFLICT_STRATEGY_MANUAL,     // Require manual resolution
+    METAGRAPH_CONFLICT_STRATEGY_FAIL        // Fail on conflicts
+} mg_conflict_strategy_t;
 
 typedef struct {
-    hyperdag_id_t asset_id;            // Asset with version conflict
-    hyperdag_id_t* conflicting_versions; // Available versions
+    mg_id_t asset_id;            // Asset with version conflict
+    mg_id_t* conflicting_versions; // Available versions
     size_t version_count;              // Number of conflicting versions
-    hyperdag_id_t* dependent_assets;   // Assets that depend on this
+    mg_id_t* dependent_assets;   // Assets that depend on this
     size_t dependent_count;            // Number of dependent assets
-} hyperdag_conflict_info_t;
+} mg_conflict_info_t;
 
 typedef struct {
-    hyperdag_conflict_strategy_t default_strategy;
-    hyperdag_conflict_info_t* conflicts;
+    mg_conflict_strategy_t default_strategy;
+    mg_conflict_info_t* conflicts;
     size_t conflict_count;
-    hyperdag_id_t* pinned_assets;      // Assets with pinned versions
+    mg_id_t* pinned_assets;      // Assets with pinned versions
     size_t pinned_count;
-} hyperdag_conflict_resolution_t;
+} mg_conflict_resolution_t;
 
-hyperdag_result_t hyperdag_detect_conflicts(
-    const hyperdag_graph_t* graph,
-    hyperdag_conflict_resolution_t* out_conflicts
+mg_result_t mg_detect_conflicts(
+    const mg_graph_t* graph,
+    mg_conflict_resolution_t* out_conflicts
 );
 
-hyperdag_result_t hyperdag_resolve_conflicts(
-    hyperdag_dependency_context_t* context,
-    const hyperdag_conflict_resolution_t* resolution
+mg_result_t mg_resolve_conflicts(
+    mg_dependency_context_t* context,
+    const mg_conflict_resolution_t* resolution
 );
 
 // Parallel loading coordination
 typedef struct {
-    hyperdag_id_t asset_id;            // Asset being loaded
-    hyperdag_id_t* dependencies;       // Direct dependencies
+    mg_id_t asset_id;            // Asset being loaded
+    mg_id_t* dependencies;       // Direct dependencies
     size_t dependency_count;           // Number of dependencies
     uint32_t depth;                    // Depth in dependency tree
     bool is_ready;                     // Whether dependencies are satisfied
     bool is_loading;                   // Whether currently being loaded
     bool is_loaded;                    // Whether loading is complete
-} hyperdag_load_state_t;
+} mg_load_state_t;
 
-typedef void (*hyperdag_load_callback_t)(
-    hyperdag_id_t asset_id,
-    hyperdag_result_t load_result,
+typedef void (*mg_load_callback_t)(
+    mg_id_t asset_id,
+    mg_result_t load_result,
     void* user_data
 );
 
-hyperdag_result_t hyperdag_schedule_parallel_loading(
-    const hyperdag_dependency_config_t* config,
-    const hyperdag_resolution_result_t* resolution,
-    hyperdag_load_callback_t callback,
+mg_result_t mg_schedule_parallel_loading(
+    const mg_dependency_config_t* config,
+    const mg_resolution_result_t* resolution,
+    mg_load_callback_t callback,
     void* user_data
 );
 
@@ -226,44 +226,44 @@ typedef struct {
     double fan_out_average;            // Average number of dependencies per asset
     double fan_in_average;             // Average number of dependents per asset
     size_t memory_estimate_bytes;      // Estimated memory usage
-} hyperdag_dependency_stats_t;
+} mg_dependency_stats_t;
 
-hyperdag_result_t hyperdag_analyze_dependencies(
-    const hyperdag_graph_t* graph,
-    const hyperdag_id_t* root_assets,
+mg_result_t mg_analyze_dependencies(
+    const mg_graph_t* graph,
+    const mg_id_t* root_assets,
     size_t root_count,
-    hyperdag_dependency_stats_t* out_stats
+    mg_dependency_stats_t* out_stats
 );
 
 // Dependency cache management
-typedef struct hyperdag_dependency_cache hyperdag_dependency_cache_t;
+typedef struct mg_dependency_cache mg_dependency_cache_t;
 
-hyperdag_result_t hyperdag_dependency_cache_create(
+mg_result_t mg_dependency_cache_create(
     size_t max_entries,
-    hyperdag_dependency_cache_t** out_cache
+    mg_dependency_cache_t** out_cache
 );
 
-hyperdag_result_t hyperdag_dependency_cache_destroy(
-    hyperdag_dependency_cache_t* cache
+mg_result_t mg_dependency_cache_destroy(
+    mg_dependency_cache_t* cache
 );
 
-hyperdag_result_t hyperdag_dependency_cache_get(
-    const hyperdag_dependency_cache_t* cache,
-    hyperdag_id_t asset_id,
-    hyperdag_id_t** out_dependencies,
+mg_result_t mg_dependency_cache_get(
+    const mg_dependency_cache_t* cache,
+    mg_id_t asset_id,
+    mg_id_t** out_dependencies,
     size_t* out_count
 );
 
-hyperdag_result_t hyperdag_dependency_cache_put(
-    hyperdag_dependency_cache_t* cache,
-    hyperdag_id_t asset_id,
-    const hyperdag_id_t* dependencies,
+mg_result_t mg_dependency_cache_put(
+    mg_dependency_cache_t* cache,
+    mg_id_t asset_id,
+    const mg_id_t* dependencies,
     size_t count
 );
 
-hyperdag_result_t hyperdag_dependency_cache_invalidate(
-    hyperdag_dependency_cache_t* cache,
-    hyperdag_id_t asset_id
+mg_result_t mg_dependency_cache_invalidate(
+    mg_dependency_cache_t* cache,
+    mg_id_t asset_id
 );
 ```
 
@@ -277,28 +277,28 @@ graph TD
             GRAPH[Dependency Graph]
             CONFIG[Resolution Config]
         end
-        
+
         subgraph "Resolution Engine"
             DISCOVER[Dependency Discovery]
             TOPO[Topological Sort]
             CONFLICT[Conflict Detection]
             OPTIMIZE[Load Optimization]
         end
-        
+
         subgraph "Output Generation"
             ORDER[Load Order]
             PARALLEL[Parallel Batches]
             REPORT[Resolution Report]
         end
-        
+
         ROOT --> DISCOVER
         GRAPH --> DISCOVER
         CONFIG --> DISCOVER
-        
+
         DISCOVER --> TOPO
         TOPO --> CONFLICT
         CONFLICT --> OPTIMIZE
-        
+
         OPTIMIZE --> ORDER
         OPTIMIZE --> PARALLEL
         OPTIMIZE --> REPORT
@@ -315,27 +315,27 @@ graph TD
             COLOR[Node Coloring]
             BACK_EDGE[Back Edge Detection]
         end
-        
+
         subgraph "Analysis"
             CYCLE_EXTRACT[Cycle Extraction]
             SCC[Strongly Connected Components]
             CRITICALITY[Criticality Analysis]
         end
-        
+
         subgraph "Resolution Strategies"
             BREAK[Break Cycle]
             LAZY[Lazy Loading]
             PROXY[Proxy Objects]
             MANUAL[Manual Resolution]
         end
-        
+
         DFS --> COLOR
         COLOR --> BACK_EDGE
         BACK_EDGE --> CYCLE_EXTRACT
-        
+
         CYCLE_EXTRACT --> SCC
         SCC --> CRITICALITY
-        
+
         CRITICALITY --> BREAK
         CRITICALITY --> LAZY
         CRITICALITY --> PROXY
@@ -352,23 +352,23 @@ sequenceDiagram
     participant Worker1 as Worker Thread 1
     participant Worker2 as Worker Thread 2
     participant WorkerN as Worker Thread N
-    
+
     Resolver->>Scheduler: schedule_parallel_loading(load_order)
     Scheduler->>Scheduler: analyze_parallelization_opportunities()
     Scheduler->>Scheduler: create_load_batches()
-    
+
     par Parallel Loading
         Scheduler->>Worker1: load_batch_1(assets)
         Scheduler->>Worker2: load_batch_2(assets)
         Scheduler->>WorkerN: load_batch_N(assets)
     end
-    
+
     Worker1->>Scheduler: batch_1_complete()
     Worker2->>Scheduler: batch_2_complete()
     WorkerN->>Scheduler: batch_N_complete()
-    
+
     Scheduler->>Scheduler: compute_next_ready_batch()
-    
+
     alt More batches available
         Scheduler->>Worker1: load_next_batch(assets)
         Note over Worker1,WorkerN: Continue until all assets loaded
@@ -388,13 +388,13 @@ graph TD
         MINIMIZE --> RESOLVE[Resolve Affected Subgraph]
         RESOLVE --> MERGE[Merge with Existing Resolution]
         MERGE --> UPDATE[Update Load Order]
-        
+
         subgraph "Optimization Strategies"
             CACHE[Dependency Cache]
             MEMOIZE[Memoized Results]
             PRUNE[Scope Pruning]
         end
-        
+
         AFFECTED --> CACHE
         RESOLVE --> MEMOIZE
         MINIMIZE --> PRUNE
@@ -495,4 +495,4 @@ graph TD
 - Error handling covers all failure modes gracefully
 - Documentation provides clear guidance for configuration
 
-This dependency resolution algorithm provides the intelligent automation that transforms HyperDAG from a data structure into a practical asset management system, embodying the evolution from manual JSON manifests to automatic graph-based dependency management described in the origin story.
+This dependency resolution algorithm provides the intelligent automation that transforms Meta-Graph from a data structure into a practical asset management system, embodying the evolution from manual JSON manifests to automatic graph-based dependency management described in the origin story.

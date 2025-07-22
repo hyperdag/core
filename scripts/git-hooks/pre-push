@@ -1,30 +1,28 @@
 #!/bin/sh
-# HyperDAG pre-push hook - Comprehensive validation before sharing
+# Meta-Graph pre-push hook - Comprehensive validation before sharing
 # This hook runs before pushing to ensure shared code meets extreme quality standards
 
 set -eu
 
 # Import shared utilities
-. "$(git rev-parse --show-toplevel)/scripts/shlib.sh"
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+. ./scripts/mg.sh
 
 echo "🚀 Running pre-push validation..."
 
-PROJECT_ROOT="$(git rev-parse --show-toplevel)"
-pushd "$PROJECT_ROOT" >/dev/null
-
 # Full static analysis
 echo "🔍 Running comprehensive static analysis..."
+
 if ! ./scripts/run-clang-tidy.sh; then
-    echo "❌ Static analysis failed"
-    popd >/dev/null
+    mg_red "❌ Static analysis failed"
     exit 1
 fi
 
 # Security scan
 echo "🛡️ Running security audit..."
 if ! ./scripts/security-audit.sh; then
-    echo "❌ Security audit failed"
-    popd >/dev/null
+    mg_red "❌ Security audit failed"
     exit 1
 fi
 
@@ -32,17 +30,15 @@ fi
 if [ -d "build" ]; then
     echo "🧪 Running full test suite..."
     if ! make -C build test; then
-        echo "❌ Test suite failed"
-        popd >/dev/null
+        mg_red "❌ Test suite failed"
         exit 1
     fi
-    
+
     # Memory leak detection if ASan is available
     echo "🧪 Checking for memory leaks..."
-    if [ -f "build/bin/hyperdag_tests" ]; then
-        if ! ASAN_OPTIONS="abort_on_error=1:detect_leaks=1" build/bin/hyperdag_tests; then
-            echo "❌ Memory leak detected"
-            popd >/dev/null
+    if [ -f "build/bin/mg_tests" ]; then
+        if ! ASAN_OPTIONS="abort_on_error=1:detect_leaks=1" build/bin/mg_tests; then
+            mg_red "❌ Memory leak detected"
             exit 1
         fi
     fi
@@ -52,10 +48,9 @@ fi
 if [ -d "benchmarks" ]; then
     echo "📊 Running performance regression check..."
     if ! ./scripts/profile.sh --check-regression; then
-        echo "⚠️ Performance regression detected (non-blocking)"
+        mg_yellow "⚠️ Performance regression detected (non-blocking)"
     fi
 fi
 
-popd >/dev/null
-echo "✅ All pre-push checks passed!"
-echo "🎉 Code is ready for sharing - maintaining extreme quality standards!"
+mg_green "✅ All pre-push checks passed!"
+mg_green "🎉 Code is ready for sharing - maintaining extreme quality standards!"

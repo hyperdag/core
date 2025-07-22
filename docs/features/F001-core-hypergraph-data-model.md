@@ -2,9 +2,14 @@
 
 ## Feature Overview
 
-The Core Hypergraph Data Model provides the fundamental mathematical structure for representing assets and their complex interdependencies. Unlike traditional graphs where edges connect exactly two nodes, hypergraphs support hyperedges that can connect any number of nodes, enabling rich representation of asset relationships such as "this material depends on these three textures and two shaders."
+The core data structure that this library models is a ___recursive metagraph___–a graph in which everything–nodes, edges–may themselves also be graphs, recursively.
 
-This feature implements the core insight from the origin story: "everything is graphs" - where assets become nodes in a hypergraph and dependencies become weighted, typed hyperedges.
+This model provides the fundamental mathematical structure for representing assets and their complex interdependencies.
+
+Nodes? Graphs.
+Edges? Graphs.
+
+It's all graphs, all the way down.
 
 ## Priority
 **Critical** - Foundation for all other features
@@ -17,7 +22,7 @@ This feature implements the core insight from the origin story: "everything is g
 
 ### F001.US001 - Create Hypergraph Instance
 **As a** system developer
-**I want** to create and initialize hypergraph instances
+**I want** to create and initialize mg instances
 **So that** I can represent complex asset dependency relationships
 
 **Prerequisites:**
@@ -25,14 +30,14 @@ This feature implements the core insight from the origin story: "everything is g
 - Error handling system available (F.011)
 
 **Acceptance Criteria:**
-- Can create empty hypergraph with zero nodes and edges
+- Can create empty meta-graph with zero nodes and edges
 - Hypergraph has unique identifier and metadata
 - Memory allocation is tracked and can be freed
 - Thread-safe creation and destruction
 
 ### F001.US002 - Add Nodes to Hypergraph
 **As a** system developer
-**I want** to add nodes to a hypergraph with associated metadata
+**I want** to add nodes to a meta-graph with associated metadata
 **So that** I can represent individual assets in the dependency graph
 
 **Prerequisites:**
@@ -52,7 +57,7 @@ This feature implements the core insight from the origin story: "everything is g
 **So that** I can represent complex dependency relationships where one asset depends on multiple others
 
 **Prerequisites:**
-- Nodes exist in hypergraph
+- Nodes exist in meta-graph
 - Node IDs are valid and accessible
 
 **Acceptance Criteria:**
@@ -80,7 +85,7 @@ This feature implements the core insight from the origin story: "everything is g
 
 ### F001.US005 - Memory Management
 **As a** system developer
-**I want** deterministic memory management for hypergraphs
+**I want** deterministic memory management for meta-graphs
 **So that** I can use the library in resource-constrained environments
 
 **Prerequisites:**
@@ -99,73 +104,73 @@ This feature implements the core insight from the origin story: "everything is g
 
 ```c
 // Core data structures
-typedef struct hyperdag_graph hyperdag_graph_t;
-typedef struct hyperdag_node hyperdag_node_t;
-typedef struct hyperdag_edge hyperdag_edge_t;
+typedef struct mg_graph mg_graph_t;
+typedef struct mg_node mg_node_t;
+typedef struct mg_edge mg_edge_t;
 
 // Unique identifiers
 typedef struct {
     uint64_t high;
     uint64_t low;
-} hyperdag_id_t;
+} mg_id_t;
 
 // Node metadata
 typedef struct {
-    hyperdag_id_t id;
+    mg_id_t id;
     const char* name;
     uint32_t type;
     size_t data_size;
     void* data;
     uint64_t hash;
-} hyperdag_node_metadata_t;
+} mg_node_metadata_t;
 
 // Edge metadata
 typedef struct {
-    hyperdag_id_t id;
+    mg_id_t id;
     uint32_t type;
     float weight;
     size_t node_count;
-    hyperdag_id_t* nodes;
+    mg_id_t* nodes;
     void* properties;
-} hyperdag_edge_metadata_t;
+} mg_edge_metadata_t;
 
 // Graph operations
-hyperdag_result_t hyperdag_graph_create(
-    const hyperdag_graph_config_t* config,
-    hyperdag_graph_t** out_graph
+mg_result_t mg_graph_create(
+    const mg_graph_config_t* config,
+    mg_graph_t** out_graph
 );
 
-hyperdag_result_t hyperdag_graph_destroy(hyperdag_graph_t* graph);
+mg_result_t mg_graph_destroy(mg_graph_t* graph);
 
-hyperdag_result_t hyperdag_graph_add_node(
-    hyperdag_graph_t* graph,
-    const hyperdag_node_metadata_t* metadata,
-    hyperdag_node_t** out_node
+mg_result_t mg_graph_add_node(
+    mg_graph_t* graph,
+    const mg_node_metadata_t* metadata,
+    mg_node_t** out_node
 );
 
-hyperdag_result_t hyperdag_graph_add_edge(
-    hyperdag_graph_t* graph,
-    const hyperdag_edge_metadata_t* metadata,
-    hyperdag_edge_t** out_edge
+mg_result_t mg_graph_add_edge(
+    mg_graph_t* graph,
+    const mg_edge_metadata_t* metadata,
+    mg_edge_t** out_edge
 );
 
-hyperdag_result_t hyperdag_graph_find_node(
-    const hyperdag_graph_t* graph,
-    hyperdag_id_t node_id,
-    hyperdag_node_t** out_node
+mg_result_t mg_graph_find_node(
+    const mg_graph_t* graph,
+    mg_id_t node_id,
+    mg_node_t** out_node
 );
 
-hyperdag_result_t hyperdag_graph_get_incoming_edges(
-    const hyperdag_graph_t* graph,
-    hyperdag_id_t node_id,
-    hyperdag_edge_t*** out_edges,
+mg_result_t mg_graph_get_incoming_edges(
+    const mg_graph_t* graph,
+    mg_id_t node_id,
+    mg_edge_t*** out_edges,
     size_t* out_count
 );
 
-hyperdag_result_t hyperdag_graph_get_outgoing_edges(
-    const hyperdag_graph_t* graph,
-    hyperdag_id_t node_id,
-    hyperdag_edge_t*** out_edges,
+mg_result_t mg_graph_get_outgoing_edges(
+    const mg_graph_t* graph,
+    mg_id_t node_id,
+    mg_edge_t*** out_edges,
     size_t* out_count
 );
 ```
@@ -174,23 +179,23 @@ hyperdag_result_t hyperdag_graph_get_outgoing_edges(
 
 ```mermaid
 classDiagram
-    class HyperDAGGraph {
-        +hyperdag_id_t id
+    class Meta-GraphGraph {
+        +mg_id_t id
         +uint32_t version
         +size_t node_count
         +size_t edge_count
         +hash_table_t* node_index
         +array_t* edges
         +memory_pool_t* memory_pool
-        +create() hyperdag_result_t
-        +destroy() hyperdag_result_t
-        +add_node() hyperdag_result_t
-        +add_edge() hyperdag_result_t
-        +find_node() hyperdag_result_t
+        +create() mg_result_t
+        +destroy() mg_result_t
+        +add_node() mg_result_t
+        +add_edge() mg_result_t
+        +find_node() mg_result_t
     }
 
-    class HyperDAGNode {
-        +hyperdag_id_t id
+    class Meta-GraphNode {
+        +mg_id_t id
         +const char* name
         +uint32_t type
         +size_t data_size
@@ -200,12 +205,12 @@ classDiagram
         +array_t* outgoing_edges
     }
 
-    class HyperDAGEdge {
-        +hyperdag_id_t id
+    class Meta-GraphEdge {
+        +mg_id_t id
         +uint32_t type
         +float weight
         +size_t node_count
-        +hyperdag_id_t* nodes
+        +mg_id_t* nodes
         +void* properties
     }
 
@@ -214,22 +219,22 @@ classDiagram
         +size_t bucket_count
         +size_t item_count
         +hash_function_t hash_fn
-        +insert() hyperdag_result_t
-        +lookup() hyperdag_result_t
-        +remove() hyperdag_result_t
+        +insert() mg_result_t
+        +lookup() mg_result_t
+        +remove() mg_result_t
     }
 
-    HyperDAGGraph ||--o{ HyperDAGNode : contains
-    HyperDAGGraph ||--o{ HyperDAGEdge : contains
-    HyperDAGGraph ||--|| HashTable : uses
-    HyperDAGEdge }o--o{ HyperDAGNode : connects
+    Meta-GraphGraph ||--o{ Meta-GraphNode : contains
+    Meta-GraphGraph ||--o{ Meta-GraphEdge : contains
+    Meta-GraphGraph ||--|| HashTable : uses
+    Meta-GraphEdge }o--o{ Meta-GraphNode : connects
 ```
 
 ## Memory Layout
 
 ```mermaid
 graph TD
-    subgraph "HyperDAG Graph Memory Layout"
+    subgraph "Meta-Graph Graph Memory Layout"
         HEADER[Graph Header<br/>id, version, counts]
         NODE_INDEX[Node Hash Table<br/>O(1) ID lookup]
         NODE_POOL[Node Memory Pool<br/>Fixed-size allocations]
@@ -325,7 +330,7 @@ graph TD
 ## Acceptance Criteria Summary
 
 ✅ **Functional Requirements:**
-- Create/destroy hypergraph instances
+- Create/destroy meta-graph instances
 - Add nodes with metadata and unique IDs
 - Create hyperedges connecting multiple nodes
 - Query node relationships efficiently
@@ -343,4 +348,4 @@ graph TD
 - Valgrind clean memory operations
 - Thread safety validation with helgrind
 
-This feature provides the mathematical foundation that all other HyperDAG features build upon, implementing the core insight from the origin story that "everything is graphs."
+This feature provides the mathematical foundation that all other Meta-Graph features build upon, implementing the core insight from the origin story that "everything is graphs."

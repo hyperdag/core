@@ -22,11 +22,11 @@ jobs:
   # Quality checks using our bash-based git hooks
   # ============================================================================
   quality-checks:
-    name: Quality checks  
+    name: Quality checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -35,43 +35,43 @@ jobs:
             clang-tidy \
             cmake \
             ninja-build
-          
+
           # Install gitleaks
           wget -O gitleaks.tar.gz https://github.com/zricethezav/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
           tar -xzf gitleaks.tar.gz
           sudo mv gitleaks /usr/local/bin/
-          
+
       - name: Make scripts executable
         run: chmod +x scripts/*.sh
-        
+
       - name: Run quality checks (equivalent to pre-commit hook)
         run: |
           echo "🔍 Running quality checks..."
-          
+
           # Code formatting check
           if ! ./scripts/run-clang-format.sh --check; then
             echo "❌ Code formatting check failed"
             exit 1
           fi
-          
+
           # Security scan
           if ! ./scripts/run-gitleaks.sh; then
-            echo "❌ Security scan failed" 
+            echo "❌ Security scan failed"
             exit 1
           fi
-          
+
           # Version consistency
           if ! ./scripts/check-version-consistency.sh; then
             echo "❌ Version consistency check failed"
             exit 1
           fi
-          
+
           # Include guard check
           if ! ./scripts/check-include-guards.sh; then
             echo "❌ Include guard check failed"
             exit 1
           fi
-          
+
           echo "✅ All quality checks passed!"
 
   # ============================================================================
@@ -195,19 +195,19 @@ jobs:
           # Configure CMake options
           cmake_options=""
           cmake_options="$cmake_options -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}"
-          cmake_options="$cmake_options -DHYPERDAG_BUILD_TESTS=ON"
-          cmake_options="$cmake_options -DHYPERDAG_BUILD_EXAMPLES=ON"
+          cmake_options="$cmake_options -DMETAGRAPH_BUILD_TESTS=ON"
+          cmake_options="$cmake_options -DMETAGRAPH_BUILD_EXAMPLES=ON"
 
           if [[ "${{ matrix.config.sanitizers }}" == "true" ]]; then
-            cmake_options="$cmake_options -DHYPERDAG_SANITIZERS=ON"
+            cmake_options="$cmake_options -DMETAGRAPH_SANITIZERS=ON"
           fi
 
           if [[ "${{ matrix.config.asan }}" == "true" ]]; then
-            cmake_options="$cmake_options -DHYPERDAG_ASAN=ON"
+            cmake_options="$cmake_options -DMETAGRAPH_ASAN=ON"
           fi
 
           if [[ "${{ matrix.config.ubsan }}" == "true" ]]; then
-            cmake_options="$cmake_options -DHYPERDAG_UBSAN=ON"
+            cmake_options="$cmake_options -DMETAGRAPH_UBSAN=ON"
           fi
 
           # Set compilers
@@ -263,10 +263,10 @@ jobs:
 
       - name: Build with Docker
         run: |
-          docker build -f docker/Dockerfile.${{ matrix.compiler }} -t hyperdag-${{ matrix.compiler }} .
-          docker run --rm -v $PWD:/workspace hyperdag-${{ matrix.compiler }} \
+          docker build -f docker/Dockerfile.${{ matrix.compiler }} -t METAGRAPH-${{ matrix.compiler }} .
+          docker run --rm -v $PWD:/workspace METAGRAPH-${{ matrix.compiler }} \
             bash -c "cd /workspace && mkdir -p build && cd build && \
-                     cmake -DHYPERDAG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release .. && \
+                     cmake -DMETAGRAPH_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release .. && \
                      cmake --build . --parallel \$(nproc)"
 
   # ============================================================================

@@ -1,19 +1,19 @@
 /*
- * HyperDAG Version Tool
+ * Meta-Graph Version Tool
  * Simple utility to display version information
  */
 
-#include "hyperdag/version.h"
+#include "mg/version.h"
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {
     (void)argc;
     (void)argv;
 
-    printf("HyperDAG %s\n", HYPERDAG_VERSION_STRING);
-    printf("Major: %d\n", HYPERDAG_VERSION_MAJOR);
-    printf("Minor: %d\n", HYPERDAG_VERSION_MINOR);
-    printf("Patch: %d\n", HYPERDAG_VERSION_PATCH);
+    printf("Meta-Graph %s\n", METAGRAPH_VERSION_STRING);
+    printf("Major: %d\n", METAGRAPH_VERSION_MAJOR);
+    printf("Minor: %d\n", METAGRAPH_VERSION_MINOR);
+    printf("Patch: %d\n", METAGRAPH_VERSION_PATCH);
 
     return 0;
 }

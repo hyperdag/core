@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Graph Traversal Engine implements efficient algorithms for navigating and analyzing hypergraph structures. This feature provides the algorithmic foundation for dependency resolution, asset discovery, and graph analysis operations that are central to HyperDAG's capabilities.
+The Graph Traversal Engine implements efficient algorithms for navigating and analyzing meta-graph structures. This feature provides the algorithmic foundation for dependency resolution, asset discovery, and graph analysis operations that are central to Meta-Graph's capabilities.
 
 Building on the origin story's insight that "everything is graphs," this engine provides high-performance traversal algorithms optimized for the sparse, hierarchical nature of asset dependency graphs.
 
@@ -17,9 +17,9 @@ Building on the origin story's insight that "everything is graphs," this engine 
 ## User Stories
 
 ### F005.US001 - Depth-First Search Implementation
-**As a** system developer  
-**I want** efficient depth-first search traversal  
-**So that** I can explore dependency chains and detect cycles  
+**As a** system developer
+**I want** efficient depth-first search traversal
+**So that** I can explore dependency chains and detect cycles
 
 **Prerequisites:**
 - Hypergraph data model available (F.001)
@@ -33,9 +33,9 @@ Building on the origin story's insight that "everything is graphs," this engine 
 - Memory usage scales with graph depth, not size
 
 ### F005.US002 - Breadth-First Search Implementation
-**As a** system developer  
-**I want** efficient breadth-first search traversal  
-**So that** I can find shortest paths and perform level-order analysis  
+**As a** system developer
+**I want** efficient breadth-first search traversal
+**So that** I can find shortest paths and perform level-order analysis
 
 **Prerequisites:**
 - Hypergraph data model available (F.001)
@@ -49,9 +49,9 @@ Building on the origin story's insight that "everything is graphs," this engine 
 - Handles disconnected graph components
 
 ### F005.US003 - Topological Ordering
-**As a** dependency resolution system  
-**I want** to compute topological ordering of nodes  
-**So that** dependencies can be resolved in correct order  
+**As a** dependency resolution system
+**I want** to compute topological ordering of nodes
+**So that** dependencies can be resolved in correct order
 
 **Prerequisites:**
 - Directed acyclic graph validation
@@ -65,9 +65,9 @@ Building on the origin story's insight that "everything is graphs," this engine 
 - Supports partial ordering for streaming resolution
 
 ### F005.US004 - Hyperedge Traversal
-**As a** system developer  
-**I want** specialized traversal for hyperedges  
-**So that** complex multi-node relationships can be analyzed  
+**As a** system developer
+**I want** specialized traversal for hyperedges
+**So that** complex multi-node relationships can be analyzed
 
 **Prerequisites:**
 - Hypergraph data model with hyperedges
@@ -81,9 +81,9 @@ Building on the origin story's insight that "everything is graphs," this engine 
 - Respects hyperedge directionality where applicable
 
 ### F005.US005 - Parallel Traversal Support
-**As a** performance engineer  
-**I want** parallel graph traversal algorithms  
-**So that** large graphs can be processed efficiently on multi-core systems  
+**As a** performance engineer
+**I want** parallel graph traversal algorithms
+**So that** large graphs can be processed efficiently on multi-core systems
 
 **Prerequisites:**
 - Thread-safe graph access primitives (F.008)
@@ -101,121 +101,121 @@ Building on the origin story's insight that "everything is graphs," this engine 
 ```c
 // Traversal context and configuration
 typedef struct {
-    hyperdag_graph_t* graph;
+    mg_graph_t* graph;
     void* user_data;
     uint32_t max_depth;
     uint32_t max_nodes;
     bool detect_cycles;
     bool early_termination;
-} hyperdag_traversal_context_t;
+} mg_traversal_context_t;
 
 // Visitor pattern for traversal callbacks
 typedef enum {
-    HYPERDAG_VISIT_CONTINUE,    // Continue traversal
-    HYPERDAG_VISIT_SKIP,        // Skip this subtree
-    HYPERDAG_VISIT_TERMINATE    // Stop entire traversal
-} hyperdag_visit_result_t;
+    METAGRAPH_VISIT_CONTINUE,    // Continue traversal
+    METAGRAPH_VISIT_SKIP,        // Skip this subtree
+    METAGRAPH_VISIT_TERMINATE    // Stop entire traversal
+} mg_visit_result_t;
 
-typedef hyperdag_visit_result_t (*hyperdag_node_visitor_t)(
-    const hyperdag_node_t* node,
+typedef mg_visit_result_t (*mg_node_visitor_t)(
+    const mg_node_t* node,
     uint32_t depth,
     void* user_data
 );
 
-typedef hyperdag_visit_result_t (*hyperdag_edge_visitor_t)(
-    const hyperdag_edge_t* edge,
-    const hyperdag_node_t* from_node,
-    const hyperdag_node_t* to_node,
+typedef mg_visit_result_t (*mg_edge_visitor_t)(
+    const mg_edge_t* edge,
+    const mg_node_t* from_node,
+    const mg_node_t* to_node,
     uint32_t depth,
     void* user_data
 );
 
 // Depth-First Search
 typedef enum {
-    HYPERDAG_DFS_PREORDER,     // Visit node before children
-    HYPERDAG_DFS_POSTORDER,    // Visit node after children
-    HYPERDAG_DFS_BOTH          // Visit node before and after children
-} hyperdag_dfs_mode_t;
+    METAGRAPH_DFS_PREORDER,     // Visit node before children
+    METAGRAPH_DFS_POSTORDER,    // Visit node after children
+    METAGRAPH_DFS_BOTH          // Visit node before and after children
+} mg_dfs_mode_t;
 
-hyperdag_result_t hyperdag_traverse_dfs(
-    const hyperdag_traversal_context_t* context,
-    hyperdag_id_t start_node,
-    hyperdag_dfs_mode_t mode,
-    hyperdag_node_visitor_t node_visitor,
-    hyperdag_edge_visitor_t edge_visitor
+mg_result_t mg_traverse_dfs(
+    const mg_traversal_context_t* context,
+    mg_id_t start_node,
+    mg_dfs_mode_t mode,
+    mg_node_visitor_t node_visitor,
+    mg_edge_visitor_t edge_visitor
 );
 
 // Breadth-First Search
 typedef struct {
-    hyperdag_id_t node_id;
+    mg_id_t node_id;
     uint32_t distance;
-    hyperdag_id_t parent_id;
-} hyperdag_bfs_node_info_t;
+    mg_id_t parent_id;
+} mg_bfs_node_info_t;
 
-hyperdag_result_t hyperdag_traverse_bfs(
-    const hyperdag_traversal_context_t* context,
-    hyperdag_id_t start_node,
-    hyperdag_id_t target_node,  // HYPERDAG_INVALID_ID for full traversal
-    hyperdag_node_visitor_t node_visitor,
-    hyperdag_edge_visitor_t edge_visitor,
-    hyperdag_bfs_node_info_t** out_path,
+mg_result_t mg_traverse_bfs(
+    const mg_traversal_context_t* context,
+    mg_id_t start_node,
+    mg_id_t target_node,  // METAGRAPH_INVALID_ID for full traversal
+    mg_node_visitor_t node_visitor,
+    mg_edge_visitor_t edge_visitor,
+    mg_bfs_node_info_t** out_path,
     size_t* out_path_length
 );
 
 // Topological ordering
 typedef struct {
-    hyperdag_id_t* nodes;       // Topologically sorted node IDs
+    mg_id_t* nodes;       // Topologically sorted node IDs
     size_t node_count;          // Number of nodes in ordering
-    hyperdag_id_t* cycle_nodes; // Nodes involved in cycles (if any)
+    mg_id_t* cycle_nodes; // Nodes involved in cycles (if any)
     size_t cycle_count;         // Number of nodes in cycles
-} hyperdag_topological_result_t;
+} mg_topological_result_t;
 
-hyperdag_result_t hyperdag_compute_topological_order(
-    const hyperdag_graph_t* graph,
-    hyperdag_topological_result_t* out_result
+mg_result_t mg_compute_topological_order(
+    const mg_graph_t* graph,
+    mg_topological_result_t* out_result
 );
 
-hyperdag_result_t hyperdag_topological_result_destroy(
-    hyperdag_topological_result_t* result
+mg_result_t mg_topological_result_destroy(
+    mg_topological_result_t* result
 );
 
 // Incremental topological updates
-typedef struct hyperdag_topological_context hyperdag_topological_context_t;
+typedef struct mg_topological_context mg_topological_context_t;
 
-hyperdag_result_t hyperdag_topological_context_create(
-    const hyperdag_graph_t* graph,
-    hyperdag_topological_context_t** out_context
+mg_result_t mg_topological_context_create(
+    const mg_graph_t* graph,
+    mg_topological_context_t** out_context
 );
 
-hyperdag_result_t hyperdag_topological_context_destroy(
-    hyperdag_topological_context_t* context
+mg_result_t mg_topological_context_destroy(
+    mg_topological_context_t* context
 );
 
-hyperdag_result_t hyperdag_topological_add_edge(
-    hyperdag_topological_context_t* context,
-    hyperdag_id_t from_node,
-    hyperdag_id_t to_node
+mg_result_t mg_topological_add_edge(
+    mg_topological_context_t* context,
+    mg_id_t from_node,
+    mg_id_t to_node
 );
 
-hyperdag_result_t hyperdag_topological_remove_edge(
-    hyperdag_topological_context_t* context,
-    hyperdag_id_t from_node,
-    hyperdag_id_t to_node
+mg_result_t mg_topological_remove_edge(
+    mg_topological_context_t* context,
+    mg_id_t from_node,
+    mg_id_t to_node
 );
 
 // Hyperedge traversal
 typedef enum {
-    HYPERDAG_HYPEREDGE_EXPAND,     // Treat hyperedge as multiple binary edges
-    HYPERDAG_HYPEREDGE_ATOMIC,     // Treat hyperedge as single unit
-    HYPERDAG_HYPEREDGE_STARRED     // Star configuration with center node
-} hyperdag_hyperedge_mode_t;
+    METAGRAPH_HYPEREDGE_EXPAND,     // Treat hyperedge as multiple binary edges
+    METAGRAPH_HYPEREDGE_ATOMIC,     // Treat hyperedge as single unit
+    METAGRAPH_HYPEREDGE_STARRED     // Star configuration with center node
+} mg_hyperedge_mode_t;
 
-hyperdag_result_t hyperdag_traverse_hyperedges(
-    const hyperdag_traversal_context_t* context,
-    hyperdag_id_t start_node,
-    hyperdag_hyperedge_mode_t mode,
-    hyperdag_node_visitor_t node_visitor,
-    hyperdag_edge_visitor_t edge_visitor
+mg_result_t mg_traverse_hyperedges(
+    const mg_traversal_context_t* context,
+    mg_id_t start_node,
+    mg_hyperedge_mode_t mode,
+    mg_node_visitor_t node_visitor,
+    mg_edge_visitor_t edge_visitor
 );
 
 // Parallel traversal
@@ -223,35 +223,35 @@ typedef struct {
     uint32_t thread_count;      // Number of worker threads
     size_t work_unit_size;      // Minimum work unit for load balancing
     bool deterministic;         // Ensure deterministic ordering
-} hyperdag_parallel_config_t;
+} mg_parallel_config_t;
 
-hyperdag_result_t hyperdag_traverse_parallel_bfs(
-    const hyperdag_traversal_context_t* context,
-    hyperdag_id_t start_node,
-    const hyperdag_parallel_config_t* parallel_config,
-    hyperdag_node_visitor_t node_visitor,
-    hyperdag_edge_visitor_t edge_visitor
+mg_result_t mg_traverse_parallel_bfs(
+    const mg_traversal_context_t* context,
+    mg_id_t start_node,
+    const mg_parallel_config_t* parallel_config,
+    mg_node_visitor_t node_visitor,
+    mg_edge_visitor_t edge_visitor
 );
 
 // Graph analysis utilities
-hyperdag_result_t hyperdag_find_shortest_path(
-    const hyperdag_graph_t* graph,
-    hyperdag_id_t start_node,
-    hyperdag_id_t end_node,
-    hyperdag_id_t** out_path,
+mg_result_t mg_find_shortest_path(
+    const mg_graph_t* graph,
+    mg_id_t start_node,
+    mg_id_t end_node,
+    mg_id_t** out_path,
     size_t* out_path_length
 );
 
-hyperdag_result_t hyperdag_find_strongly_connected_components(
-    const hyperdag_graph_t* graph,
-    hyperdag_id_t*** out_components,
+mg_result_t mg_find_strongly_connected_components(
+    const mg_graph_t* graph,
+    mg_id_t*** out_components,
     size_t** out_component_sizes,
     size_t* out_component_count
 );
 
-hyperdag_result_t hyperdag_detect_cycles(
-    const hyperdag_graph_t* graph,
-    hyperdag_id_t*** out_cycles,
+mg_result_t mg_detect_cycles(
+    const mg_graph_t* graph,
+    mg_id_t*** out_cycles,
     size_t** out_cycle_lengths,
     size_t* out_cycle_count
 );
@@ -264,10 +264,10 @@ typedef struct {
     double traversal_time_ms;
     size_t peak_memory_bytes;
     uint32_t thread_utilization_percent;
-} hyperdag_traversal_stats_t;
+} mg_traversal_stats_t;
 
-hyperdag_result_t hyperdag_get_traversal_stats(hyperdag_traversal_stats_t* out_stats);
-hyperdag_result_t hyperdag_reset_traversal_stats(void);
+mg_result_t mg_get_traversal_stats(mg_traversal_stats_t* out_stats);
+mg_result_t mg_reset_traversal_stats(void);
 ```
 
 ## Traversal Algorithm Architecture
@@ -281,23 +281,23 @@ graph TD
             TOPO[Topological Sort<br/>Kahn's algorithm]
             CYCLE[Cycle Detection<br/>DFS with coloring]
         end
-        
+
         subgraph "Hyperedge Support"
             EXPAND[Edge Expansion<br/>Binary edge simulation]
             ATOMIC[Atomic Traversal<br/>Hyperedge as unit]
             STAR[Star Configuration<br/>Center node pattern]
         end
-        
+
         subgraph "Optimization"
             PARALLEL[Parallel Algorithms<br/>Work-stealing BFS]
             CACHE[Cache-Friendly<br/>Memory layout]
             INCREMENTAL[Incremental Updates<br/>Efficient recomputation]
         end
-        
+
         DFS --> CYCLE
         BFS --> PARALLEL
         TOPO --> INCREMENTAL
-        
+
         EXPAND --> PARALLEL
         ATOMIC --> CACHE
         STAR --> INCREMENTAL
@@ -312,15 +312,15 @@ graph TD
         START[Start Node] --> STACK[Initialize Stack]
         STACK --> PUSH[Push Start Node]
         PUSH --> LOOP{Stack Empty?}
-        
+
         LOOP -->|No| POP[Pop Node]
         POP --> VISIT[Visit Node]
         VISIT --> CHILDREN[Get Children]
         CHILDREN --> PUSH_CHILDREN[Push Unvisited Children]
         PUSH_CHILDREN --> LOOP
-        
+
         LOOP -->|Yes| DONE[Traversal Complete]
-        
+
         subgraph "Cycle Detection"
             VISIT --> COLOR_CHECK{Node Color?}
             COLOR_CHECK -->|White| MARK_GRAY[Mark Gray]
@@ -342,29 +342,29 @@ graph TD
             PARTITIONER[Work Partitioner]
             QUEUES[Thread-Local Queues]
         end
-        
+
         subgraph "Worker Threads"
             T1[Thread 1<br/>Process partition]
             T2[Thread 2<br/>Process partition]
             TN[Thread N<br/>Process partition]
         end
-        
+
         subgraph "Synchronization"
             BARRIER[Synchronization Barrier]
             MERGE[Merge Results]
             NEXT_LEVEL[Next Level Frontier]
         end
-        
+
         FRONTIER --> PARTITIONER
         PARTITIONER --> QUEUES
         QUEUES --> T1
         QUEUES --> T2
         QUEUES --> TN
-        
+
         T1 --> BARRIER
         T2 --> BARRIER
         TN --> BARRIER
-        
+
         BARRIER --> MERGE
         MERGE --> NEXT_LEVEL
         NEXT_LEVEL --> FRONTIER
@@ -379,21 +379,21 @@ sequenceDiagram
     participant Topo as Topological Sort
     participant Graph as Graph Structure
     participant Queue as Priority Queue
-    
+
     Client->>Topo: compute_topological_order()
     Topo->>Graph: compute_in_degrees()
     Graph->>Topo: in_degree_array
-    
+
     Topo->>Queue: initialize_with_zero_indegree()
     Queue->>Topo: zero_indegree_nodes
-    
+
     loop Until queue empty
         Topo->>Queue: dequeue_node()
         Queue->>Topo: current_node
         Topo->>Topo: add_to_result(current_node)
         Topo->>Graph: get_outgoing_edges(current_node)
         Graph->>Topo: outgoing_edges
-        
+
         loop For each outgoing edge
             Topo->>Topo: decrement_indegree(target)
             alt Indegree becomes zero
@@ -401,7 +401,7 @@ sequenceDiagram
             end
         end
     end
-    
+
     Topo->>Topo: check_remaining_nodes()
     alt Nodes remain with non-zero indegree
         Topo->>Client: CYCLE_DETECTED + cycle_nodes
@@ -416,33 +416,33 @@ sequenceDiagram
 ```c
 // Optimize traversal for cache efficiency
 typedef struct {
-    hyperdag_id_t* nodes;       // Node IDs for current level
+    mg_id_t* nodes;       // Node IDs for current level
     size_t count;               // Number of nodes at this level
     size_t capacity;            // Allocated capacity
 } level_buffer_t;
 
 // Use level-by-level processing for better cache locality
-static hyperdag_result_t traverse_level_order(
-    const hyperdag_graph_t* graph,
-    hyperdag_id_t start_node,
-    hyperdag_node_visitor_t visitor
+static mg_result_t traverse_level_order(
+    const mg_graph_t* graph,
+    mg_id_t start_node,
+    mg_node_visitor_t visitor
 ) {
     level_buffer_t current_level = {0};
     level_buffer_t next_level = {0};
-    
+
     // Process nodes level by level for cache efficiency
     level_buffer_add(&current_level, start_node);
-    
+
     while (current_level.count > 0) {
         // Process all nodes at current level
         for (size_t i = 0; i < current_level.count; i++) {
-            hyperdag_node_t* node = graph_get_node(graph, current_level.nodes[i]);
+            mg_node_t* node = graph_get_node(graph, current_level.nodes[i]);
             visitor(node, level, user_data);
-            
+
             // Add children to next level
             add_children_to_level(&next_level, node);
         }
-        
+
         // Swap levels
         level_buffer_swap(&current_level, &next_level);
         level_buffer_clear(&next_level);
@@ -456,19 +456,19 @@ static hyperdag_result_t traverse_level_order(
 typedef struct {
     atomic_size_t head;         // Head of work queue
     atomic_size_t tail;         // Tail of work queue
-    hyperdag_id_t* work_items;  // Work items buffer
+    mg_id_t* work_items;  // Work items buffer
     size_t capacity;            // Queue capacity
 } work_stealing_queue_t;
 
-static hyperdag_result_t parallel_bfs_worker(
+static mg_result_t parallel_bfs_worker(
     int thread_id,
     work_stealing_queue_t* local_queue,
     work_stealing_queue_t* global_queues,
     int num_threads
 ) {
     while (has_work_remaining()) {
-        hyperdag_id_t node_id;
-        
+        mg_id_t node_id;
+
         // Try to get work from local queue first
         if (work_queue_pop(local_queue, &node_id)) {
             process_node(node_id, local_queue);
@@ -573,4 +573,4 @@ static hyperdag_result_t parallel_bfs_worker(
 - Performance benchmarks track optimization
 - Memory leak detection for all traversal paths
 
-This graph traversal engine provides the algorithmic foundation that enables efficient dependency resolution, build optimization, and analysis capabilities that are central to HyperDAG's value proposition.
+This graph traversal engine provides the algorithmic foundation that enables efficient dependency resolution, build optimization, and analysis capabilities that are central to Meta-Graph's value proposition.

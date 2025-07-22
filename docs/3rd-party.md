@@ -1,6 +1,6 @@
-# Third-Party Library Recommendations for HyperDAG
+# Third-Party Library Recommendations for Meta-Graph
 
-This document provides opinionated recommendations for third-party C libraries to handle foundational components of HyperDAG, allowing us to focus on the core hypergraph implementation rather than reinventing well-solved problems.
+This document provides opinionated recommendations for third-party C libraries to handle foundational components of Meta-Graph, allowing us to focus on the core meta-graph implementation rather than reinventing well-solved problems.
 
 ## Selection Criteria
 
@@ -17,9 +17,9 @@ All recommendations must meet these requirements:
 
 ### 🏆 Primary Recommendation: Official BLAKE3 C Implementation
 
-**Repository**: [BLAKE3-team/BLAKE3](https://github.com/BLAKE3-team/BLAKE3)  
-**License**: CC0-1.0 / Apache-2.0  
-**Integration**: Compile `c/blake3.c` with your project  
+**Repository**: [BLAKE3-team/BLAKE3](https://github.com/BLAKE3-team/BLAKE3)
+**License**: CC0-1.0 / Apache-2.0
+**Integration**: Compile `c/blake3.c` with your project
 **Fit Rating**: ⭐⭐⭐⭐⭐ (5/5 stars)
 
 The official BLAKE3 implementation provides the definitive C implementation of the algorithm with extensive SIMD optimizations.
@@ -49,7 +49,7 @@ uint8_t final_hash[BLAKE3_OUT_LEN];
 blake3_hasher_finalize(&stream_hasher, final_hash, BLAKE3_OUT_LEN);
 ```
 
-#### HyperDAG-Specific Pitfalls
+#### Meta-Graph-Specific Pitfalls
 
 - **Large Bundle Streaming**: For multi-GB bundles, always use streaming API to avoid memory exhaustion
 - **Thread Safety**: `blake3_hasher` is not thread-safe; use separate hasher instances per thread
@@ -59,9 +59,9 @@ blake3_hasher_finalize(&stream_hasher, final_hash, BLAKE3_OUT_LEN);
 
 ### Alternative: blake3-c (Standalone C Port)
 
-**Repository**: [oconnor663/blake3-c](https://github.com/oconnor663/blake3-c)  
-**License**: CC0-1.0  
-**Integration**: Single header + implementation file  
+**Repository**: [oconnor663/blake3-c](https://github.com/oconnor663/blake3-c)
+**License**: CC0-1.0
+**Integration**: Single header + implementation file
 **Fit Rating**: ⭐⭐⭐⭐ (4/5 stars)
 
 A standalone C port that may be easier to integrate but potentially less optimized.
@@ -92,9 +92,9 @@ Implementing a cryptographic hash function correctly requires extensive expertis
 
 ### 🏆 Primary Recommendation: tinycthread + Compiler Atomics
 
-**Repository**: [tinycthread/tinycthread](https://github.com/tinycthread/tinycthread)  
-**License**: zlib/libpng  
-**Integration**: Single header file  
+**Repository**: [tinycthread/tinycthread](https://github.com/tinycthread/tinycthread)
+**License**: zlib/libpng
+**Integration**: Single header file
 **Fit Rating**: ⭐⭐⭐⭐ (4/5 stars)
 
 Tinycthread provides C11-compatible threading on platforms that don't support it natively. Combined with compiler-specific atomic intrinsics for lock-free programming.
@@ -106,7 +106,7 @@ Tinycthread provides C11-compatible threading on platforms that don't support it
 
 // Basic threading
 int worker_thread(void* arg) {
-    hyperdag_graph_t* graph = (hyperdag_graph_t*)arg;
+    mg_graph_t* graph = (mg_graph_t*)arg;
     // Process graph nodes...
     return 0;
 }
@@ -128,11 +128,11 @@ _Atomic(uint64_t) node_counter = 0;
 uint64_t new_id = __atomic_fetch_add(&node_counter, 1, __ATOMIC_SEQ_CST);
 
 // Lock-free pointer operations
-_Atomic(hyperdag_node_t*) head_node = NULL;
-hyperdag_node_t* old_head = __atomic_load(&head_node, __ATOMIC_ACQUIRE);
+_Atomic(mg_node_t*) head_node = NULL;
+mg_node_t* old_head = __atomic_load(&head_node, __ATOMIC_ACQUIRE);
 ```
 
-#### HyperDAG-Specific Pitfalls
+#### Meta-Graph-Specific Pitfalls
 
 - **Memory Ordering**: Critical for lock-free graph algorithms; use `__ATOMIC_SEQ_CST` when unsure
 - **ABA Problem**: In lock-free node insertion/deletion, use generation counters or hazard pointers
@@ -142,8 +142,8 @@ hyperdag_node_t* old_head = __atomic_load(&head_node, __ATOMIC_ACQUIRE);
 
 ### Alternative: Platform-Specific APIs with Custom Wrapper
 
-**Components**: pthreads (Unix), Windows Threading APIs  
-**Integration**: Custom abstraction layer  
+**Components**: pthreads (Unix), Windows Threading APIs
+**Integration**: Custom abstraction layer
 **Fit Rating**: ⭐⭐⭐⭐⭐ (5/5 stars)
 
 Direct use of platform threading APIs with a thin abstraction layer for portability.
@@ -174,9 +174,9 @@ Threading is complex and error-prone. Custom implementation would essentially du
 
 ### 🏆 Primary Recommendation: mimalloc + Custom Arenas
 
-**Repository**: [microsoft/mimalloc](https://github.com/microsoft/mimalloc)  
-**License**: MIT  
-**Integration**: Compile mimalloc source files  
+**Repository**: [microsoft/mimalloc](https://github.com/microsoft/mimalloc)
+**License**: MIT
+**Integration**: Compile mimalloc source files
 **Fit Rating**: ⭐⭐⭐⭐ (4/5 stars)
 
 Microsoft's high-performance malloc replacement for general allocation, combined with custom arena allocators for specialized patterns.
@@ -192,7 +192,7 @@ mi_free(ptr);
 
 // Heap-specific allocation for thread isolation
 mi_heap_t* graph_heap = mi_heap_new();
-hyperdag_node_t* node = (hyperdag_node_t*)mi_heap_malloc(graph_heap, sizeof(hyperdag_node_t));
+mg_node_t* node = (mg_node_t*)mi_heap_malloc(graph_heap, sizeof(mg_node_t));
 mi_heap_destroy(graph_heap);
 
 // Custom arena on top of mimalloc
@@ -201,10 +201,10 @@ typedef struct {
     uint8_t* arena_base;
     size_t arena_size;
     size_t arena_offset;
-} hyperdag_arena_t;
+} mg_arena_t;
 
-hyperdag_arena_t* create_node_arena(size_t size) {
-    hyperdag_arena_t* arena = mi_malloc(sizeof(hyperdag_arena_t));
+mg_arena_t* create_node_arena(size_t size) {
+    mg_arena_t* arena = mi_malloc(sizeof(mg_arena_t));
     arena->heap = mi_heap_new();
     arena->arena_base = mi_heap_malloc(arena->heap, size);
     arena->arena_size = size;
@@ -212,17 +212,17 @@ hyperdag_arena_t* create_node_arena(size_t size) {
     return arena;
 }
 
-void* arena_alloc(hyperdag_arena_t* arena, size_t size, size_t align) {
+void* arena_alloc(mg_arena_t* arena, size_t size, size_t align) {
     size_t aligned_offset = (arena->arena_offset + align - 1) & ~(align - 1);
     if (aligned_offset + size > arena->arena_size) return NULL;
-    
+
     void* ptr = arena->arena_base + aligned_offset;
     arena->arena_offset = aligned_offset + size;
     return ptr;
 }
 ```
 
-#### HyperDAG-Specific Pitfalls
+#### Meta-Graph-Specific Pitfalls
 
 - **Thread-Local Heaps**: Use separate heaps for graph construction vs. traversal threads
 - **Arena Lifecycle**: Coordinate arena destruction with graph component lifecycles
@@ -232,9 +232,9 @@ void* arena_alloc(hyperdag_arena_t* arena, size_t size, size_t align) {
 
 ### Alternative: jemalloc
 
-**Repository**: [jemalloc/jemalloc](https://github.com/jemalloc/jemalloc)  
-**License**: BSD-2-Clause  
-**Integration**: System library or compile from source  
+**Repository**: [jemalloc/jemalloc](https://github.com/jemalloc/jemalloc)
+**License**: BSD-2-Clause
+**Integration**: System library or compile from source
 **Fit Rating**: ⭐⭐⭐⭐ (4/5 stars)
 
 Facebook's mature malloc implementation with excellent performance characteristics.
@@ -265,9 +265,9 @@ Memory allocators are extremely complex. Custom arena allocators on top of prove
 
 ### 🏆 Primary Recommendation: uthash
 
-**Repository**: [troydhanson/uthash](https://github.com/troydhanson/uthash)  
-**License**: BSD  
-**Integration**: Single header file  
+**Repository**: [troydhanson/uthash](https://github.com/troydhanson/uthash)
+**License**: BSD
+**Integration**: Single header file
 **Fit Rating**: ⭐⭐⭐⭐ (4/5 stars)
 
 Macro-based hash table that's extremely flexible and widely used in C projects.
@@ -279,42 +279,42 @@ Macro-based hash table that's extremely flexible and widely used in C projects.
 
 // Define node structure with hash handle
 typedef struct {
-    hyperdag_id_t id;           // Key
-    hyperdag_node_data_t data;  // Value
+    mg_id_t id;           // Key
+    mg_node_data_t data;  // Value
     UT_hash_handle hh;          // Hash handle (required)
-} hyperdag_node_entry_t;
+} mg_node_entry_t;
 
 // Hash table operations
-hyperdag_node_entry_t* node_table = NULL;
+mg_node_entry_t* node_table = NULL;
 
 // Insert node
-hyperdag_node_entry_t* add_node(hyperdag_id_t id, hyperdag_node_data_t data) {
-    hyperdag_node_entry_t* entry;
-    HASH_FIND(hh, node_table, &id, sizeof(hyperdag_id_t), entry);
+mg_node_entry_t* add_node(mg_id_t id, mg_node_data_t data) {
+    mg_node_entry_t* entry;
+    HASH_FIND(hh, node_table, &id, sizeof(mg_id_t), entry);
     if (entry == NULL) {
-        entry = malloc(sizeof(hyperdag_node_entry_t));
+        entry = malloc(sizeof(mg_node_entry_t));
         entry->id = id;
         entry->data = data;
-        HASH_ADD(hh, node_table, id, sizeof(hyperdag_id_t), entry);
+        HASH_ADD(hh, node_table, id, sizeof(mg_id_t), entry);
     }
     return entry;
 }
 
 // Find node
-hyperdag_node_entry_t* find_node(hyperdag_id_t id) {
-    hyperdag_node_entry_t* entry;
-    HASH_FIND(hh, node_table, &id, sizeof(hyperdag_id_t), entry);
+mg_node_entry_t* find_node(mg_id_t id) {
+    mg_node_entry_t* entry;
+    HASH_FIND(hh, node_table, &id, sizeof(mg_id_t), entry);
     return entry;
 }
 
 // Iterate all nodes
-hyperdag_node_entry_t* entry, *tmp;
+mg_node_entry_t* entry, *tmp;
 HASH_ITER(hh, node_table, entry, tmp) {
     // Process entry...
 }
 ```
 
-#### HyperDAG-Specific Pitfalls
+#### Meta-Graph-Specific Pitfalls
 
 - **Memory Integration**: Replace malloc/free with mimalloc or arena allocation
 - **Hash Function**: Asset IDs may have patterns; consider custom hash function for better distribution
@@ -324,9 +324,9 @@ HASH_ITER(hh, node_table, entry, tmp) {
 
 ### Alternative: khash
 
-**Repository**: [attractivechaos/klib](https://github.com/attractivechaos/klib)  
-**License**: MIT  
-**Integration**: Single header file (part of klib)  
+**Repository**: [attractivechaos/klib](https://github.com/attractivechaos/klib)
+**License**: MIT
+**Integration**: Single header file (part of klib)
 **Fit Rating**: ⭐⭐⭐⭐⭐ (5/5 stars)
 
 Template-based hash library that's very fast and used in many bioinformatics tools.
@@ -357,31 +357,31 @@ Hash tables are well-understood. Custom implementation could be optimized for as
 
 ### 🏆 Primary Recommendation: Custom Thin Abstraction Layer
 
-**Implementation**: Custom lightweight wrapper around platform APIs  
-**Coverage**: File I/O, memory mapping, basic system info  
+**Implementation**: Custom lightweight wrapper around platform APIs
+**Coverage**: File I/O, memory mapping, basic system info
 **Fit Rating**: ⭐⭐⭐⭐⭐ (5/5 stars)
 
-A focused abstraction layer that covers only HyperDAG's specific needs without unnecessary complexity.
+A focused abstraction layer that covers only Meta-Graph's specific needs without unnecessary complexity.
 
 #### Integration Guide
 
 ```c
-// hyperdag_platform.h - Our custom abstraction
+// mg_platform.h - Our custom abstraction
 #ifdef _WIN32
     #include <windows.h>
-    typedef HANDLE hyperdag_file_t;
-    typedef HANDLE hyperdag_mutex_t;
+    typedef HANDLE mg_file_t;
+    typedef HANDLE mg_mutex_t;
 #else
     #include <unistd.h>
     #include <pthread.h>
-    typedef int hyperdag_file_t;
-    typedef pthread_mutex_t hyperdag_mutex_t;
+    typedef int mg_file_t;
+    typedef pthread_mutex_t mg_mutex_t;
 #endif
 
 // Cross-platform file operations
-hyperdag_result_t hyperdag_file_open(const char* path, hyperdag_file_t* file);
-hyperdag_result_t hyperdag_file_read(hyperdag_file_t file, void* buffer, size_t size);
-hyperdag_result_t hyperdag_file_close(hyperdag_file_t file);
+mg_result_t mg_file_open(const char* path, mg_file_t* file);
+mg_result_t mg_file_read(mg_file_t file, void* buffer, size_t size);
+mg_result_t mg_file_close(mg_file_t file);
 
 // Memory mapping abstraction
 typedef struct {
@@ -393,13 +393,13 @@ typedef struct {
 #else
     int fd;
 #endif
-} hyperdag_mmap_t;
+} mg_mmap_t;
 
-hyperdag_result_t hyperdag_mmap_file(const char* path, hyperdag_mmap_t* map);
-hyperdag_result_t hyperdag_mmap_unmap(hyperdag_mmap_t* map);
+mg_result_t mg_mmap_file(const char* path, mg_mmap_t* map);
+mg_result_t mg_mmap_unmap(mg_mmap_t* map);
 ```
 
-#### HyperDAG-Specific Pitfalls
+#### Meta-Graph-Specific Pitfalls
 
 - **Error Code Mapping**: Ensure consistent error reporting across platforms
 - **Path Handling**: Normalize path separators and handle Unicode properly
@@ -409,9 +409,9 @@ hyperdag_result_t hyperdag_mmap_unmap(hyperdag_mmap_t* map);
 
 ### Alternative: Apache Portable Runtime (APR)
 
-**Repository**: [apr.apache.org](https://apr.apache.org/)  
-**License**: Apache-2.0  
-**Integration**: System library dependency  
+**Repository**: [apr.apache.org](https://apr.apache.org/)
+**License**: Apache-2.0
+**Integration**: System library dependency
 **Fit Rating**: ⭐⭐⭐ (3/5 stars)
 
 Mature, comprehensive cross-platform abstraction used by Apache HTTP Server.
@@ -442,8 +442,8 @@ For our specific needs, a lightweight custom abstraction provides the best balan
 
 ### 🏆 Primary Recommendation: Custom Platform-Optimized Layer
 
-**Implementation**: Direct platform APIs with optimization  
-**Platforms**: mmap (Unix), MapViewOfFile (Windows), io_uring (Linux), DirectStorage (Windows)  
+**Implementation**: Direct platform APIs with optimization
+**Platforms**: mmap (Unix), MapViewOfFile (Windows), io_uring (Linux), DirectStorage (Windows)
 **Fit Rating**: ⭐⭐⭐⭐⭐ (5/5 stars)
 
 Custom implementation that can leverage platform-specific optimizations like io_uring and DirectStorage.
@@ -458,7 +458,7 @@ Custom implementation that can leverage platform-specific optimizations like io_
         struct io_uring ring;
         struct io_uring_sqe* sqe;
         struct io_uring_cqe* cqe;
-    } hyperdag_async_context_t;
+    } mg_async_context_t;
 #endif
 
 #ifdef _WIN32
@@ -467,41 +467,41 @@ Custom implementation that can leverage platform-specific optimizations like io_
         IDStorageFactory* factory;
         IDStorageQueue* queue;
         IDStorageFile* file;
-    } hyperdag_dstorage_context_t;
+    } mg_dstorage_context_t;
 #endif
 
 // High-performance async read
-hyperdag_result_t hyperdag_read_async(
-    hyperdag_file_t file,
+mg_result_t mg_read_async(
+    mg_file_t file,
     uint64_t offset,
     void* buffer,
     size_t size,
-    hyperdag_completion_callback_t callback
+    mg_completion_callback_t callback
 );
 
 // Memory-mapped bundle access
-hyperdag_result_t hyperdag_bundle_mmap(
+mg_result_t mg_bundle_mmap(
     const char* bundle_path,
-    hyperdag_bundle_mmap_t* bundle
+    mg_bundle_mmap_t* bundle
 ) {
 #ifdef _WIN32
     // Use DirectStorage for large bundles
     if (bundle_size > DIRECTSTORAGE_THRESHOLD) {
-        return hyperdag_directstorage_map(bundle_path, bundle);
+        return mg_directstorage_map(bundle_path, bundle);
     }
 #endif
-    
+
 #ifdef __linux__
     // Use io_uring for async operations
-    return hyperdag_uring_mmap(bundle_path, bundle);
+    return mg_uring_mmap(bundle_path, bundle);
 #endif
-    
+
     // Fallback to standard mmap
-    return hyperdag_standard_mmap(bundle_path, bundle);
+    return mg_standard_mmap(bundle_path, bundle);
 }
 ```
 
-#### HyperDAG-Specific Pitfalls
+#### Meta-Graph-Specific Pitfalls
 
 - **Large File Handling**: Ensure proper 64-bit offset handling for multi-GB bundles
 - **Memory Mapping Lifecycle**: Coordinate with graph pointer hydration carefully
@@ -511,8 +511,8 @@ hyperdag_result_t hyperdag_bundle_mmap(
 
 ### Alternative: Portable I/O Library
 
-**Options**: APR, libuv (for async), or other cross-platform libraries  
-**Trade-off**: Portability vs. platform-specific optimization  
+**Options**: APR, libuv (for async), or other cross-platform libraries
+**Trade-off**: Portability vs. platform-specific optimization
 **Fit Rating**: ⭐⭐⭐ (3/5 stars)
 
 ### Roll Our Own Analysis
@@ -558,7 +558,7 @@ I/O patterns for asset management are specific enough that custom implementation
 ### Phase 1: Rapid Prototyping
 
 - Use all recommended third-party libraries
-- Focus on hypergraph algorithm implementation
+- Focus on meta-graph algorithm implementation
 - Get working system quickly
 
 ### Phase 2: Optimization
@@ -593,7 +593,7 @@ add_subdirectory(3rdparty/mimalloc)
 add_subdirectory(3rdparty/blake3)
 
 # Header-only libraries
-target_include_directories(hyperdag PRIVATE 
+target_include_directories(mg PRIVATE
     3rdparty/uthash/include
     3rdparty/tinycthread
 )
@@ -602,4 +602,4 @@ target_include_directories(hyperdag PRIVATE
 add_subdirectory(src/platform)
 ```
 
-This approach allows us to focus our engineering effort on the novel hypergraph algorithms while building on a foundation of proven, high-performance libraries for the infrastructure components.
+This approach allows us to focus our engineering effort on the novel meta-graph algorithms while building on a foundation of proven, high-performance libraries for the infrastructure components.

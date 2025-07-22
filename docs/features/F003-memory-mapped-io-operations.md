@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Memory-Mapped I/O Operations feature implements the core insight from the origin story: efficient access to bundle data through memory mapping with pointer hydration. This enables direct access to serialized hypergraph data without full deserialization, providing the performance foundation for TurtlGraph's capabilities.
+The Memory-Mapped I/O Operations feature implements the core insight from the origin story: efficient access to bundle data through memory mapping with pointer hydration. This enables direct access to serialized meta-graph data without full deserialization, providing the performance foundation for TurtlGraph's capabilities.
 
 This feature implements the binary format's memory-mapped access strategy where offsets are converted to pointers on first access, enabling lazy loading and minimal memory overhead for large bundles.
 
@@ -17,9 +17,9 @@ This feature implements the binary format's memory-mapped access strategy where 
 ## User Stories
 
 ### F003.US001 - Memory-Mapped Bundle Loading
-**As a** performance engineer  
-**I want** to memory-map bundle files for direct access  
-**So that** large bundles can be loaded instantly without full deserialization  
+**As a** performance engineer
+**I want** to memory-map bundle files for direct access
+**So that** large bundles can be loaded instantly without full deserialization
 
 **Prerequisites:**
 - Platform abstraction for memory mapping (F.010)
@@ -33,9 +33,9 @@ This feature implements the binary format's memory-mapped access strategy where 
 - Automatic page alignment and size calculations
 
 ### F003.US002 - Pointer Hydration System
-**As a** system developer  
-**I want** automatic conversion of file offsets to memory pointers  
-**So that** serialized data structures can be accessed directly  
+**As a** system developer
+**I want** automatic conversion of file offsets to memory pointers
+**So that** serialized data structures can be accessed directly
 
 **Prerequisites:**
 - Memory-mapped file access
@@ -49,9 +49,9 @@ This feature implements the binary format's memory-mapped access strategy where 
 - Handles alignment requirements for different architectures
 
 ### F003.US003 - Lazy Loading and Streaming
-**As a** system developer  
-**I want** to load bundle sections on-demand  
-**So that** memory usage is minimized and startup time is reduced  
+**As a** system developer
+**I want** to load bundle sections on-demand
+**So that** memory usage is minimized and startup time is reduced
 
 **Prerequisites:**
 - Section-based bundle format
@@ -65,9 +65,9 @@ This feature implements the binary format's memory-mapped access strategy where 
 - Handles partial bundle loading efficiently
 
 ### F003.US004 - Cross-Platform Memory Management
-**As a** platform engineer  
-**I want** consistent memory mapping behavior across platforms  
-**So that** bundles work identically on all target systems  
+**As a** platform engineer
+**I want** consistent memory mapping behavior across platforms
+**So that** bundles work identically on all target systems
 
 **Prerequisites:**
 - Platform abstraction layer (F.010)
@@ -81,9 +81,9 @@ This feature implements the binary format's memory-mapped access strategy where 
 - Provides platform-specific optimizations where beneficial
 
 ### F003.US005 - Hot Reload Support
-**As a** developer  
-**I want** to detect and reload changed bundle files  
-**So that** asset changes are reflected immediately during development  
+**As a** developer
+**I want** to detect and reload changed bundle files
+**So that** asset changes are reflected immediately during development
 
 **Prerequisites:**
 - File system monitoring capabilities
@@ -107,42 +107,42 @@ typedef struct {
     bool is_writable;
     bool is_coherent;
     void* platform_handle;
-} hyperdag_memory_map_t;
+} mg_memory_map_t;
 
 typedef struct {
     uint64_t offset;        // Offset from base address
     size_t size;           // Size of mapped region
     uint32_t access_flags; // Read/write permissions
     uint32_t cache_flags;  // Caching behavior hints
-} hyperdag_mapping_request_t;
+} mg_mapping_request_t;
 
 // Memory-mapped I/O operations
-hyperdag_result_t hyperdag_mmap_create_from_file(
-    hyperdag_file_t* file,
-    const hyperdag_mapping_request_t* request,
-    hyperdag_memory_map_t** out_map
+mg_result_t mg_mmap_create_from_file(
+    mg_file_t* file,
+    const mg_mapping_request_t* request,
+    mg_memory_map_t** out_map
 );
 
-hyperdag_result_t hyperdag_mmap_create_from_memory(
+mg_result_t mg_mmap_create_from_memory(
     void* buffer,
     size_t size,
     bool writable,
-    hyperdag_memory_map_t** out_map
+    mg_memory_map_t** out_map
 );
 
-hyperdag_result_t hyperdag_mmap_destroy(hyperdag_memory_map_t* map);
+mg_result_t mg_mmap_destroy(mg_memory_map_t* map);
 
-hyperdag_result_t hyperdag_mmap_sync(
-    hyperdag_memory_map_t* map,
+mg_result_t mg_mmap_sync(
+    mg_memory_map_t* map,
     uint64_t offset,
     size_t size
 );
 
-hyperdag_result_t hyperdag_mmap_advise(
-    hyperdag_memory_map_t* map,
+mg_result_t mg_mmap_advise(
+    mg_memory_map_t* map,
     uint64_t offset,
     size_t size,
-    hyperdag_memory_advice_t advice
+    mg_memory_advice_t advice
 );
 
 // Pointer hydration system
@@ -151,24 +151,24 @@ typedef struct {
     void* cached_pointer;   // Cached hydrated pointer
     bool is_hydrated;      // Whether pointer has been computed
     uint32_t access_count; // Number of times accessed
-} hyperdag_offset_pointer_t;
+} mg_offset_pointer_t;
 
-hyperdag_result_t hyperdag_hydrate_pointer(
-    const hyperdag_memory_map_t* map,
-    hyperdag_offset_pointer_t* offset_ptr,
+mg_result_t mg_hydrate_pointer(
+    const mg_memory_map_t* map,
+    mg_offset_pointer_t* offset_ptr,
     void** out_pointer
 );
 
-hyperdag_result_t hyperdag_validate_pointer(
-    const hyperdag_memory_map_t* map,
+mg_result_t mg_validate_pointer(
+    const mg_memory_map_t* map,
     const void* pointer,
     size_t required_size
 );
 
 // Batch pointer hydration for performance
-hyperdag_result_t hyperdag_hydrate_pointer_batch(
-    const hyperdag_memory_map_t* map,
-    hyperdag_offset_pointer_t* offset_ptrs,
+mg_result_t mg_hydrate_pointer_batch(
+    const mg_memory_map_t* map,
+    mg_offset_pointer_t* offset_ptrs,
     size_t count
 );
 
@@ -179,53 +179,53 @@ typedef struct {
     bool is_loaded;
     void* cached_data;
     uint32_t reference_count;
-} hyperdag_section_handle_t;
+} mg_section_handle_t;
 
-hyperdag_result_t hyperdag_section_load(
-    hyperdag_memory_map_t* map,
-    hyperdag_section_handle_t* section,
+mg_result_t mg_section_load(
+    mg_memory_map_t* map,
+    mg_section_handle_t* section,
     void** out_data
 );
 
-hyperdag_result_t hyperdag_section_unload(
-    hyperdag_memory_map_t* map,
-    hyperdag_section_handle_t* section
+mg_result_t mg_section_unload(
+    mg_memory_map_t* map,
+    mg_section_handle_t* section
 );
 
-hyperdag_result_t hyperdag_section_prefetch(
-    hyperdag_memory_map_t* map,
-    hyperdag_section_handle_t* sections,
+mg_result_t mg_section_prefetch(
+    mg_memory_map_t* map,
+    mg_section_handle_t* sections,
     size_t section_count
 );
 
 // Hot reload support
-typedef void (*hyperdag_reload_callback_t)(
+typedef void (*mg_reload_callback_t)(
     const char* file_path,
-    hyperdag_memory_map_t* old_map,
-    hyperdag_memory_map_t* new_map,
+    mg_memory_map_t* old_map,
+    mg_memory_map_t* new_map,
     void* user_data
 );
 
-typedef struct hyperdag_file_watcher hyperdag_file_watcher_t;
+typedef struct mg_file_watcher mg_file_watcher_t;
 
-hyperdag_result_t hyperdag_file_watcher_create(
+mg_result_t mg_file_watcher_create(
     const char* file_path,
-    hyperdag_reload_callback_t callback,
+    mg_reload_callback_t callback,
     void* user_data,
-    hyperdag_file_watcher_t** out_watcher
+    mg_file_watcher_t** out_watcher
 );
 
-hyperdag_result_t hyperdag_file_watcher_destroy(hyperdag_file_watcher_t* watcher);
+mg_result_t mg_file_watcher_destroy(mg_file_watcher_t* watcher);
 
 // Memory advice types
 typedef enum {
-    HYPERDAG_ADVICE_NORMAL,     // Normal access pattern
-    HYPERDAG_ADVICE_SEQUENTIAL, // Sequential access expected
-    HYPERDAG_ADVICE_RANDOM,     // Random access expected
-    HYPERDAG_ADVICE_WILLNEED,   // Will be needed soon
-    HYPERDAG_ADVICE_DONTNEED,   // Won't be needed soon
-    HYPERDAG_ADVICE_NOREUSE     // Won't be reused
-} hyperdag_memory_advice_t;
+    METAGRAPH_ADVICE_NORMAL,     // Normal access pattern
+    METAGRAPH_ADVICE_SEQUENTIAL, // Sequential access expected
+    METAGRAPH_ADVICE_RANDOM,     // Random access expected
+    METAGRAPH_ADVICE_WILLNEED,   // Will be needed soon
+    METAGRAPH_ADVICE_DONTNEED,   // Won't be needed soon
+    METAGRAPH_ADVICE_NOREUSE     // Won't be reused
+} mg_memory_advice_t;
 
 // Performance monitoring
 typedef struct {
@@ -235,10 +235,10 @@ typedef struct {
     uint32_t cache_hits;
     uint32_t cache_misses;
     double average_hydration_time_ns;
-} hyperdag_mmap_stats_t;
+} mg_mmap_stats_t;
 
-hyperdag_result_t hyperdag_mmap_get_stats(hyperdag_mmap_stats_t* out_stats);
-hyperdag_result_t hyperdag_mmap_reset_stats(void);
+mg_result_t mg_mmap_get_stats(mg_mmap_stats_t* out_stats);
+mg_result_t mg_mmap_reset_stats(void);
 ```
 
 ## Memory Mapping Architecture
@@ -250,24 +250,24 @@ graph TD
             BUNDLE_FILE[Bundle File<br/>On-disk storage]
             FILE_HANDLE[File Handle<br/>Platform abstraction]
         end
-        
+
         subgraph "Mapping Layer"
             MMAP[Memory Map<br/>Virtual memory mapping]
             SECTIONS[Section Mapping<br/>Lazy-loaded sections]
             CACHE[Page Cache<br/>OS-managed caching]
         end
-        
+
         subgraph "Access Layer"
             OFFSETS[Offset Pointers<br/>Serialized references]
             HYDRATED[Hydrated Pointers<br/>Live memory pointers]
             VALIDATION[Bounds Checking<br/>Safety validation]
         end
-        
+
         BUNDLE_FILE --> FILE_HANDLE
         FILE_HANDLE --> MMAP
         MMAP --> SECTIONS
         SECTIONS --> CACHE
-        
+
         MMAP --> OFFSETS
         OFFSETS --> HYDRATED
         HYDRATED --> VALIDATION
@@ -282,10 +282,10 @@ sequenceDiagram
     participant Hydrator as Pointer Hydrator
     participant Map as Memory Map
     participant OS as Operating System
-    
+
     App->>Hydrator: access_offset_pointer(offset)
     Hydrator->>Hydrator: check_cache(offset)
-    
+
     alt Pointer cached
         Hydrator->>App: cached_pointer
     else Pointer not cached
@@ -311,34 +311,34 @@ graph TD
             WIN_MAP[MapViewOfFile]
             WIN_ADVICE[PrefetchVirtualMemory]
         end
-        
+
         subgraph "Linux"
             LINUX_MMAP[mmap(2)]
             LINUX_ADVICE[madvise(2)]
             LINUX_HUGE[MAP_HUGETLB]
         end
-        
+
         subgraph "macOS"
             MACOS_MMAP[mmap(2)]
             MACOS_ADVICE[madvise(2)]
             MACOS_VM[vm_allocate]
         end
-        
+
         subgraph "Unified API"
-            HYPERDAG_API[HyperDAG Memory API]
+            METAGRAPH_API[Meta-Graph Memory API]
         end
-        
-        WIN_CREATE --> HYPERDAG_API
-        WIN_MAP --> HYPERDAG_API
-        WIN_ADVICE --> HYPERDAG_API
-        
-        LINUX_MMAP --> HYPERDAG_API
-        LINUX_ADVICE --> HYPERDAG_API
-        LINUX_HUGE --> HYPERDAG_API
-        
-        MACOS_MMAP --> HYPERDAG_API
-        MACOS_ADVICE --> HYPERDAG_API
-        MACOS_VM --> HYPERDAG_API
+
+        WIN_CREATE --> METAGRAPH_API
+        WIN_MAP --> METAGRAPH_API
+        WIN_ADVICE --> METAGRAPH_API
+
+        LINUX_MMAP --> METAGRAPH_API
+        LINUX_ADVICE --> METAGRAPH_API
+        LINUX_HUGE --> METAGRAPH_API
+
+        MACOS_MMAP --> METAGRAPH_API
+        MACOS_ADVICE --> METAGRAPH_API
+        MACOS_VM --> METAGRAPH_API
     end
 ```
 
@@ -356,13 +356,13 @@ typedef enum {
 
 static const struct {
     access_pattern_t pattern;
-    hyperdag_memory_advice_t advice;
+    mg_memory_advice_t advice;
     size_t prefetch_size;
 } optimization_table[] = {
-    {ACCESS_PATTERN_SEQUENTIAL, HYPERDAG_ADVICE_SEQUENTIAL, 1024*1024},
-    {ACCESS_PATTERN_RANDOM, HYPERDAG_ADVICE_RANDOM, 4096},
-    {ACCESS_PATTERN_CLUSTERED, HYPERDAG_ADVICE_NORMAL, 64*1024},
-    {ACCESS_PATTERN_STREAMING, HYPERDAG_ADVICE_SEQUENTIAL, 2*1024*1024}
+    {ACCESS_PATTERN_SEQUENTIAL, METAGRAPH_ADVICE_SEQUENTIAL, 1024*1024},
+    {ACCESS_PATTERN_RANDOM, METAGRAPH_ADVICE_RANDOM, 4096},
+    {ACCESS_PATTERN_CLUSTERED, METAGRAPH_ADVICE_NORMAL, 64*1024},
+    {ACCESS_PATTERN_STREAMING, METAGRAPH_ADVICE_SEQUENTIAL, 2*1024*1024}
 };
 ```
 
@@ -375,23 +375,23 @@ graph TD
             INDEX[Section Index<br/>Cache-line packed]
             DATA[Data Sections<br/>Page-aligned]
         end
-        
+
         subgraph "Access Locality"
             HOT[Hot Data<br/>Frequently accessed]
             WARM[Warm Data<br/>Sometimes accessed]
             COLD[Cold Data<br/>Rarely accessed]
         end
-        
+
         subgraph "Prefetch Strategy"
             SPATIAL[Spatial Prefetch<br/>Nearby data]
             TEMPORAL[Temporal Prefetch<br/>Access patterns]
             SEMANTIC[Semantic Prefetch<br/>Related assets]
         end
-        
+
         HEADER --> HOT
         INDEX --> WARM
         DATA --> COLD
-        
+
         HOT --> SPATIAL
         WARM --> TEMPORAL
         COLD --> SEMANTIC
@@ -492,4 +492,4 @@ graph TD
 - Performance regression testing
 - Stress testing validates robustness under load
 
-This memory-mapped I/O system provides the high-performance foundation that enables HyperDAG to achieve the instant loading and minimal memory overhead that makes large-scale asset management practical.
+This memory-mapped I/O system provides the high-performance foundation that enables Meta-Graph to achieve the instant loading and minimal memory overhead that makes large-scale asset management practical.

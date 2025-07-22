@@ -2,7 +2,7 @@
 
 ## 🛡️ Security Overview
 
-HyperDAG is built with security as a fundamental principle. This document outlines our security practices, vulnerability reporting process, and security guarantees.
+METAGRAPH is built with security as a fundamental principle. This document outlines our security practices, vulnerability reporting process, and security guarantees.
 
 ## 🔒 Security Features
 
@@ -72,14 +72,14 @@ Please include the following information:
 ./scripts/security-audit.sh
 
 # Run fuzzing tests
-cmake -DHYPERDAG_FUZZING=ON -B build-fuzz
+cmake -DMETAGRAPH_FUZZING=ON -B build-fuzz
 cmake --build build-fuzz
 ./build-fuzz/tests/fuzz/fuzz_graph
 
 # Memory safety testing
-cmake -DHYPERDAG_SANITIZERS=ON -B build-asan
+cmake -DMETAGRAPH_SANITIZERS=ON -B build-asan
 cmake --build build-asan
-ASAN_OPTIONS="abort_on_error=1" ./build-asan/bin/hyperdag_unit_tests
+ASAN_OPTIONS="abort_on_error=1" ./build-asan/bin/METAGRAPH_unit_tests
 ```
 
 ### Manual Testing Checklist
@@ -155,6 +155,6 @@ ASAN_OPTIONS="abort_on_error=1" ./build-asan/bin/hyperdag_unit_tests
 
 ---
 
-**Last Updated**: 2025-07-20  
-**Version**: 1.0.0  
+**Last Updated**: 2025-07-20
+**Version**: 1.0.0
 **Contact**: james@flyingrobots.dev
