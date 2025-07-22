@@ -3,12 +3,16 @@
 
 set -eu
 
+# Load shared shell library (tools auto-configured)
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
+
 echo "🚀 Running quick tests for pre-commit..."
 
 # Check if we have any tests to run
 if [ ! -d "tests" ] && [ ! -f "CMakeLists.txt" ]; then
-    echo "⚠️  No tests found - implementation pending"
-    echo "✓ Quick tests passed (no tests to run)"
+    mg_yellow "⚠️  No tests found - implementation pending"
+    mg_green "✓ Quick tests passed (no tests to run)"
     exit 0
 fi
 
@@ -23,7 +27,7 @@ if command -v gcc >/dev/null 2>&1; then
         if [ -f "$header" ]; then
             echo "  Checking: $header"
             if ! gcc -std=c23 -fsyntax-only -I include "$header" 2>/dev/null; then
-                echo "❌ Header compilation failed: $header"
+                mg_red "❌ Header compilation failed: $header"
                 HEADER_CHECK=1
             fi
         fi
@@ -34,15 +38,15 @@ fi
 if [ -f "include/metagraph/version.h" ]; then
     echo "🔍 Validating version header..."
     if ! grep -q "#define METAGRAPH_API_VERSION_MAJOR" include/metagraph/version.h; then
-        echo "❌ version.h missing METAGRAPH_API_VERSION_MAJOR"
+        mg_red "❌ version.h missing METAGRAPH_API_VERSION_MAJOR"
         exit 1
     fi
     if ! grep -q "#define METAGRAPH_API_VERSION_MINOR" include/metagraph/version.h; then
-        echo "❌ version.h missing METAGRAPH_API_VERSION_MINOR"
+        mg_red "❌ version.h missing METAGRAPH_API_VERSION_MINOR"
         exit 1
     fi
     if ! grep -q "#define METAGRAPH_API_VERSION_PATCH" include/metagraph/version.h; then
-        echo "❌ version.h missing METAGRAPH_API_VERSION_PATCH"
+        mg_red "❌ version.h missing METAGRAPH_API_VERSION_PATCH"
         exit 1
     fi
 fi
@@ -59,7 +63,7 @@ if [ -d "docs/features" ]; then
             for feature_file in docs/features/F*.md; do
                 feature_id=$(basename "$feature_file" .md)
                 if ! grep -q "$feature_id" docs/features/README.md; then
-                    echo "⚠️  Feature $feature_id not referenced in docs/features/README.md"
+                    mg_yellow "⚠️  Feature $feature_id not referenced in docs/features/README.md"
                 fi
             done
         fi
@@ -70,19 +74,19 @@ fi
 if [ -f "include/mg/result.h" ]; then
     echo "🔍 Checking error code consistency..."
     if ! grep -q "HYPERDAG_SUCCESS" include/mg/result.h; then
-        echo "❌ Missing HYPERDAG_SUCCESS in result.h"
+        mg_red "❌ Missing HYPERDAG_SUCCESS in result.h"
         exit 1
     fi
     if ! grep -q "HYP_OK()" include/mg/result.h; then
-        echo "❌ Missing HYP_OK() macro in result.h"
+        mg_red "❌ Missing HYP_OK() macro in result.h"
         exit 1
     fi
 fi
 
 if [ $HEADER_CHECK -eq 1 ]; then
-    echo "❌ Quick tests failed due to header compilation errors"
+    mg_red "❌ Quick tests failed due to header compilation errors"
     exit 1
 fi
 
-echo "✓ Quick tests passed"
+mg_green "✓ Quick tests passed"
 exit 0
