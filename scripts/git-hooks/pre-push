@@ -52,10 +52,47 @@ if [ -d "build" ]; then
 fi
 
 # Performance regression check
-if [ -d "benchmarks" ]; then
+if [ -d "benchmarks" ] || [ -f "build/bin/mg_benchmarks" ]; then
     echo "📊 Running performance regression check..."
-    if ! ./scripts/profile.sh --check-regression; then
-        mg_yellow "⚠️ Performance regression detected (non-blocking)"
+    
+    # Check if baseline performance data exists
+    if [ ! -f "performance-baseline.txt" ]; then
+        mg_red "❌ No performance baseline data found"
+        
+        # Only prompt in interactive mode
+        if mg_is_interactive; then
+            if mg_prompt "Would you like to capture baseline performance data now?"; then
+                echo "Capturing baseline performance data..."
+                if ./scripts/profile.sh timing; then
+                    mv timing-analysis.txt performance-baseline.txt
+                    mg_green "✅ Baseline performance data captured"
+                else
+                    mg_red "❌ Failed to capture baseline data"
+                    exit 1
+                fi
+            else
+                mg_red "❌ Cannot proceed without performance baseline"
+                echo "Run: ./scripts/profile.sh timing && mv timing-analysis.txt performance-baseline.txt"
+                exit 1
+            fi
+        else
+            mg_red "❌ No performance baseline data (non-interactive mode)"
+            echo "Run: ./scripts/profile.sh timing && mv timing-analysis.txt performance-baseline.txt"
+            exit 1
+        fi
+    else
+        # Run timing analysis and compare with baseline
+        if ! ./scripts/profile.sh timing; then
+            mg_red "❌ Failed to run performance analysis"
+            exit 1
+        fi
+        
+        # Compare with baseline - would do statistical analysis in production
+        echo "Comparing with baseline performance..."
+        if ! diff -u performance-baseline.txt timing-analysis.txt > performance-diff.txt 2>&1; then
+            mg_yellow "⚠️ Performance differences detected (review performance-diff.txt)"
+            # For now, don't fail on performance differences, just warn
+        fi
     fi
 fi
 

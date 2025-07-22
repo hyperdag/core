@@ -3,29 +3,14 @@
 
 set -eu
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Load shared shell library (tools auto-configured)
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
 
 print_header() {
-    printf "%s===================================================\n" "$BLUE$NC"
-    printf "%s🚀 MetaGraph Performance Profiling Suite\n" "$BLUE$NC"
-    printf "%s===================================================\n" "$BLUE$NC"
-}
-
-print_status() {
-    printf "%s[INFO]%s %s\n" "$GREEN" "$NC" "$1"
-}
-
-print_warning() {
-    printf "%s[WARN]%s %s\n" "$YELLOW" "$NC" "$1"
-}
-
-print_error() {
-    printf "%s[ERROR]%s %s\n" "$RED" "$NC" "$1"
+    echo "==================================================="
+    echo "🚀 MetaGraph Performance Profiling Suite"
+    echo "==================================================="
 }
 
 # Check if required tools are available
@@ -44,15 +29,15 @@ check_dependencies() {
     done
 
     if [ -n "$missing" ]; then
-        print_warning "Missing dependencies: $missing"
-        print_status "Install with: sudo apt-get install linux-perf valgrind gprof time"
-        print_status "On macOS: brew install valgrind (perf not available)"
+        mg_yellow "[WARN] Missing dependencies: $missing"
+        echo "[INFO] Install with: sudo apt-get install linux-perf valgrind gprof time"
+        echo "[INFO] On macOS: brew install valgrind (perf not available)"
     fi
 }
 
 # Build optimized version for profiling
 build_for_profiling() {
-    print_status "Building optimized version with profiling symbols..."
+    echo "[INFO] Building optimized version with profiling symbols..."
 
     cmake -B build-profile \
         -DCMAKE_BUILD_TYPE=RelWithDebInfo \
@@ -67,11 +52,11 @@ build_for_profiling() {
 profile_with_perf() {
     # Portable OS detection
     if [ "$(uname -s)" != "Linux" ]; then
-        print_warning "perf profiling is only available on Linux"
+        mg_yellow "[WARN] perf profiling is only available on Linux"
         return
     fi
 
-    print_status "🔥 Running perf profiling..."
+    echo "[INFO] 🔥 Running perf profiling..."
 
     # Record performance data
     perf record -g --call-graph=dwarf -o perf.data \
@@ -84,15 +69,15 @@ profile_with_perf() {
     # Generate flame graph if available
     if command -v flamegraph >/dev/null 2>&1; then
         perf script -i perf.data | flamegraph > flamegraph.svg
-        print_status "Flame graph generated: flamegraph.svg"
+        echo "[INFO] Flame graph generated: flamegraph.svg"
     fi
 
-    print_status "Perf reports generated: perf-report.txt, perf-annotate.txt"
+    echo "[INFO] Perf reports generated: perf-report.txt, perf-annotate.txt"
 }
 
 # Memory profiling with Valgrind
 profile_with_valgrind() {
-    print_status "🧠 Running Valgrind memory profiling..."
+    echo "[INFO] 🧠 Running Valgrind memory profiling..."
 
     # Memcheck for memory errors
     valgrind --tool=memcheck \
@@ -115,12 +100,12 @@ profile_with_valgrind() {
         --callgrind-out-file=callgrind.out \
         ./build-profile/bin/mg_benchmarks
 
-    print_status "Valgrind reports generated: valgrind-memcheck.log, cachegrind.out, callgrind.out"
+    echo "[INFO] Valgrind reports generated: valgrind-memcheck.log, cachegrind.out, callgrind.out"
 }
 
 # CPU profiling with gprof
 profile_with_gprof() {
-    print_status "📊 Running gprof CPU profiling..."
+    echo "[INFO] 📊 Running gprof CPU profiling..."
 
     # Run the program to generate gmon.out
     ./build-profile/bin/mg_benchmarks
@@ -128,12 +113,12 @@ profile_with_gprof() {
     # Generate profile report
     gprof ./build-profile/bin/mg_benchmarks gmon.out > gprof-report.txt
 
-    print_status "gprof report generated: gprof-report.txt"
+    echo "[INFO] gprof report generated: gprof-report.txt"
 }
 
 # Benchmark timing analysis
 benchmark_timing() {
-    print_status "⏱️  Running detailed timing analysis..."
+    echo "[INFO] ⏱️  Running detailed timing analysis..."
 
     # Multiple runs for statistical significance
     runs=10
@@ -144,7 +129,7 @@ benchmark_timing() {
 
     i=1
     while [ $i -le $runs ]; do
-        print_status "Run $i/$runs..."
+        echo "[INFO] Run $i/$runs..."
         time_result=$(/usr/bin/time -f "%e %U %S %M" ./build-profile/bin/mg_benchmarks 2>&1 >/dev/null | tail -1)
         printf '%s\n' "$time_result" >> "$times_file"
         i=$((i + 1))
@@ -166,12 +151,12 @@ benchmark_timing() {
     # Clean up temporary file
     rm -f "$times_file"
 
-    print_status "Timing analysis saved to: timing-analysis.txt"
+    echo "[INFO] Timing analysis saved to: timing-analysis.txt"
 }
 
 # Profile-Guided Optimization
 run_pgo() {
-    print_status "🎯 Running Profile-Guided Optimization..."
+    echo "[INFO] 🎯 Running Profile-Guided Optimization..."
 
     # Phase 1: Generate profile data
     cmake -B build-pgo-gen \
@@ -195,7 +180,7 @@ run_pgo() {
     cmake --build build-pgo-use --parallel
 
     # Compare performance
-    print_status "Comparing PGO vs non-PGO performance..."
+    echo "[INFO] Comparing PGO vs non-PGO performance..."
     {
         echo "=== Without PGO ==="
         ./build-profile/bin/mg_benchmarks
@@ -203,12 +188,12 @@ run_pgo() {
         ./build-pgo-use/bin/mg_benchmarks
     } > pgo-comparison.txt
 
-    print_status "PGO comparison saved to: pgo-comparison.txt"
+    echo "[INFO] PGO comparison saved to: pgo-comparison.txt"
 }
 
 # Fuzzing with address sanitizer
 run_fuzzing() {
-    print_status "🐛 Running fuzzing tests..."
+    echo "[INFO] 🐛 Running fuzzing tests..."
 
     # Build fuzzing targets
     cmake -B build-fuzz \
@@ -225,7 +210,7 @@ run_fuzzing() {
     timeout 60 ./build-fuzz/tests/fuzz/fuzz_graph -max_total_time=60 fuzz-corpus/graph/ || true
     timeout 60 ./build-fuzz/tests/fuzz/fuzz_node_ops -max_total_time=60 fuzz-corpus/node-ops/ || true
 
-    print_status "Fuzzing completed. Corpus saved in fuzz-corpus/"
+    echo "[INFO] Fuzzing completed. Corpus saved in fuzz-corpus/"
 }
 
 # Main execution
@@ -276,7 +261,7 @@ main() {
             ;;
     esac
 
-    print_status "✅ Profiling complete! Check generated reports."
+    echo "[INFO] ✅ Profiling complete! Check generated reports."
 }
 
 # Run if called directly

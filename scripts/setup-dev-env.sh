@@ -16,7 +16,7 @@ PACKAGE_MANAGER="$(mg_detect_package_manager)"
 # =============================================================================
 mg_tool_exists_check() {
     # List of required tools with descriptions
-    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner shellcheck:Shell_script_linter"
+    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner shellcheck:Shell_script_linter semgrep:Security_analyzer"
 
     missing_tools=""
 
@@ -69,7 +69,7 @@ install_tools() {
     fi
 
     # Tools are already in PATH thanks to automatic setup in mg.sh
-    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner shellcheck:Shell_script_linter"
+    TOOLS_TO_CHECK="cmake:CMake_build_system clang-format:LLVM_formatter clang-tidy:LLVM_analyzer gitleaks:Secret_scanner shellcheck:Shell_script_linter semgrep:Security_analyzer"
 
     tools_prompted=false
 

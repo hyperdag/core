@@ -41,8 +41,8 @@ extern "C" {
 // Build Information (populated by CMake)
 // =============================================================================
 
-#define METAGRAPH_BUILD_TIMESTAMP "2025-07-22 19:58:20 UTC"
-#define METAGRAPH_BUILD_COMMIT_HASH "6a6eae86ff05c4080f4caf3617280467dcd72b31"
+#define METAGRAPH_BUILD_TIMESTAMP "2025-07-22 19:59:11 UTC"
+#define METAGRAPH_BUILD_COMMIT_HASH "759232e083707b069c13142699341926a7a5e3f6"
 #define METAGRAPH_BUILD_BRANCH "feat/docker-dev-container-image"
 
 // Fallback to compiler macros if CMake variables not available
