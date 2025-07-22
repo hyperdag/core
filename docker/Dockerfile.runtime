@@ -1,0 +1,72 @@
+# MetaGraph Runtime Container
+# Minimal runtime image for MetaGraph applications
+FROM ubuntu:22.04@sha256:0bced47fffa3361afa981854fcabcd4577cd43cebbb808cea2b1f33a3dd7f508 AS runtime-base
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Install only runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates=20230311ubuntu0.22.04.1 \
+    libssl3=3.0.2-0ubuntu1.15 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -g 1000 metagraph && \
+    useradd -m -u 1000 -g metagraph metagraph
+
+# Build stage - uses buildenv for consistency
+FROM metagraph-buildenv:latest AS builder
+
+# Copy source code
+COPY --chown=builder:builder . /workspace
+
+# Build arguments for versioning
+ARG VERSION=dev
+ARG COMMIT_HASH=unknown
+ARG BUILD_TIMESTAMP
+
+# Build release binary
+RUN cmake -B build-release \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DMETAGRAPH_WERROR=ON \
+    -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON \
+    -DCMAKE_INSTALL_PREFIX=/opt/metagraph \
+    && cmake --build build-release --parallel \
+    && cmake --install build-release --strip
+
+# Final runtime stage
+FROM runtime-base
+
+# Copy installed files from builder
+COPY --from=builder /opt/metagraph /opt/metagraph
+
+# Add binary to PATH
+ENV PATH="/opt/metagraph/bin:${PATH}"
+ENV LD_LIBRARY_PATH="/opt/metagraph/lib:${LD_LIBRARY_PATH}"
+
+# Create data directory
+RUN mkdir -p /data && chown metagraph:metagraph /data
+
+# Switch to non-root user
+USER metagraph
+WORKDIR /data
+
+# Runtime metadata
+LABEL org.opencontainers.image.title="MetaGraph Runtime"
+LABEL org.opencontainers.image.description="MetaGraph hypergraph engine runtime"
+LABEL org.opencontainers.image.version="${VERSION}"
+LABEL org.opencontainers.image.revision="${COMMIT_HASH}"
+LABEL org.opencontainers.image.created="${BUILD_TIMESTAMP}"
+LABEL org.opencontainers.image.vendor="MetaGraph Project"
+LABEL org.opencontainers.image.source="https://github.com/meta-graph/core"
+LABEL org.opencontainers.image.documentation="https://github.com/meta-graph/core/blob/main/README.md"
+LABEL org.opencontainers.image.licenses="Apache-2.0"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD mg-cli --version || exit 1
+
+# Default command - show help
+CMD ["mg-cli", "--help"]
