@@ -8,6 +8,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+void metagraph_print_api_version(void);
+void metagraph_print_bundle_format(void);
+void metagraph_print_build_info(void);
+void metagraph_print_features(void);
+
 void metagraph_print_api_version(void) {
     (void)printf("API Version: %d.%d.%d\n", metagraph_version_major(),
                  metagraph_version_minor(), metagraph_version_patch());
