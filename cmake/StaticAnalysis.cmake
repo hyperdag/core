@@ -114,9 +114,14 @@ find_program(IWYU_PROGRAM include-what-you-use)
 if(IWYU_PROGRAM)
     message(STATUS "include-what-you-use found: ${IWYU_PROGRAM}")
 
-    # Enable IWYU for all targets in development mode
-    if(METAGRAPH_DEV)
+    # IWYU is currently disabled on macOS due to incorrect suggestions
+    # (e.g., suggesting <_stdio.h> instead of <stdio.h>)
+    # TODO: Configure IWYU with proper mapping files for macOS
+    if(METAGRAPH_DEV AND NOT APPLE)
         set(CMAKE_C_INCLUDE_WHAT_YOU_USE ${IWYU_PROGRAM})
+        message(STATUS "IWYU enabled for development builds")
+    elseif(APPLE)
+        message(STATUS "IWYU disabled on macOS (needs configuration)")
     endif()
 endif()
 
