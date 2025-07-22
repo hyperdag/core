@@ -1,0 +1,56 @@
+FROM silkeh/clang:18
+
+# Install additional development tools that aren't in the base image
+RUN apt-get update && apt-get install -y \
+    # Core development tools
+    cmake \
+    ninja-build \
+    git \
+    curl \
+    wget \
+    unzip \
+    # Shell tools
+    shellcheck \
+    # Additional utilities
+    tree \
+    htop \
+    jq \
+    # Cleanup
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install gitleaks (secret scanner)
+RUN GITLEAKS_VERSION="8.18.2" \
+    && ARCH=$(dpkg --print-architecture) \
+    && if [ "$ARCH" = "amd64" ]; then GITLEAKS_ARCH="x64"; \
+       elif [ "$ARCH" = "arm64" ]; then GITLEAKS_ARCH="arm64"; \
+       else echo "Unsupported architecture: $ARCH" && exit 1; fi \
+    && curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_${GITLEAKS_ARCH}.tar.gz" \
+    | tar -xzC /usr/local/bin gitleaks \
+    && chmod +x /usr/local/bin/gitleaks
+
+# Set up git configuration for containers
+RUN git config --system init.defaultBranch main \
+    && git config --system pull.rebase false \
+    && git config --system core.autocrlf false
+
+# Create workspace directory
+WORKDIR /workspace
+
+# Set environment variables
+ENV CC=clang \
+    CXX=clang++ \
+    ASAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stats=1" \
+    UBSAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stacktrace=1"
+
+# Verify tools are installed correctly
+RUN echo "Verifying installed tools..." \
+    && cmake --version \
+    && clang --version \
+    && git --version \
+    && gitleaks version \
+    && shellcheck --version \
+    && echo "✅ All development tools verified successfully"
+
+# Default command
+CMD ["/bin/bash"]

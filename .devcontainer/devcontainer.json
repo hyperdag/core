@@ -1,17 +1,8 @@
 {
     "name": "Meta-Graph C23 Development",
-    "image": "silkeh/clang:18",
+    "image": "ghcr.io/james/hyperdag-core/devcontainer:latest",
 
-    "features": {
-        "ghcr.io/devcontainers/features/cmake:1": {
-            "version": "latest"
-        },
-        "ghcr.io/devcontainers/features/git:1": {
-            "version": "latest"
-        }
-    },
-
-    "postCreateCommand": "./scripts/setup-dev-env.sh --skip-vscode",
+    "features": {},
 
     "customizations": {
         "vscode": {
