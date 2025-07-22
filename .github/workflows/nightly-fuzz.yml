@@ -1,0 +1,269 @@
+name: Nightly Fuzzing
+
+on:
+  schedule:
+    # Run at 2 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Fuzzing duration in seconds'
+        type: number
+        default: 3600
+
+env:
+  LLVM_VERSION: '18'
+
+jobs:
+  fuzz-targets:
+    name: Fuzz ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - bundle-parser
+          - graph-traversal
+          - dependency-resolver
+          - memory-pool
+    
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ env.LLVM_VERSION }}
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake ninja-build \
+          libfuzzer-${{ env.LLVM_VERSION }}-dev
+
+    - name: Build fuzz targets
+      env:
+        CC: clang-18
+        CXX: clang++-18
+      run: |
+        cmake -B build-fuzz -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DMETAGRAPH_FUZZING=ON \
+          -DCMAKE_C_FLAGS="-fsanitize=fuzzer,address,undefined -fno-omit-frame-pointer" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=fuzzer,address,undefined"
+        
+        cmake --build build-fuzz --target fuzz-${{ matrix.target }}
+
+    - name: Prepare corpus
+      run: |
+        mkdir -p corpus/${{ matrix.target }}
+        
+        # Download any existing corpus from previous runs
+        if gh release view corpus-latest --json assets -q '.assets[].name' | grep -q "${{ matrix.target }}.tar.gz"; then
+          gh release download corpus-latest -p "${{ matrix.target }}.tar.gz"
+          tar -xzf "${{ matrix.target }}.tar.gz" -C corpus/${{ matrix.target }}
+        fi
+
+    - name: Run fuzzing
+      run: |
+        DURATION=${{ github.event.inputs.duration || 3600 }}
+        
+        ./build-fuzz/tests/fuzz/fuzz-${{ matrix.target }} \
+          corpus/${{ matrix.target }} \
+          -max_total_time=$DURATION \
+          -print_final_stats=1 \
+          -jobs=$(nproc) \
+          -workers=$(nproc) \
+          -max_len=1048576 \
+          -timeout=30 \
+          -rss_limit_mb=4096 \
+          -artifact_prefix=crashes/
+      env:
+        ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:strict_string_checks=1:print_stats=1
+        UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=0:print_module_map=1
+
+    - name: Check for crashes
+      id: check_crashes
+      run: |
+        if [ -d crashes ] && [ "$(ls -A crashes)" ]; then
+          echo "found_crashes=true" >> $GITHUB_OUTPUT
+          echo "❌ Found $(ls crashes | wc -l) crashes!"
+          ls -la crashes/
+        else
+          echo "found_crashes=false" >> $GITHUB_OUTPUT
+          echo "✅ No crashes found"
+        fi
+
+    - name: Minimize corpus
+      if: steps.check_crashes.outputs.found_crashes == 'false'
+      run: |
+        mkdir -p corpus-min/${{ matrix.target }}
+        
+        ./build-fuzz/tests/fuzz/fuzz-${{ matrix.target }} \
+          -merge=1 \
+          corpus-min/${{ matrix.target }} \
+          corpus/${{ matrix.target }}
+        
+        # Archive minimized corpus
+        tar -czf ${{ matrix.target }}-corpus.tar.gz -C corpus-min/${{ matrix.target }} .
+
+    - name: Upload crashes
+      if: steps.check_crashes.outputs.found_crashes == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: crashes-${{ matrix.target }}-${{ github.run_id }}
+        path: crashes/
+        retention-days: 30
+
+    - name: Upload corpus
+      if: steps.check_crashes.outputs.found_crashes == 'false'
+      uses: actions/upload-artifact@v4
+      with:
+        name: corpus-${{ matrix.target }}
+        path: ${{ matrix.target }}-corpus.tar.gz
+        retention-days: 7
+
+  coverage-report:
+    name: Fuzzing Coverage Report
+    needs: fuzz-targets
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ env.LLVM_VERSION }}
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build
+
+    - name: Download corpus
+      uses: actions/download-artifact@v4
+      with:
+        pattern: corpus-*
+        path: corpus-artifacts/
+
+    - name: Extract corpus files
+      run: |
+        mkdir -p corpus
+        for file in corpus-artifacts/corpus-*/*.tar.gz; do
+          target=$(basename "$file" -corpus.tar.gz)
+          mkdir -p corpus/$target
+          tar -xzf "$file" -C corpus/$target
+        done
+
+    - name: Build with coverage
+      env:
+        CC: clang-18
+        CXX: clang++-18
+      run: |
+        cmake -B build-cov -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DMETAGRAPH_FUZZING=ON \
+          -DCMAKE_C_FLAGS="-fprofile-instr-generate -fcoverage-mapping" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fprofile-instr-generate"
+        
+        cmake --build build-cov
+
+    - name: Generate coverage data
+      run: |
+        # Run each fuzzer with its corpus to collect coverage
+        for target in bundle-parser graph-traversal dependency-resolver memory-pool; do
+          if [ -d "corpus/$target" ]; then
+            LLVM_PROFILE_FILE="$target.profraw" \
+              ./build-cov/tests/fuzz/fuzz-$target \
+              corpus/$target \
+              -runs=0
+          fi
+        done
+        
+        # Merge all profiles
+        llvm-profdata-18 merge -sparse *.profraw -o fuzzing.profdata
+        
+        # Generate report
+        llvm-cov-18 report ./build-cov/tests/fuzz/fuzz-* \
+          -instr-profile=fuzzing.profdata \
+          > coverage-report.txt
+        
+        # Generate HTML report
+        llvm-cov-18 show ./build-cov/tests/fuzz/fuzz-* \
+          -instr-profile=fuzzing.profdata \
+          -format=html \
+          -output-dir=coverage-html
+
+    - name: Upload coverage report
+      uses: actions/upload-artifact@v4
+      with:
+        name: fuzzing-coverage
+        path: |
+          coverage-report.txt
+          coverage-html/
+
+  update-corpus:
+    name: Update Corpus Release
+    needs: [fuzz-targets, coverage-report]
+    if: github.event_name == 'schedule'  # Only on scheduled runs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download corpus artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: corpus-*
+        path: corpus-artifacts/
+
+    - name: Check if corpus exists
+      run: |
+        if [ -z "$(ls -A corpus-artifacts/)" ]; then
+          echo "No corpus artifacts to update"
+          exit 0
+        fi
+
+    - name: Create corpus release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        # Delete old corpus release if exists
+        if gh release view corpus-latest >/dev/null 2>&1; then
+          gh release delete corpus-latest -y
+        fi
+        
+        # Create new corpus release
+        gh release create corpus-latest \
+          --title "Fuzzing Corpus - $(date -u +%Y-%m-%d)" \
+          --notes "Latest minimized fuzzing corpus from nightly runs" \
+          --prerelease \
+          corpus-artifacts/corpus-*/*.tar.gz
+
+  notify-failures:
+    name: Notify Failures
+    needs: [fuzz-targets, coverage-report]
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create issue
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `Fuzzing Failure - ${new Date().toISOString().split('T')[0]}`;
+          const body = `## Fuzzing Run Failed
+          
+          **Run:** ${context.runId}
+          **URL:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}
+          
+          Please investigate the failures and fix any crashes found.
+          
+          ### Affected Targets
+          Check the workflow run for details on which targets failed.
+          `;
+          
+          github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['bug', 'fuzzing', 'security']
+          });

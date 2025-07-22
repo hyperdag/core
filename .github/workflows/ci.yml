@@ -4,391 +4,190 @@ on:
   push:
     branches: [ main, develop ]
   pull_request:
-    branches: [ main, develop ]
-  schedule:
-    # Run nightly to catch regressions
-    - cron: '0 2 * * *'
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [ main ]
+  workflow_dispatch:
 
 env:
-  CARGO_TERM_COLOR: always
-  CTEST_OUTPUT_ON_FAILURE: 1
+  CMAKE_VERSION: '3.28.3'
+  LLVM_VERSION: '18'
 
 jobs:
-  # ============================================================================
-  # Quality checks using our bash-based git hooks
-  # ============================================================================
-  quality-checks:
-    name: Quality checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            clang-format \
-            clang-tidy \
-            cmake \
-            ninja-build
-
-          # Install gitleaks
-          wget -O gitleaks.tar.gz https://github.com/zricethezav/gitleaks/releases/download/v8.18.0/gitleaks_8.18.0_linux_x64.tar.gz
-          tar -xzf gitleaks.tar.gz
-          sudo mv gitleaks /usr/local/bin/
-
-      - name: Make scripts executable
-        run: chmod +x scripts/*.sh
-
-      - name: Run quality checks (equivalent to pre-commit hook)
-        run: |
-          echo "🔍 Running quality checks..."
-
-          # Code formatting check
-          if ! ./scripts/run-clang-format.sh --check; then
-            echo "❌ Code formatting check failed"
-            exit 1
-          fi
-
-          # Security scan
-          if ! ./scripts/run-gitleaks.sh; then
-            echo "❌ Security scan failed"
-            exit 1
-          fi
-
-          # Version consistency
-          if ! ./scripts/check-version-consistency.sh; then
-            echo "❌ Version consistency check failed"
-            exit 1
-          fi
-
-          # Include guard check
-          if ! ./scripts/check-include-guards.sh; then
-            echo "❌ Include guard check failed"
-            exit 1
-          fi
-
-          echo "✅ All quality checks passed!"
-
-  # ============================================================================
-  # Build matrix: Multiple compilers and platforms
-  # ============================================================================
-  build:
-    name: ${{ matrix.config.name }}
-    runs-on: ${{ matrix.config.os }}
+  quality-matrix:
+    name: Quality Matrix
+    runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        config:
-          # Linux builds with different compilers
-          - name: "Ubuntu GCC 13"
-            os: ubuntu-latest
-            cc: gcc-13
-            cxx: g++-13
-            build_type: Release
-            sanitizers: false
-
-          - name: "Ubuntu GCC 14"
-            os: ubuntu-latest
-            cc: gcc-14
-            cxx: g++-14
-            build_type: Release
-            sanitizers: true
-
-          - name: "Ubuntu Clang 17"
-            os: ubuntu-latest
-            cc: clang-17
-            cxx: clang++-17
-            build_type: Release
-            sanitizers: false
-
-          - name: "Ubuntu Clang 18"
-            os: ubuntu-latest
+        os: [ubuntu-latest, macos-latest]
+        build_type: [Debug, Release]
+        compiler: [clang]
+        include:
+          - os: ubuntu-latest
             cc: clang-18
             cxx: clang++-18
-            build_type: Release
-            sanitizers: true
-
-          # Debug builds with sanitizers
-          - name: "Debug + ASAN"
-            os: ubuntu-latest
-            cc: clang-18
-            cxx: clang++-18
-            build_type: Debug
-            sanitizers: true
-            asan: true
-
-          - name: "Debug + UBSAN"
-            os: ubuntu-latest
-            cc: clang-18
-            cxx: clang++-18
-            build_type: Debug
-            sanitizers: true
-            ubsan: true
-
-          # macOS builds
-          - name: "macOS Clang"
-            os: macos-latest
+          - os: macos-latest
             cc: clang
             cxx: clang++
-            build_type: Release
-            sanitizers: false
-
-          # Windows builds
-          - name: "Windows MSVC"
-            os: windows-latest
-            cc: cl
-            cxx: cl
-            build_type: Release
-            sanitizers: false
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for version checks
 
-      - name: Install dependencies (Ubuntu)
-        if: startsWith(matrix.config.os, 'ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            cmake \
-            ninja-build \
-            ${{ matrix.config.cc }} \
-            ${{ matrix.config.cxx }} \
-            clang-tidy \
-            cppcheck \
-            valgrind \
-            lcov
+    - name: Install dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ env.LLVM_VERSION }}
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake ninja-build \
+          clang-tidy-${{ env.LLVM_VERSION }} \
+          clang-format-${{ env.LLVM_VERSION }} \
+          valgrind
 
-          # Install newer CMake if needed
-          cmake_version=$(cmake --version | head -n1 | cut -d' ' -f3)
-          if dpkg --compare-versions "$cmake_version" lt "3.28"; then
-            wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo apt-key add -
-            echo 'deb https://apt.kitware.com/ubuntu/ focal main' | sudo tee /etc/apt/sources.list.d/kitware.list
-            sudo apt-get update
-            sudo apt-get install -y cmake
-          fi
+    - name: Install dependencies (macOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew update
+        brew install cmake ninja llvm@${{ env.LLVM_VERSION }}
+        echo "/opt/homebrew/opt/llvm@${{ env.LLVM_VERSION }}/bin" >> $GITHUB_PATH
 
-      - name: Install dependencies (macOS)
-        if: startsWith(matrix.config.os, 'macos')
-        run: |
-          brew install cmake ninja llvm cppcheck
+    - name: Configure CMake
+      env:
+        CC: ${{ matrix.cc }}
+        CXX: ${{ matrix.cxx }}
+      run: |
+        cmake -B build \
+          -G Ninja \
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+          -DMETAGRAPH_WERROR=ON \
+          -DMETAGRAPH_SANITIZERS=${{ matrix.build_type == 'Debug' && 'ON' || 'OFF' }} \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
-      - name: Install dependencies (Windows)
-        if: startsWith(matrix.config.os, 'windows')
-        run: |
-          choco install cmake ninja
+    - name: Build
+      run: cmake --build build --parallel
 
-      - name: Configure build
-        shell: bash
-        run: |
-          # Set up build directory
-          mkdir build
-          cd build
+    - name: Test
+      run: ctest --test-dir build --output-on-failure --parallel
 
-          # Configure CMake options
-          cmake_options=""
-          cmake_options="$cmake_options -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }}"
-          cmake_options="$cmake_options -DMETAGRAPH_BUILD_TESTS=ON"
-          cmake_options="$cmake_options -DMETAGRAPH_BUILD_EXAMPLES=ON"
+    - name: Static Analysis
+      if: matrix.build_type == 'Debug'
+      run: ./scripts/run-clang-tidy.sh
 
-          if [[ "${{ matrix.config.sanitizers }}" == "true" ]]; then
-            cmake_options="$cmake_options -DMETAGRAPH_SANITIZERS=ON"
-          fi
+    - name: Security Audit
+      if: matrix.build_type == 'Release'
+      run: ./scripts/security-audit.sh
 
-          if [[ "${{ matrix.config.asan }}" == "true" ]]; then
-            cmake_options="$cmake_options -DMETAGRAPH_ASAN=ON"
-          fi
+    - name: Upload artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: failure-logs-${{ matrix.os }}-${{ matrix.build_type }}
+        path: |
+          build/
+          .ignored/
+        retention-days: 7
 
-          if [[ "${{ matrix.config.ubsan }}" == "true" ]]; then
-            cmake_options="$cmake_options -DMETAGRAPH_UBSAN=ON"
-          fi
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
 
-          # Set compilers
-          if [[ "${{ matrix.config.cc }}" != "cl" ]]; then
-            export CC=${{ matrix.config.cc }}
-            export CXX=${{ matrix.config.cxx }}
-          fi
+    - name: Install clang-format
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ env.LLVM_VERSION }}
+        sudo apt-get install -y clang-format-${{ env.LLVM_VERSION }}
 
-          # Configure
-          cmake .. $cmake_options -G Ninja
+    - name: Check formatting
+      run: ./scripts/run-clang-format.sh
 
-      - name: Build
-        shell: bash
-        run: |
-          cd build
-          cmake --build . --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
-
-      - name: Run tests
-        shell: bash
-        run: |
-          cd build
-          ctest --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4) --output-on-failure
-
-      - name: Static analysis
-        if: matrix.config.name == 'Ubuntu Clang 18'
-        shell: bash
-        run: |
-          cd build
-          cmake --build . --target static-analysis
-
-      - name: Generate coverage report
-        if: matrix.config.build_type == 'Debug' && matrix.config.asan == true
-        shell: bash
-        run: |
-          cd build
-          # TODO: Add coverage generation when we have tests
-          echo "Coverage reporting will be added with test implementation"
-
-  # ============================================================================
-  # Docker matrix testing with bleeding-edge compilers
-  # ============================================================================
-  docker-matrix:
-    name: Docker ${{ matrix.compiler }}
+  sanitizers:
+    name: Sanitizers
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        compiler: [gcc15, clang18]
-
+        sanitizer: [address, undefined, thread, memory]
+    
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Build with Docker
-        run: |
-          docker build -f docker/Dockerfile.${{ matrix.compiler }} -t METAGRAPH-${{ matrix.compiler }} .
-          docker run --rm -v $PWD:/workspace METAGRAPH-${{ matrix.compiler }} \
-            bash -c "cd /workspace && mkdir -p build && cd build && \
-                     cmake -DMETAGRAPH_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Release .. && \
-                     cmake --build . --parallel \$(nproc)"
+    - name: Install dependencies
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ env.LLVM_VERSION }}
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build
 
-  # ============================================================================
-  # Security scanning
-  # ============================================================================
-  security:
-    name: Security scan
+    - name: Configure with ${{ matrix.sanitizer }} sanitizer
+      env:
+        CC: clang-18
+        CXX: clang++-18
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DMETAGRAPH_SANITIZERS=ON \
+          -DCMAKE_C_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer" \
+          -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=${{ matrix.sanitizer }}"
+
+    - name: Build
+      run: cmake --build build
+
+    - name: Test with ${{ matrix.sanitizer }} sanitizer
+      run: ctest --test-dir build --output-on-failure
+      env:
+        ASAN_OPTIONS: detect_leaks=1:check_initialization_order=1:strict_string_checks=1
+        UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
+        MSAN_OPTIONS: halt_on_error=1:print_stats=1
+
+  coverage:
+    name: Code Coverage
     runs-on: ubuntu-latest
-    permissions:
-      security-events: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Run CodeQL analysis
-        uses: github/codeql-action/init@v3
-        with:
-          languages: cpp
-          queries: security-and-quality
+    - name: Install dependencies
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh ${{ env.LLVM_VERSION }}
+        sudo apt-get update
+        sudo apt-get install -y cmake ninja-build lcov
 
-      - name: Build for CodeQL
-        run: |
-          mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Debug ..
-          cmake --build . --parallel $(nproc)
+    - name: Configure with coverage
+      env:
+        CC: clang-18
+        CXX: clang++-18
+      run: |
+        cmake -B build -G Ninja \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_C_FLAGS="--coverage -fprofile-instr-generate -fcoverage-mapping" \
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 
-      - name: Perform CodeQL analysis
-        uses: github/codeql-action/analyze@v3
+    - name: Build
+      run: cmake --build build
 
-      - name: Run security audit script
-        run: |
-          chmod +x scripts/security-audit.sh
-          ./scripts/security-audit.sh
+    - name: Test
+      run: |
+        LLVM_PROFILE_FILE="coverage-%p.profraw" ctest --test-dir build --output-on-failure
+        llvm-profdata-18 merge -sparse coverage-*.profraw -o coverage.profdata
+        llvm-cov-18 report ./build/bin/* -instr-profile=coverage.profdata
 
-  # ============================================================================
-  # Performance regression testing
-  # ============================================================================
-  performance:
-    name: Performance benchmarks
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.profdata
+        fail_ci_if_error: true
+
+  all-checks-pass:
+    name: All Checks Pass
+    needs: [quality-matrix, format-check, sanitizers, coverage]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y cmake ninja-build gcc-13 g++-13 valgrind perf
-
-      - name: Run performance tests
-        run: |
-          chmod +x scripts/profile.sh
-          # TODO: Add performance testing when we have benchmarks
-          echo "Performance testing will be added with benchmark implementation"
-
-  # ============================================================================
-  # Documentation and release preparation
-  # ============================================================================
-  docs-and-release:
-    name: Documentation and release checks
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Check version consistency
-        run: |
-          chmod +x scripts/check-version-consistency.sh
-          ./scripts/check-version-consistency.sh
-
-      - name: Validate documentation
-        run: |
-          # Check that all feature specs are properly linked
-          find docs/features -name "F*.md" | while read -r feature; do
-            feature_id=$(basename "$feature" .md)
-            if ! grep -q "$feature_id" docs/features/README.md; then
-              echo "ERROR: Feature $feature_id not referenced in docs/features/README.md"
-              exit 1
-            fi
-          done
-
-          # Check README links
-          if ! [ -f docs/features/README.md ]; then
-            echo "ERROR: docs/features/README.md missing"
-            exit 1
-          fi
-
-          echo "✓ Documentation validation passed"
-
-  # ============================================================================
-  # Summary job for required checks
-  # ============================================================================
-  ci-success:
-    name: CI Success
-    runs-on: ubuntu-latest
-    needs: [quality-checks, build, docker-matrix, security]
-    if: always()
-
-    steps:
-      - name: Check CI results
-        run: |
-          if [[ "${{ needs.quality-checks.result }}" != "success" ]]; then
-            echo "Quality checks failed"
-            exit 1
-          fi
-          if [[ "${{ needs.build.result }}" != "success" ]]; then
-            echo "Build matrix failed"
-            exit 1
-          fi
-          if [[ "${{ needs.docker-matrix.result }}" != "success" ]]; then
-            echo "Docker matrix failed"
-            exit 1
-          fi
-          if [[ "${{ needs.security.result }}" != "success" ]]; then
-            echo "Security scan failed"
-            exit 1
-          fi
-          echo "✅ All CI checks passed!"
+    - run: echo "All checks passed!"

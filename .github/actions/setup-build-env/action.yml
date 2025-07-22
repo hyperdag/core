@@ -1,0 +1,47 @@
+name: 'Setup Build Environment'
+description: 'Setup consistent build environment across platforms'
+inputs:
+  os:
+    description: 'Operating system'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Windows
+      if: inputs.os == 'Windows'
+      shell: bash
+      run: |
+        choco install cmake ninja llvm --version=18.0.0 -y
+        echo "C:\Program Files\LLVM\bin" >> $GITHUB_PATH
+
+    - name: Setup Linux
+      if: inputs.os == 'Linux'
+      shell: bash
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 18
+        sudo apt-get update
+        sudo apt-get install -y \
+          cmake ninja-build \
+          clang-18 clang-tidy-18 clang-format-18 \
+          libssl-dev
+
+    - name: Setup macOS
+      if: inputs.os == 'macOS'
+      shell: bash
+      run: |
+        brew update
+        brew install cmake ninja llvm@18
+        echo "/opt/homebrew/opt/llvm@18/bin" >> $GITHUB_PATH
+        echo "/usr/local/opt/llvm@18/bin" >> $GITHUB_PATH
+
+    - name: Verify tools
+      shell: bash
+      run: |
+        echo "Tool versions:"
+        cmake --version
+        ninja --version
+        clang --version || clang-18 --version
+        echo "Build environment ready!"
