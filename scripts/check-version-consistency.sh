@@ -9,7 +9,6 @@ PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
 
 CMAKE_FILE="CMakeLists.txt"
 VERSION_HEADER="include/metagraph/version.h"
-VERSION_HEADER_IN="include/metagraph/version.h.in"
 
 if [ ! -f "$CMAKE_FILE" ]; then
     mg_red "ERROR: CMakeLists.txt not found"
@@ -18,11 +17,6 @@ fi
 
 if [ ! -f "$VERSION_HEADER" ]; then
     mg_red "ERROR: version.h header not found"
-    exit 1
-fi
-
-if [ ! -f "$VERSION_HEADER_IN" ]; then
-    mg_red "ERROR: version.h.in template not found"
     exit 1
 fi
 
@@ -67,7 +61,7 @@ fi
 
 if [ "$CMAKE_VERSION" != "$HEADER_STRING" ]; then
     mg_red "ERROR: Version string mismatch: CMake=$CMAKE_VERSION, header=$HEADER_STRING"
-    mg_yellow "Hint: Run 'cmake .' in the build directory to regenerate version.h"
+    mg_yellow "Hint: Update version.h or run scripts/prepare-release.sh"
     ERRORS=1
 fi
 
