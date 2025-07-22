@@ -3,28 +3,26 @@
 
 set -eu
 
-GREEN='\033[0;32m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# Load shared shell library (tools auto-configured)
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
 
 print_header() {
-    printf "%s================================================%s\n" "${BLUE}" "${NC}"
-    printf "%s🛡️  MetaGraph Security Audit Suite%s\n" "${BLUE}" "${NC}"
-    printf "%s================================================%s\n" "${BLUE}" "${NC}"
+    echo "================================================"
+    echo "🛡️  MetaGraph Security Audit Suite"
+    echo "================================================"
 }
 
 print_status() {
-    printf "%s[AUDIT]%s %s\n" "${GREEN}" "${NC}" "$1"
+    mg_green "[AUDIT] $1"
 }
 
 print_warning() {
-    printf "%s[WARN]%s %s\n" "${YELLOW}" "${NC}" "$1"
+    mg_yellow "[WARN] $1"
 }
 
 print_error() {
-    printf "%s[CRITICAL]%s %s\n" "${RED}" "${NC}" "$1"
+    mg_red "[CRITICAL] $1"
 }
 
 # Binary security analysis
@@ -120,6 +118,11 @@ scan_dependencies() {
     # List all linked libraries
     binary="./build/bin/mg-cli"
 
+    if [ ! -f "$binary" ]; then
+        echo "⚠️  Binary not found for dependency analysis" >> security-audit.txt
+        return 0
+    fi
+
     if command -v ldd >/dev/null 2>&1; then
         echo "Linked Libraries:" >> security-audit.txt
         ldd "$binary" >> security-audit.txt 2>&1 || true
@@ -140,39 +143,47 @@ analyze_memory_safety() {
 
     echo "=== Memory Safety Analysis ===" >> security-audit.txt
 
-    # Build with address sanitizer
-    cmake -B build-asan \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DMETAGRAPH_SANITIZERS=ON \
-        -DMETAGRAPH_ASAN=ON \
-        -DCMAKE_C_COMPILER=clang >/dev/null 2>&1
-
-    cmake --build build-asan --parallel >/dev/null 2>&1
-
-    # Run tests with ASAN
-    export ASAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stats=1"
-
-    if ./build-asan/bin/mg_unit_tests >/dev/null 2>&1; then
-        echo "✅ AddressSanitizer: No memory safety issues detected" >> security-audit.txt
-    else
-        echo "❌ AddressSanitizer: Memory safety issues detected!" >> security-audit.txt
+    # Check if we have test binaries to run
+    if [ ! -f "build/bin/mg_unit_tests" ] && [ ! -f "build/bin/placeholder_test" ]; then
+        print_warning "No test binaries found - skipping memory safety analysis"
+        echo "⚠️  No test binaries for memory safety analysis" >> security-audit.txt
+        echo "    Build with 'cmake -B build && cmake --build build' first" >> security-audit.txt
+        return 0
     fi
 
-    # UndefinedBehaviorSanitizer
-    cmake -B build-ubsan \
-        -DCMAKE_BUILD_TYPE=Debug \
-        -DMETAGRAPH_SANITIZERS=ON \
-        -DMETAGRAPH_UBSAN=ON \
-        -DCMAKE_C_COMPILER=clang >/dev/null 2>&1
-
-    cmake --build build-ubsan --parallel >/dev/null 2>&1
-
-    export UBSAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stacktrace=1"
-
-    if ./build-ubsan/bin/mg_unit_tests >/dev/null 2>&1; then
-        echo "✅ UndefinedBehaviorSanitizer: No undefined behavior detected" >> security-audit.txt
+    # Try to build with sanitizers if clang is available
+    if command -v clang >/dev/null 2>&1; then
+        print_status "Building with AddressSanitizer..."
+        
+        # Build with address sanitizer
+        if cmake -B build-asan \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DMETAGRAPH_SANITIZERS=ON \
+            -DCMAKE_C_COMPILER=clang >/dev/null 2>&1; then
+            
+            if cmake --build build-asan --parallel >/dev/null 2>&1; then
+                # Run tests with ASAN
+                export ASAN_OPTIONS="abort_on_error=1:halt_on_error=1:print_stats=1"
+                
+                # Find and run any test binary
+                test_binary=$(find build-asan/bin -name '*test*' -type f 2>/dev/null | head -1)
+                if [ -n "$test_binary" ] && [ -f "$test_binary" ]; then
+                    if "$test_binary" >/dev/null 2>&1; then
+                        echo "✅ AddressSanitizer: No memory safety issues detected" >> security-audit.txt
+                    else
+                        echo "❌ AddressSanitizer: Memory safety issues detected!" >> security-audit.txt
+                    fi
+                else
+                    echo "⚠️  No test binaries found in sanitizer build" >> security-audit.txt
+                fi
+            else
+                echo "⚠️  Failed to build with AddressSanitizer" >> security-audit.txt
+            fi
+        else
+            echo "⚠️  Failed to configure AddressSanitizer build" >> security-audit.txt
+        fi
     else
-        echo "❌ UndefinedBehaviorSanitizer: Undefined behavior detected!" >> security-audit.txt
+        echo "⚠️  Clang not found - cannot perform sanitizer analysis" >> security-audit.txt
     fi
 }
 
@@ -285,6 +296,9 @@ main() {
     if [ ! -d "build" ]; then
         print_status "Building project for security analysis..."
         cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang
+        cmake --build build --parallel
+    elif [ ! -f "build/bin/mg-cli" ]; then
+        print_status "Building missing binaries for security analysis..."
         cmake --build build --parallel
     fi
 

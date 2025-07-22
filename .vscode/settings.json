@@ -151,5 +151,9 @@
   "cSpell.words": [
     "CDPATH",
     "METAGRAPH"
-  ]
+  ],
+  "cSpell.autoFormatConfigFile": true,
+  "cSpell.enabledFileTypes": {
+    "sh": false
+  }
 }
