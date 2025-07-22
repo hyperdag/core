@@ -310,6 +310,7 @@
       "label": "Pre-push: Run Comprehensive Validation",
       "type": "shell",
       "command": "${workspaceFolder}/scripts/git-hooks/pre-push",
+      "detail": "Builds project, runs static analysis, security audit, tests, and performance checks",
       "group": "test",
       "presentation": {
         "echo": true,

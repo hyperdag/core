@@ -50,8 +50,10 @@ find_c_files() {
     find "$PROJECT_ROOT" \
         -name "*.c" \
         | grep -v "/build/" \
+        | grep -v "/build-" \
         | grep -v "/third_party/" \
         | grep -v "/external/" \
+        | grep -v "/cmake-build-" \
         | sort
 }
 

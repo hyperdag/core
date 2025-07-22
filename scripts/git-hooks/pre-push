@@ -11,6 +11,13 @@ cd "$PROJECT_ROOT"
 
 echo "🚀 Running pre-push validation..."
 
+# Build the project first to ensure we're testing current code
+echo "🔨 Building project..."
+if ! cmake --build build --parallel; then
+    mg_red "❌ Build failed"
+    exit 1
+fi
+
 # Full static analysis
 echo "🔍 Running comprehensive static analysis..."
 

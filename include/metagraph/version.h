@@ -41,8 +41,8 @@ extern "C" {
 // Build Information (populated by CMake)
 // =============================================================================
 
-#define METAGRAPH_BUILD_TIMESTAMP "2025-07-22 18:56:43 UTC"
-#define METAGRAPH_BUILD_COMMIT_HASH "bcc36236df31d9ed115387094949edb14a3af467"
+#define METAGRAPH_BUILD_TIMESTAMP "2025-07-22 19:55:05 UTC"
+#define METAGRAPH_BUILD_COMMIT_HASH "55a08d1b8c9f5fd8e9cfb267ba535bbe4480acd9"
 #define METAGRAPH_BUILD_BRANCH "feat/docker-dev-container-image"
 
 // Fallback to compiler macros if CMake variables not available
@@ -111,13 +111,19 @@ const char *metagraph_bundle_format_uuid(void);
 const char *metagraph_build_info(void);
 
 /**
- * @brief Get detailed build information
- * @param timestamp Output parameter for build timestamp (can be NULL)
- * @param commit_hash Output parameter for git commit hash (can be NULL)
- * @param branch Output parameter for git branch (can be NULL)
+ * @brief Build details structure
  */
-void metagraph_build_details(const char **timestamp, const char **commit_hash,
-                             const char **branch);
+typedef struct metagraph_build_details_s {
+    const char *timestamp;
+    const char *commit_hash;
+    const char *branch;
+} metagraph_build_details_t;
+
+/**
+ * @brief Get detailed build information
+ * @param details Output structure for build details (must not be NULL)
+ */
+void metagraph_get_build_details(metagraph_build_details_t *details);
 
 /**
  * @brief Check if a feature is available
@@ -127,14 +133,20 @@ void metagraph_build_details(const char **timestamp, const char **commit_hash,
 int metagraph_feature_available(const char *feature_name);
 
 /**
+ * @brief Version structure
+ */
+typedef struct metagraph_version_s {
+    int major;
+    int minor;
+    int patch;
+} metagraph_version_t;
+
+/**
  * @brief Check API compatibility
- * @param required_major Required major version
- * @param required_minor Required minor version
- * @param required_patch Required patch version
+ * @param required Required version
  * @return 1 if API is compatible, 0 otherwise
  */
-int metagraph_api_compatible(int required_major, int required_minor,
-                             int required_patch);
+int metagraph_api_compatible(const metagraph_version_t *required);
 
 /**
  * @brief Check bundle format compatibility

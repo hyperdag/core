@@ -5,9 +5,12 @@
 # add_subdirectory(mg-cli)
 # add_subdirectory(mg-inspect)
 
-# For now, create a minimal placeholder
+# Create minimal placeholders
 add_executable(mg_version_tool version_tool.c)
 target_link_libraries(mg_version_tool mg_placeholder)
+
+add_executable(mg-cli mg-cli.c)
+target_link_libraries(mg-cli mg_placeholder)
 
 # Install tools
 install(TARGETS mg_version_tool

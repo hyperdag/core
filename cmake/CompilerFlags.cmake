@@ -130,6 +130,11 @@ endif()
 add_compile_options(${METAGRAPH_WARNING_FLAGS})
 add_compile_options(${METAGRAPH_SECURITY_FLAGS})
 
+# Enable PIE for all builds (not just release)
+if(NOT CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    add_link_options(-pie)
+endif()
+
 # Warnings as errors in development mode
 if(METAGRAPH_DEV OR METAGRAPH_WERROR)
     if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")

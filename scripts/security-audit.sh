@@ -46,7 +46,9 @@ analyze_binary_security() {
         echo "Security Features Check:" >> security-audit.txt
 
         # Check for stack canaries
-        if objdump -d "$binary" | grep -q "__stack_chk_fail"; then
+        if objdump -d "$binary" 2>/dev/null | grep -q "__stack_chk_fail"; then
+            echo "✅ Stack canaries: ENABLED" >> security-audit.txt
+        elif nm "$binary" 2>/dev/null | grep -q "__stack_chk_fail"; then
             echo "✅ Stack canaries: ENABLED" >> security-audit.txt
         else
             echo "❌ Stack canaries: DISABLED" >> security-audit.txt
@@ -54,6 +56,10 @@ analyze_binary_security() {
 
         # Check for PIE
         if file "$binary" | grep -q "shared object"; then
+            echo "✅ PIE (Position Independent Executable): ENABLED" >> security-audit.txt
+        elif file "$binary" | grep -q "Mach-O.*executable.*PIE"; then
+            echo "✅ PIE (Position Independent Executable): ENABLED" >> security-audit.txt
+        elif otool -hv "$binary" 2>/dev/null | grep -q "PIE"; then
             echo "✅ PIE (Position Independent Executable): ENABLED" >> security-audit.txt
         else
             echo "❌ PIE: DISABLED" >> security-audit.txt
@@ -222,14 +228,14 @@ check_compliance() {
     fi
 
     # Check for vulnerability reporting
-    if grep -q "security\|vulnerability" README.md 2>/dev/null; then
+    if grep -i -q "security\|vulnerability" README.md 2>/dev/null || [ -f "SECURITY.md" ]; then
         echo "✅ Vulnerability reporting information present" >> security-audit.txt
     else
         echo "❌ Vulnerability reporting information missing" >> security-audit.txt
     fi
 
     # Check for automated security scanning
-    if [ -f ".github/workflows/security.yml" ] || [ -f ".github/workflows/codeql.yml" ]; then
+    if [ -f ".github/workflows/security.yml" ] || [ -f ".github/workflows/codeql.yml" ] || grep -q "CodeQL\|codeql" .github/workflows/*.yml 2>/dev/null; then
         echo "✅ Automated security scanning configured" >> security-audit.txt
     else
         echo "❌ Automated security scanning not configured" >> security-audit.txt

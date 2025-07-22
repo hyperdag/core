@@ -29,17 +29,16 @@ void metagraph_print_bundle_format(void) {
 void metagraph_print_build_info(void) {
     (void)printf("Build Info: %s\n", metagraph_build_info());
 
-    const char *timestamp;
-    const char *commit_hash;
-    const char *branch;
+    metagraph_build_details_t details;
+    metagraph_get_build_details(&details);
 
-    metagraph_build_details(&timestamp, &commit_hash, &branch);
+    (void)printf("Build Timestamp: %s\n",
+                 details.timestamp ? details.timestamp : "N/A");
 
-    (void)printf("Build Timestamp: %s\n", timestamp ? timestamp : "N/A");
+    (void)printf("Commit Hash: %s\n",
+                 details.commit_hash ? details.commit_hash : "N/A");
 
-    (void)printf("Commit Hash: %s\n", commit_hash ? commit_hash : "N/A");
-
-    (void)printf("Branch: %s\n", branch ? branch : "N/A");
+    (void)printf("Branch: %s\n", details.branch ? details.branch : "N/A");
 }
 
 void metagraph_print_features(void) {
