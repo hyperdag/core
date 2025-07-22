@@ -132,7 +132,11 @@ add_compile_options(${METAGRAPH_SECURITY_FLAGS})
 
 # Enable PIE for all builds (not just release)
 if(NOT CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-    add_link_options(-pie)
+    set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        add_link_options(-pie)
+    endif()
+    # macOS automatically handles PIE with CMAKE_POSITION_INDEPENDENT_CODE
 endif()
 
 # Warnings as errors in development mode
@@ -170,7 +174,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
         endif()
 
         # Linker flags for release (platform-specific)
-        add_link_options(-pie)
         if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
             add_link_options(
                 -Wl,-z,relro,-z,now
