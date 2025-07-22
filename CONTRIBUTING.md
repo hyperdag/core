@@ -1,6 +1,6 @@
-# Contributing to METAGRAPH
+# Contributing to MetaGraph
 
-Welcome to METAGRAPH! This guide covers everything you need to know to contribute to this high-performance C23 mg-core library.
+Welcome to MetaGraph! This guide covers everything you need to know to contribute to this high-performance C23 mg-core library.
 
 ## Quick Start
 
