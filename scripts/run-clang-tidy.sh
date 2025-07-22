@@ -17,6 +17,33 @@ if [ ! -f "$CONFIG_FILE" ]; then
     exit 1
 fi
 
+# Ensure compilation database exists
+ensure_compile_commands() {
+    if [ ! -f "$COMPILE_COMMANDS" ]; then
+        echo "📁 Compilation database missing, generating it..."
+        if [ ! -d "$PROJECT_ROOT/build" ]; then
+            echo "🔧 Creating build directory..."
+            mkdir -p "$PROJECT_ROOT/build"
+        fi
+        
+        echo "⚙️  Running CMake to generate compile_commands.json..."
+        if ! cmake -B "$PROJECT_ROOT/build" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DMETAGRAPH_DEV=ON >/dev/null 2>&1; then
+            mg_red "❌ Failed to generate compilation database with CMake"
+            exit 1
+        fi
+        
+        if [ ! -f "$COMPILE_COMMANDS" ]; then
+            mg_red "❌ CMake completed but compile_commands.json still missing"
+            exit 1
+        fi
+        
+        mg_green "✅ Compilation database generated successfully"
+    fi
+}
+
 # Find all C source files
 find_c_files() {
     find "$PROJECT_ROOT" \
@@ -78,12 +105,8 @@ EOF
 
     cd "$PROJECT_ROOT"
 
-    # Check for compile_commands.json
-    if [ ! -f "$COMPILE_COMMANDS" ]; then
-        echo "⚠️  compile_commands.json not found at: $COMPILE_COMMANDS"
-        echo "Run: cmake -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-        echo "Continuing without compilation database..."
-    fi
+    # Ensure compilation database exists (generate if missing)
+    ensure_compile_commands
 
     # Create temp file list for portability
     temp_file_list="/tmp/mg_tidy_files_$$"
@@ -111,7 +134,7 @@ EOF
 
     if [ "$fix_mode" = true ]; then
         tidy_args="$tidy_args --fix --fix-errors"
-        echo "🔧 Running clang-tidy with auto-fix..."
+        mg_yellow "🔧 Running clang-tidy with auto-fix..."
     else
         echo "🔍 Running clang-tidy static analysis..."
     fi
@@ -123,24 +146,24 @@ EOF
             echo "Analyzing: $file"
         fi
 
-        if ! $CLANG_TIDY "$tidy_args" "$file" >/dev/null 2>&1; then
+        if ! $CLANG_TIDY $tidy_args "$file"; then
             issues=$((issues + 1))
-            echo "❌ Issues found in: $file"
+            mg_red "❌ Issues found in: $file"
         elif [ "$verbose" = true ]; then
-            echo "✓ $file"
+            mg_green "✓ $file"
         fi
     done < "$temp_file_list"
 
     rm -f "$temp_file_list"
 
     if [ $issues -gt 0 ]; then
-        echo "❌ Found issues in $issues file(s)"
+        mg_red "❌ Found issues in $issues file(s)"
         if [ "$fix_mode" = false ]; then
             echo "Run: $0 --fix (to auto-fix what's possible)"
         fi
         exit 1
     else
-        echo "✓ All files pass static analysis"
+        mg_green "✅ All files pass static analysis"
     fi
 }
 

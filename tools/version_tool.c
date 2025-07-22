@@ -3,7 +3,7 @@
  * Simple utility to display version information
  */
 
-#include "mg/version.h"
+#include "metagraph/version.h"
 #include <stdio.h>
 
 int main(int argc, char *argv[]) {

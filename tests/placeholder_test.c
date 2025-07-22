@@ -3,8 +3,8 @@
  * Minimal test for CI validation until real tests are implemented
  */
 
-#include "mg/result.h"
-#include "mg/version.h"
+#include "metagraph/result.h"
+#include "metagraph/version.h"
 #include <stdio.h>
 
 int main(void) {
