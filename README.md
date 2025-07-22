@@ -2,8 +2,8 @@
 
 > **This is a WIP!**
 
-[![CI](https://github.com/METAGRAPH/METAGRAPH-core/workflows/CI/badge.svg)](https://github.com/METAGRAPH/METAGRAPH-core/actions)
-[![Security](https://github.com/METAGRAPH/METAGRAPH-core/workflows/Security/badge.svg)](https://github.com/METAGRAPH/METAGRAPH-core/actions)
+[![CI](https://github.com/meta-graph/core/workflows/CI/badge.svg)](https://github.com/meta-graph/core/actions)
+[![Security](https://github.com/meta-graph/core/workflows/Security/badge.svg)](https://github.com/meta-graph/core/actions)
 [![SLSA](https://slsa.dev/images/gh-badge-level1.svg)](https://slsa.dev)
 
 A high-performance C23 library providing mathematical meta-graph foundations for complex asset dependency management. METAGRAPH enables hyperedges that connect multiple nodes simultaneously, representing rich N-to-M relationships impossible with traditional graphs.
@@ -86,20 +86,73 @@ graph TD
 
 ## Quick Start
 
-> **Note**: METAGRAPH is currently in architectural design phase. Implementation begins with foundation layer.
+### Using DevContainer (Recommended)
 
-### Architecture Complete ✅
+The fastest way to get started is using the provided DevContainer with VS Code:
 
 ```bash
-# Review comprehensive feature specifications
-ls docs/features/
-# F001-core-meta-graph-data-model.md
-# F002-binary-bundle-format.md
-# ... (12 total features)
+# Open in VS Code
+code .
 
-# Examine third-party library recommendations
-cat docs/3rd-party.md
+# When prompted: "Reopen in Container"
+# Or manually: Cmd/Ctrl+Shift+P -> "Dev Containers: Reopen in Container"
 ```
+
+The DevContainer provides:
+- Pre-configured C23 environment with Clang 18
+- All required tools (CMake, clang-tidy, clang-format)
+- Automatic environment setup
+- Optimized VS Code settings
+
+### Manual Setup
+
+```bash
+# Run automated setup
+./scripts/setup-dev-env.sh
+
+# Build the project
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMETAGRAPH_DEV=ON
+cmake --build build
+
+# Run tests
+ctest --test-dir build --output-on-failure
+```
+
+### Development Workflow
+
+MetaGraph follows a structured branch and PR workflow:
+
+1. **Feature Development**
+   ```bash
+   # Create feature branch from release branch
+   git checkout release/v0.1.0
+   git checkout -b feat/123-hypergraph-traversal
+   
+   # Branch naming: feat/{issue#}-{description}
+   ```
+
+2. **Fix Development**
+   ```bash
+   # Fix branches can target any branch
+   git checkout -b fix/456-memory-leak
+   ```
+
+3. **Pull Request Rules**
+   - `feat/*` → must target `release/v*` branches
+   - `fix/*` → can target any branch
+   - `release/*` → must target `main`
+   - Only `release/*` and `fix/*` can merge to `main`
+
+4. **Quality Gates**
+   ```bash
+   # Pre-commit hooks run automatically
+   git commit -m "feat: implement graph traversal"
+   
+   # Pre-push validation
+   git push origin feat/123-hypergraph-traversal
+   ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ### Planned API (Implementation Pending)
 
