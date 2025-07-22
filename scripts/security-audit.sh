@@ -86,7 +86,7 @@ scan_source_code() {
         semgrep --config=auto --json --output=semgrep-results.json . || true
         semgrep --config=auto . >> security-audit.txt 2>&1 || true
     else
-        print_error "Semgrep not found. Install with: pip install semgrep"
+        print_error "Semgrep not found. Run ./scripts/setup-dev-env.sh to install"
         echo "❌ Semgrep security scan: MISSING" >> security-audit.txt
         return 1
     fi
