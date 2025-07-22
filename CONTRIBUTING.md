@@ -515,6 +515,19 @@ typedef struct {
 3. **Architecture Review**: For significant changes to core design
 4. **Performance Review**: For changes affecting critical paths
 
+## 🚀 Release Process
+
+MetaGraph follows a Fort Knox-grade release process with strict validation and security requirements. For detailed information about creating releases, see:
+
+**[Release Process Documentation](docs/RELEASE.md)**
+
+Key points:
+- All releases must originate from `release/v*` branches
+- Comprehensive quality validation is mandatory
+- Version files are managed by `scripts/prepare-release.sh`
+- Performance regressions beyond ±5% fail the release
+- All artifacts are cryptographically signed
+
 ## 📞 Getting Help
 
 - **Questions**: Open GitHub Issues with the `question` label
@@ -527,6 +540,7 @@ typedef struct {
 - **[Feature Specifications](docs/features/)**: Complete technical specifications
 - **[Third-Party Integration](docs/3rd-party.md)**: Library selection and usage guides
 - **[Architecture Overview](README.md#architecture-overview)**: High-level system design
+- **[Release Process](docs/RELEASE.md)**: Fort Knox-grade release workflow
 
 ---
 

@@ -97,5 +97,15 @@ if [ -d "benchmarks" ] || [ -f "build/bin/mg_benchmarks" ]; then
     fi
 fi
 
+# Check if we're pushing a release branch
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+if echo "$current_branch" | grep -qE '^release/v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$'; then
+    echo "🏷️ Detected release branch push - running release preparation..."
+    if ! ./scripts/prepare-release.sh; then
+        mg_red "❌ Release preparation failed"
+        exit 1
+    fi
+fi
+
 mg_green "✅ All pre-push checks passed!"
 mg_green "🎉 Code is ready for sharing - maintaining extreme quality standards!"
