@@ -63,7 +63,8 @@ if [ -d "docs/features" ]; then
             for feature_file in docs/features/F*.md; do
                 feature_id=$(basename "$feature_file" .md)
                 if ! grep -q "$feature_id" docs/features/README.md; then
-                    mg_yellow "⚠️  Feature $feature_id not referenced in docs/features/README.md"
+                    mg_red "❌ Feature $feature_id not referenced in docs/features/README.md"
+                    exit 1
                 fi
             done
         fi

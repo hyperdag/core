@@ -1,4 +1,4 @@
-# F.001 - Core Hypergraph Data Model
+# F.001 - Core MetaGraph Data Model
 
 ## Feature Overview
 

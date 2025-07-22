@@ -6,7 +6,7 @@ This directory contains the complete feature specification for MetaGraph - the m
 
 | Feature ID | Name | Priority | Dependencies |
 |------------|------|----------|--------------|
-| [F.001](F001-core-meta-graph-data-model.md) | Core Hypergraph Data Model | Critical | F.010, F.011 |
+| [F.001](F001-core-metagraph-data-model.md) | Core MetaGraph Data Model | Critical | F.010, F.011 |
 | [F.002](F002-binary-bundle-format.md) | Binary Bundle Format | Critical | F.001, F.007, F.011 |
 | [F.003](F003-memory-mapped-io-operations.md) | Memory-Mapped I/O Operations | Critical | F.010, F.009, F.011 |
 | [F.004](F004-blake3-cryptographic-integrity.md) | BLAKE3 Cryptographic Integrity | High | F.002, F.010, F.011 |
@@ -26,7 +26,7 @@ This directory contains the complete feature specification for MetaGraph - the m
 - F.011 - Error Handling and Validation
 
 ### Phase 2: Core Data Structures (Weeks 3-4)
-- F.001 - Core Hypergraph Data Model
+- F.001 - Core MetaGraph Data Model
 - F.007 - Asset ID and Addressing
 - F.009 - Memory Pool Management
 
@@ -47,7 +47,7 @@ This directory contains the complete feature specification for MetaGraph - the m
 
 ```mermaid
 graph TD
-    F010[F.010 Platform Abstraction] --> F001[F.001 Hypergraph Data Model]
+    F010[F.010 Platform Abstraction] --> F001[F.001 MetaGraph Data Model]
     F010 --> F007[F.007 Asset ID & Addressing]
     F010 --> F009[F.009 Memory Pool Management]
     F010 --> F003[F.003 Memory-Mapped I/O]
