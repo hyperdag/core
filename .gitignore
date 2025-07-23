@@ -38,6 +38,7 @@ DerivedData/
 # Build directories
 build/
 build-*/
+compile_commands.json
 dist/
 bin/
 obj/
