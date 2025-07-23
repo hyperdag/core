@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Binary Bundle Format implements the core serialization structure discovered in the origin story: `{header}{index}{edges}{store}`. This format enables efficient storage and memory-mapped loading of hypergraphs, providing the foundation for TurtlGraph's performance characteristics.
+The Binary Bundle Format implements the core serialization structure discovered in the origin story: `{header}{index}{edges}{store}`. This format enables efficient storage and memory-mapped loading of meta-graphs, providing the foundation for TurtlGraph's performance characteristics.
 
 The format is designed for:
 - **Memory-mapped I/O** - Direct access without full deserialization
@@ -21,9 +21,9 @@ The format is designed for:
 ## User Stories
 
 ### F002.US001 - Define Binary Format Structure
-**As a** system developer  
-**I want** a standardized binary format for hypergraphs  
-**So that** graphs can be efficiently stored and loaded across platforms  
+**As a** system developer
+**I want** a standardized binary format for meta-graphs
+**So that** graphs can be efficiently stored and loaded across platforms
 
 **Prerequisites:**
 - Hypergraph data model defined (F.001)
@@ -36,9 +36,9 @@ The format is designed for:
 - Supports forward and backward compatibility
 
 ### F002.US002 - Implement Memory-Mapped Loading
-**As a** performance engineer  
-**I want** to load bundles without full deserialization  
-**So that** large asset collections can be accessed efficiently  
+**As a** performance engineer
+**I want** to load bundles without full deserialization
+**So that** large asset collections can be accessed efficiently
 
 **Prerequisites:**
 - Binary format specification complete
@@ -51,9 +51,9 @@ The format is designed for:
 - Minimal memory overhead for unused assets
 
 ### F002.US003 - Bundle Validation and Integrity
-**As a** security engineer  
-**I want** built-in integrity verification  
-**So that** corrupted or tampered bundles are detected  
+**As a** security engineer
+**I want** built-in integrity verification
+**So that** corrupted or tampered bundles are detected
 
 **Prerequisites:**
 - Binary format with checksum fields
@@ -66,9 +66,9 @@ The format is designed for:
 - Clear error reporting for corruption
 
 ### F002.US004 - Cross-Platform Compatibility
-**As a** platform engineer  
-**I want** bundles to work across different architectures  
-**So that** assets can be shared between development and target platforms  
+**As a** platform engineer
+**I want** bundles to work across different architectures
+**So that** assets can be shared between development and target platforms
 
 **Prerequisites:**
 - Platform abstraction layer (F.010)
@@ -81,9 +81,9 @@ The format is designed for:
 - Performance equivalent to native format
 
 ### F002.US005 - Version Management
-**As a** system developer  
-**I want** format versioning and migration support  
-**So that** bundles remain compatible as the format evolves  
+**As a** system developer
+**I want** format versioning and migration support
+**So that** bundles remain compatible as the format evolves
 
 **Prerequisites:**
 - Version field in bundle header
@@ -100,7 +100,7 @@ The format is designed for:
 ```c
 // Bundle file format structures
 typedef struct {
-    char magic[8];              // "HYPERDAG"
+    char magic[8];              // "METAGRAPH"
     uint32_t version;           // Format version
     uint32_t flags;             // Feature flags
     uint64_t total_size;        // Total bundle size
@@ -108,7 +108,7 @@ typedef struct {
     uint64_t bundle_checksum;   // Full bundle integrity
     uint32_t section_count;     // Number of sections
     uint32_t reserved;          // Future use
-} hyperdag_bundle_header_t;
+} mg_bundle_header_t;
 
 typedef struct {
     uint32_t type;              // Section type (nodes, edges, store)
@@ -118,40 +118,40 @@ typedef struct {
     uint64_t checksum;          // Section integrity hash
     uint32_t item_count;        // Number of items in section
     uint32_t reserved;          // Future use
-} hyperdag_section_header_t;
+} mg_section_header_t;
 
 // Bundle loading API
-typedef struct hyperdag_bundle hyperdag_bundle_t;
+typedef struct mg_bundle mg_bundle_t;
 
-hyperdag_result_t hyperdag_bundle_create_from_file(
+mg_result_t mg_bundle_create_from_file(
     const char* file_path,
-    const hyperdag_bundle_options_t* options,
-    hyperdag_bundle_t** out_bundle
+    const mg_bundle_options_t* options,
+    mg_bundle_t** out_bundle
 );
 
-hyperdag_result_t hyperdag_bundle_create_from_memory(
+mg_result_t mg_bundle_create_from_memory(
     const void* data,
     size_t data_size,
-    const hyperdag_bundle_options_t* options,
-    hyperdag_bundle_t** out_bundle
+    const mg_bundle_options_t* options,
+    mg_bundle_t** out_bundle
 );
 
-hyperdag_result_t hyperdag_bundle_destroy(hyperdag_bundle_t* bundle);
+mg_result_t mg_bundle_destroy(mg_bundle_t* bundle);
 
-hyperdag_result_t hyperdag_bundle_validate(
-    const hyperdag_bundle_t* bundle,
-    hyperdag_validation_flags_t flags
+mg_result_t mg_bundle_validate(
+    const mg_bundle_t* bundle,
+    mg_validation_flags_t flags
 );
 
-hyperdag_result_t hyperdag_bundle_get_graph(
-    const hyperdag_bundle_t* bundle,
-    hyperdag_graph_t** out_graph
+mg_result_t mg_bundle_get_graph(
+    const mg_bundle_t* bundle,
+    mg_graph_t** out_graph
 );
 
 // Bundle section access
-hyperdag_result_t hyperdag_bundle_get_section(
-    const hyperdag_bundle_t* bundle,
-    hyperdag_section_type_t type,
+mg_result_t mg_bundle_get_section(
+    const mg_bundle_t* bundle,
+    mg_section_type_t type,
     const void** out_data,
     size_t* out_size
 );
@@ -164,11 +164,11 @@ typedef struct {
     char description[256];
     uint32_t target_platform;
     uint32_t compression_type;
-} hyperdag_bundle_metadata_t;
+} mg_bundle_metadata_t;
 
-hyperdag_result_t hyperdag_bundle_get_metadata(
-    const hyperdag_bundle_t* bundle,
-    hyperdag_bundle_metadata_t* out_metadata
+mg_result_t mg_bundle_get_metadata(
+    const mg_bundle_t* bundle,
+    mg_bundle_metadata_t* out_metadata
 );
 ```
 
@@ -176,7 +176,7 @@ hyperdag_result_t hyperdag_bundle_get_metadata(
 
 ### Format Versioning and Compatibility
 
-**Current Version**: 1  
+**Current Version**: 1
 **Format UUID**: `550e8400-e29b-41d4-a716-446655440000`
 
 #### Compatibility Matrix
@@ -202,17 +202,17 @@ hyperdag_result_t hyperdag_bundle_get_metadata(
 
 ```mermaid
 graph TD
-    subgraph "HyperDAG Bundle Format"
+    subgraph "MetaGraph Bundle Format"
         HEADER[Bundle Header<br/>magic, version, checksums]
         SECTION_INDEX[Section Index<br/>offsets and sizes]
-        
+
         subgraph "Data Sections"
             NODES[Node Section<br/>serialized node data]
-            EDGES[Edge Section<br/>serialized edge data] 
+            EDGES[Edge Section<br/>serialized edge data]
             STORE[Asset Store<br/>binary asset data]
             META[Metadata Section<br/>bundle information]
         end
-        
+
         HEADER --> SECTION_INDEX
         SECTION_INDEX --> NODES
         SECTION_INDEX --> EDGES
@@ -229,22 +229,22 @@ graph LR
         H[Header<br/>64 bytes]
         SI[Section Index<br/>Variable]
         NS[Node Section]
-        ES[Edge Section]  
+        ES[Edge Section]
         AS[Asset Store]
         MS[Metadata]
-        
+
         H --> SI
         SI --> NS
         NS --> ES
         ES --> AS
         AS --> MS
     end
-    
+
     subgraph "Section Structure"
         SH[Section Header]
         SD[Section Data]
         SC[Section Checksum]
-        
+
         SH --> SD
         SD --> SC
     end
@@ -254,8 +254,8 @@ graph LR
 
 ### Bundle Header (80 bytes - Updated for Future-Proofing)
 ```c
-struct hyperdag_bundle_header {
-    char magic[8];              // "HYPERDAG" magic identifier
+struct mg_bundle_header {
+    char magic[8];              // "METAGRAPH" magic identifier
     uint8_t format_uuid[16];    // Format UUID for version identification
     uint32_t format_version;    // Binary format version (current: 1)
     uint32_t api_version;       // API version compatibility (major.minor)
@@ -272,14 +272,14 @@ struct hyperdag_bundle_header {
 };
 
 // Format UUID for Bundle Format v1
-#define HYPERDAG_BUNDLE_FORMAT_V1_UUID \
+#define METAGRAPH_BUNDLE_FORMAT_V1_UUID \
     {0x55, 0x0e, 0x84, 0x00, 0xe2, 0x9b, 0x41, 0xd4, \
      0xa7, 0x16, 0x44, 0x66, 0x55, 0x44, 0x00, 0x00}
 ```
 
 ### Section Types
 - **SECTION_NODES** (0x01) - Serialized node data with metadata
-- **SECTION_EDGES** (0x02) - Serialized hyperedge data  
+- **SECTION_EDGES** (0x02) - Serialized hyperedge data
 - **SECTION_STORE** (0x03) - Binary asset content
 - **SECTION_INDEX** (0x04) - Asset ID to offset mapping
 - **SECTION_METADATA** (0x05) - Bundle metadata and properties
@@ -292,20 +292,20 @@ sequenceDiagram
     participant Bundle as Bundle Loader
     participant OS as Operating System
     participant File as Bundle File
-    
-    App->>Bundle: hyperdag_bundle_create_from_file()
+
+    App->>Bundle: mg_bundle_create_from_file()
     Bundle->>OS: mmap(bundle_file, PROT_READ)
     OS->>Bundle: mapped_memory_address
     Bundle->>Bundle: validate_header(mapped_memory)
     Bundle->>Bundle: create_section_pointers()
     Bundle->>App: bundle_handle
-    
-    App->>Bundle: hyperdag_bundle_get_graph()
+
+    App->>Bundle: mg_bundle_get_graph()
     Bundle->>Bundle: hydrate_node_pointers()
     Bundle->>Bundle: hydrate_edge_pointers()
     Bundle->>App: graph_handle
-    
-    App->>Bundle: hyperdag_bundle_destroy()
+
+    App->>Bundle: mg_bundle_destroy()
     Bundle->>OS: munmap(mapped_memory)
 ```
 
@@ -317,7 +317,7 @@ All multi-byte values are stored in little-endian format for consistency. On big
 // Endian-safe reading
 static inline uint32_t read_uint32_le(const void* ptr) {
     const uint8_t* bytes = (const uint8_t*)ptr;
-    return (uint32_t)bytes[0] | 
+    return (uint32_t)bytes[0] |
            ((uint32_t)bytes[1] << 8) |
            ((uint32_t)bytes[2] << 16) |
            ((uint32_t)bytes[3] << 24);
@@ -373,7 +373,7 @@ static inline uint64_t read_uint64_le(const void* ptr) {
 
 ### Integration Tests
 1. **Bundle Creation and Loading**
-   - Create bundle from hypergraph, load back successfully
+   - Create bundle from meta-graph, load back successfully
    - Round-trip preserves all graph data
    - Memory usage stays within bounds
 
@@ -390,13 +390,13 @@ static inline uint64_t read_uint64_le(const void* ptr) {
 
 2. **Access Patterns**
    - Random access performance
-   - Sequential access performance  
+   - Sequential access performance
    - Partial bundle loading efficiency
 
 ## Acceptance Criteria Summary
 
 ✅ **Functional Requirements:**
-- Binary format loads hypergraphs correctly
+- Binary format loads meta-graphs correctly
 - Memory-mapped I/O works efficiently
 - Cross-platform compatibility verified
 - Integrity validation detects corruption

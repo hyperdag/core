@@ -1,72 +1,74 @@
 #!/bin/sh
-# Check version consistency between VERSION file and version.h
+# Check version consistency between CMakeLists.txt and version.h
 
 set -eu
 
-VERSION_FILE="VERSION"
-VERSION_HEADER="include/hyperdag/version.h"
+# Load shared shell library (tools auto-configured)
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
 
-if [ ! -f "$VERSION_FILE" ]; then
-    echo "ERROR: VERSION file not found"
+CMAKE_FILE="CMakeLists.txt"
+VERSION_HEADER="include/metagraph/version.h"
+
+if [ ! -f "$CMAKE_FILE" ]; then
+    mg_red "ERROR: CMakeLists.txt not found"
     exit 1
 fi
 
 if [ ! -f "$VERSION_HEADER" ]; then
-    echo "ERROR: version.h header not found"
+    mg_red "ERROR: version.h header not found"
     exit 1
 fi
 
-# Extract versions from VERSION file
-eval "$(grep -E '^HYPERDAG_API_VERSION_(MAJOR|MINOR|PATCH)=' "$VERSION_FILE")"
-eval "$(grep -E '^HYPERDAG_API_VERSION_STRING=' "$VERSION_FILE")"
-eval "$(grep -E '^HYPERDAG_BUNDLE_FORMAT_VERSION=' "$VERSION_FILE")"
-eval "$(grep -E '^HYPERDAG_BUNDLE_FORMAT_UUID=' "$VERSION_FILE")"
+# Extract version from CMakeLists.txt
+CMAKE_VERSION=$(grep -E 'project\(MetaGraph VERSION' "$CMAKE_FILE" | sed -E 's/.*VERSION ([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+if [ -z "$CMAKE_VERSION" ]; then
+    mg_red "ERROR: Could not extract version from CMakeLists.txt"
+    exit 1
+fi
 
-# Extract versions from header file
-HEADER_MAJOR=$(grep -E '#define HYPERDAG_API_VERSION_MAJOR' "$VERSION_HEADER" | awk '{print $3}')
-HEADER_MINOR=$(grep -E '#define HYPERDAG_API_VERSION_MINOR' "$VERSION_HEADER" | awk '{print $3}')
-HEADER_PATCH=$(grep -E '#define HYPERDAG_API_VERSION_PATCH' "$VERSION_HEADER" | awk '{print $3}')
-HEADER_STRING=$(grep -E '#define HYPERDAG_API_VERSION_STRING' "$VERSION_HEADER" | awk '{print $3}' | tr -d '"')
-HEADER_BUNDLE_VERSION=$(grep -E '#define HYPERDAG_BUNDLE_FORMAT_VERSION' "$VERSION_HEADER" | awk '{print $3}')
-HEADER_BUNDLE_UUID=$(grep -E '#define HYPERDAG_BUNDLE_FORMAT_UUID' "$VERSION_HEADER" | awk '{print $3}' | tr -d '"')
+# Parse version components
+CMAKE_MAJOR=$(echo "$CMAKE_VERSION" | cut -d. -f1)
+CMAKE_MINOR=$(echo "$CMAKE_VERSION" | cut -d. -f2)
+CMAKE_PATCH=$(echo "$CMAKE_VERSION" | cut -d. -f3)
+
+# Extract versions from header
+HEADER_MAJOR=$(grep -E '#define METAGRAPH_API_VERSION_MAJOR' "$VERSION_HEADER" | awk '{print $3}')
+HEADER_MINOR=$(grep -E '#define METAGRAPH_API_VERSION_MINOR' "$VERSION_HEADER" | awk '{print $3}')
+HEADER_PATCH=$(grep -E '#define METAGRAPH_API_VERSION_PATCH' "$VERSION_HEADER" | awk '{print $3}')
+HEADER_STRING=$(grep -E '#define METAGRAPH_API_VERSION_STRING' "$VERSION_HEADER" | awk '{print $3}' | tr -d '"')
 
 # Check consistency
 ERRORS=0
 
-if [ "$HYPERDAG_API_VERSION_MAJOR" != "$HEADER_MAJOR" ]; then
-    echo "ERROR: API major version mismatch: VERSION=$HYPERDAG_API_VERSION_MAJOR, header=$HEADER_MAJOR"
+if [ "$CMAKE_MAJOR" != "$HEADER_MAJOR" ]; then
+    mg_red "ERROR: Major version mismatch: CMake=$CMAKE_MAJOR, header=$HEADER_MAJOR"
+    mg_yellow "Hint: Run 'cmake .' in the build directory to regenerate version.h"
     ERRORS=1
 fi
 
-if [ "$HYPERDAG_API_VERSION_MINOR" != "$HEADER_MINOR" ]; then
-    echo "ERROR: API minor version mismatch: VERSION=$HYPERDAG_API_VERSION_MINOR, header=$HEADER_MINOR"
+if [ "$CMAKE_MINOR" != "$HEADER_MINOR" ]; then
+    mg_red "ERROR: Minor version mismatch: CMake=$CMAKE_MINOR, header=$HEADER_MINOR"
+    mg_yellow "Hint: Run 'cmake .' in the build directory to regenerate version.h"
     ERRORS=1
 fi
 
-if [ "$HYPERDAG_API_VERSION_PATCH" != "$HEADER_PATCH" ]; then
-    echo "ERROR: API patch version mismatch: VERSION=$HYPERDAG_API_VERSION_PATCH, header=$HEADER_PATCH"
+if [ "$CMAKE_PATCH" != "$HEADER_PATCH" ]; then
+    mg_red "ERROR: Patch version mismatch: CMake=$CMAKE_PATCH, header=$HEADER_PATCH"
+    mg_yellow "Hint: Run 'cmake .' in the build directory to regenerate version.h"
     ERRORS=1
 fi
 
-if [ "$HYPERDAG_API_VERSION_STRING" != "$HEADER_STRING" ]; then
-    echo "ERROR: API version string mismatch: VERSION=$HYPERDAG_API_VERSION_STRING, header=$HEADER_STRING"
-    ERRORS=1
-fi
-
-if [ "$HYPERDAG_BUNDLE_FORMAT_VERSION" != "$HEADER_BUNDLE_VERSION" ]; then
-    echo "ERROR: Bundle format version mismatch: VERSION=$HYPERDAG_BUNDLE_FORMAT_VERSION, header=$HEADER_BUNDLE_VERSION"
-    ERRORS=1
-fi
-
-if [ "$HYPERDAG_BUNDLE_FORMAT_UUID" != "$HEADER_BUNDLE_UUID" ]; then
-    echo "ERROR: Bundle format UUID mismatch: VERSION=$HYPERDAG_BUNDLE_FORMAT_UUID, header=$HEADER_BUNDLE_UUID"
+if [ "$CMAKE_VERSION" != "$HEADER_STRING" ]; then
+    mg_red "ERROR: Version string mismatch: CMake=$CMAKE_VERSION, header=$HEADER_STRING"
+    mg_yellow "Hint: Update version.h or run scripts/prepare-release.sh"
     ERRORS=1
 fi
 
 if [ $ERRORS -eq 0 ]; then
-    echo "✓ Version consistency check passed"
+    mg_green "✓ Version consistency check passed ($CMAKE_VERSION)"
     exit 0
 else
-    echo "❌ Version consistency check failed"
+    mg_red "❌ Version consistency check failed"
     exit 1
 fi

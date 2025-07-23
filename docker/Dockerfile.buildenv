@@ -1,0 +1,135 @@
+# MetaGraph Build Environment
+# Deterministic build container with all dependencies pinned
+FROM ubuntu:22.04@sha256:0bced47fffa3361afa981854fcabcd4577cd43cebbb808cea2b1f33a3dd7f508
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+
+# Pin package versions for reproducibility
+ARG CMAKE_VERSION=3.28.3
+ARG LLVM_VERSION=18
+ARG NINJA_VERSION=1.11.1
+
+# Create non-root user for builds
+RUN groupadd -g 1000 builder && \
+    useradd -m -u 1000 -g builder builder
+
+# Install base dependencies with pinned versions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates=20230311ubuntu0.22.04.1 \
+    curl=7.81.0-1ubuntu1.16 \
+    gnupg=2.2.27-3ubuntu2.1 \
+    lsb-release=11.1.0ubuntu4 \
+    software-properties-common=0.99.22.9 \
+    wget=1.21.2-2ubuntu1.1 \
+    git=1:2.34.1-1ubuntu1.11 \
+    python3=3.10.6-1~22.04 \
+    python3-pip=22.0.2+dfsg-1ubuntu0.4 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install LLVM/Clang from official APT repository
+RUN wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - && \
+    echo "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-${LLVM_VERSION} main" > /etc/apt/sources.list.d/llvm.list && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    clang-${LLVM_VERSION}=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    clang-format-${LLVM_VERSION}=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    clang-tidy-${LLVM_VERSION}=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    clang-tools-${LLVM_VERSION}=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    lld-${LLVM_VERSION}=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    lldb-${LLVM_VERSION}=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    llvm-${LLVM_VERSION}=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    llvm-${LLVM_VERSION}-dev=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    llvm-${LLVM_VERSION}-runtime=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    libfuzzer-${LLVM_VERSION}-dev=1:${LLVM_VERSION}.1.8-0ubuntu1~22.04.1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install CMake (specific version)
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz && \
+    tar -xzf cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz --strip-components=1 -C /usr/local && \
+    rm cmake-${CMAKE_VERSION}-linux-x86_64.tar.gz
+
+# Install Ninja (specific version)
+RUN wget -q https://github.com/ninja-build/ninja/releases/download/v${NINJA_VERSION}/ninja-linux.zip && \
+    unzip -q ninja-linux.zip -d /usr/local/bin && \
+    rm ninja-linux.zip && \
+    chmod +x /usr/local/bin/ninja
+
+# Install additional build tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ccache=4.5.1-1 \
+    cppcheck=2.7-1 \
+    iwyu=8.17-1 \
+    valgrind=1:3.18.1-1ubuntu2 \
+    lcov=1.15-1 \
+    gcovr=5.0-1 \
+    pkg-config=0.29.2-1ubuntu3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python tools with pinned versions
+RUN python3 -m pip install --no-cache-dir \
+    cpplint==1.6.1 \
+    lizard==1.17.10 \
+    pytest==8.0.0 \
+    pyyaml==6.0.1
+
+# Install security scanning tools
+RUN python3 -m pip install --no-cache-dir \
+    semgrep==1.45.0 \
+    bandit==1.7.7
+
+# Install syft for SBOM generation
+ARG SYFT_VERSION=1.0.1
+RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin v${SYFT_VERSION}
+
+# Install cosign for artifact signing
+ARG COSIGN_VERSION=2.2.3
+RUN wget -q https://github.com/sigstore/cosign/releases/download/v${COSIGN_VERSION}/cosign-linux-amd64 && \
+    mv cosign-linux-amd64 /usr/local/bin/cosign && \
+    chmod +x /usr/local/bin/cosign
+
+# Set up compiler alternatives
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VERSION} 100 && \
+    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VERSION} 100 && \
+    update-alternatives --install /usr/bin/clang-format clang-format /usr/bin/clang-format-${LLVM_VERSION} 100 && \
+    update-alternatives --install /usr/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-${LLVM_VERSION} 100 && \
+    update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VERSION} 100 && \
+    update-alternatives --install /usr/bin/lldb lldb /usr/bin/lldb-${LLVM_VERSION} 100 && \
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang-${LLVM_VERSION} 100 && \
+    update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++-${LLVM_VERSION} 100
+
+# Environment variables for deterministic builds
+ENV CC=clang
+ENV CXX=clang++
+ENV LD=lld
+ENV AR=llvm-ar
+ENV NM=llvm-nm
+ENV RANLIB=llvm-ranlib
+ENV STRIP=llvm-strip
+ENV OBJCOPY=llvm-objcopy
+ENV OBJDUMP=llvm-objdump
+
+# Deterministic build flags
+ENV CFLAGS="-ffile-prefix-map=/workspace=. -Wdate-time"
+ENV CXXFLAGS="-ffile-prefix-map=/workspace=. -Wdate-time"
+ENV LDFLAGS="-Wl,--build-id=sha1 -Wl,--sort-common"
+
+# Set work directory
+WORKDIR /workspace
+
+# Switch to non-root user
+USER builder
+
+# Labels for traceability
+LABEL org.opencontainers.image.title="MetaGraph Build Environment"
+LABEL org.opencontainers.image.description="Reproducible build environment for MetaGraph"
+LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.vendor="MetaGraph Project"
+LABEL org.opencontainers.image.source="https://github.com/meta-graph/core"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD cmake --version && clang --version && ninja --version || exit 1
+
+# Default command
+CMD ["/bin/bash"]

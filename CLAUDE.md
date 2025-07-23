@@ -1,87 +1,290 @@
-# HyperDAG Development Guide for Claude
+# Claude Code Assistant Guide for MetaGraph
 
-@import CONTRIBUTING.md
-@import docs/3rd-party.md
-@import docs/features/README.md
+This document provides essential context and guidelines for AI-assisted development on the MetaGraph project.
 
-This file contains AI-specific development context and standards for working on HyperDAG with Claude Code.
+## Project Context
 
-## Project Overview for AI Development
+MetaGraph is a high-performance C23 library implementing a mathematical hypergraph foundation for asset management systems. The project embodies the principle that "everything is a graph" - from neural networks to game worlds to dependency trees.
 
-**Architecture**: Complete (12 features specified)  
-**Implementation**: Ready to begin (foundation layer)  
-**Quality Standard**: Extreme - Zero tolerance for shortcuts  
+### Key Technical Decisions
 
-### Key Architectural Decisions
-- **C23 Modern Practices**: Leverage cutting-edge language features
-- **Mathematical Foundation**: Hypergraph theory for N-to-M relationships
-- **Third-Party Excellence**: Carefully selected libraries (BLAKE3, mimalloc, uthash)
-- **Cross-Platform**: Windows/Linux/macOS with POSIX shell scripts
-- **Performance Focus**: Lock-free algorithms, cache optimization, NUMA awareness
+- **Language**: C23 with bleeding-edge compiler features (GCC 15+, Clang 18+)
+- **Architecture**: 12 interconnected features forming a complete system
+- **Libraries**: BLAKE3 (cryptography), mimalloc (memory), uthash (data structures), tinycthread (threading)
+- **Performance**: Sub-200ms load times for 1GB bundles, lock-free concurrent access
+- **Quality**: Zero tolerance for warnings, 100% test coverage, comprehensive static analysis
 
-## AI Development Standards
+## Development Guidelines for Claude
 
-### 🤖 Code Generation Principles
-1. **Prefer editing existing files** over creating new ones
-2. **Never create documentation files** (*.md) unless explicitly requested
-3. **Follow existing patterns** - examine surrounding code for conventions
-4. **Use C23 features** wherever appropriate (auto, typeof, [[attributes]], etc.)
-5. **POSIX shell scripts only** - no bash-isms allowed
+### Core Principles
 
-### 🧠 Context Awareness
-- **Check CONTRIBUTING.md** for detailed coding standards and workflow
-- **Reference feature specs** in `docs/features/` for implementation details
-- **Use existing libraries** - check `docs/3rd-party.md` for integration patterns
-- **Follow naming conventions** - let clang-tidy handle API naming enforcement
+1. **Do exactly what is asked - nothing more, nothing less**
+2. **Edit existing files rather than creating new ones**
+3. **Never create documentation files unless explicitly requested**
+4. **Follow existing patterns and conventions rigorously**
+5. **Use C23 features wherever appropriate**
 
-### 🛠️ Quick Commands
-```bash
-# Environment setup
-./scripts/setup-dev-env.sh
+### Code Generation Standards
 
-# Development build
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON
+#### Error Handling - MANDATORY
 
-# Quality validation
-./scripts/run-clang-format.sh --fix
-cmake --build build --target static-analysis
+**ALWAYS use `metagraph_result_t` for ANY function that could fail:**
+
+```c
+// ✅ CORRECT - Every fallible function returns metagraph_result_t
+metagraph_result_t metagraph_node_add(metagraph_graph_t* graph,
+                                      const metagraph_node_metadata_t* metadata,
+                                      metagraph_id_t* out_id) {
+    METAGRAPH_CHECK_NULL(graph);
+    METAGRAPH_CHECK_NULL(metadata);
+    METAGRAPH_CHECK_NULL(out_id);
+    
+    // Allocation could fail
+    metagraph_node_t* node = metagraph_pool_alloc(graph->pool, sizeof(*node));
+    METAGRAPH_CHECK_ALLOC(node);
+    
+    // Any operation that could fail must be checked
+    METAGRAPH_CHECK(metagraph_id_generate(&node->id));
+    
+    *out_id = node->id;
+    return METAGRAPH_OK();
+}
+
+// ❌ WRONG - Using int/bool for error handling
+int add_node(graph_t* graph, node_t* node) {
+    if (!graph || !node) return -1;  // NO! Use METAGRAPH_CHECK_NULL
+    return 0;  // NO! Use METAGRAPH_OK()
+}
 ```
 
-## AI-Specific Implementation Notes
+**Key error handling patterns:**
+- Use `METAGRAPH_CHECK()` to propagate errors up the call stack
+- Use `METAGRAPH_CHECK_NULL()` for null pointer validation
+- Use `METAGRAPH_CHECK_ALLOC()` after any allocation
+- Use `METAGRAPH_ERR()` to return errors with context
+- Never use `int`, `bool`, or custom error codes - always `metagraph_result_t`
 
-### Implementation Strategy
-1. **Foundation First**: Platform abstraction and error handling (F.010, F.011)
-2. **Core Data**: Hypergraph structures and memory management (F.001, F.009)
-3. **I/O Systems**: Binary format and memory mapping (F.002, F.003, F.004)
-4. **Algorithms**: Traversal and dependency resolution (F.005, F.006)
-5. **Concurrency**: Thread-safe access and lock-free optimization (F.008)
-6. **Builder**: Asset processing and bundle creation (F.012)
+#### C23 Modern Features
 
-### Third-Party Integration Patterns
-- **BLAKE3**: Use streaming API for large bundles, enable SIMD optimizations
-- **mimalloc**: Thread-local heaps with custom arenas on top
-- **uthash**: Type-safe macros with proper memory management integration
-- **tinycthread**: Combined with compiler atomics for lock-free patterns
+```c
+// Use auto for type inference
+auto result = metagraph_graph_create(&config, &graph);
 
-## Critical AI Development Reminders
+// Use typeof for generic programming
+#define POOL_ALLOC(pool, type) \
+    ((type*)metagraph_pool_alloc(pool, sizeof(type), _Alignof(type)))
 
-**MUST follow without exception:**
+// Use [[attributes]] for optimization hints
+[[nodiscard]] metagraph_result_t metagraph_graph_add_node(
+    metagraph_graph_t* restrict graph,
+    const metagraph_node_metadata_t* restrict metadata,
+    metagraph_id_t* restrict out_id
+);
 
-- **Do what has been asked; nothing more, nothing less**
-- **NEVER create files unless absolutely necessary**
-- **ALWAYS prefer editing existing files**
-- **NEVER proactively create documentation files** (*.md) unless explicitly requested
-- **ABSOLUTELY NO SKIPPING TESTS OR DISABLING LINTER CHECKS**
-- **Use C23 language enhancements** wherever possible
-- **POSIX shell scripts only** - no bash-isms
+// Use _BitInt for precise bit widths
+typedef _BitInt(128) metagraph_id_t;
+typedef _BitInt(40) metagraph_offset_t;  // For files up to 1TB
+```
 
-## Quality Gates - MANDATORY
-- **100% Test Coverage**: Every function must have comprehensive unit tests
-- **Zero Warnings**: All clang-tidy warnings must be addressed, never disabled
-- **Memory Safety**: ASan/MSan/UBSan must pass completely clean
-- **Thread Safety**: TSan must validate all concurrent code
-- **Static Analysis**: PVS-Studio and Cppcheck must pass without exceptions
+#### Memory Safety
 
----
+```c
+// Always use restrict for pointer parameters
+void metagraph_copy_nodes(
+    const metagraph_node_t* restrict source,
+    metagraph_node_t* restrict dest,
+    size_t count
+);
 
-*This file provides AI-specific context for developing HyperDAG. For comprehensive development guidelines, build instructions, and contribution standards, see [CONTRIBUTING.md](CONTRIBUTING.md).*
+// Align structures for atomic operations
+typedef struct alignas(64) {  // Cache line aligned
+    _Atomic(uint64_t) ref_count;
+    metagraph_id_t id;
+    // ... rest of structure
+} metagraph_node_t;
+```
+
+### API Naming Conventions
+
+The project uses lowercase snake_case with module prefixes:
+
+```c
+// Pattern: metagraph_[module]_[action]
+metagraph_graph_create()
+metagraph_graph_destroy()
+metagraph_node_add()
+metagraph_edge_connect()
+metagraph_bundle_load()
+metagraph_pool_alloc()
+```
+
+Note: API naming is enforced by clang-tidy - let the tools handle compliance.
+
+### Shell Script Requirements
+
+**MANDATORY**: All scripts must be POSIX-compliant - NO bash-isms allowed.
+
+```bash
+#!/bin/sh  # NOT #!/bin/bash
+set -eu    # NOT set -euo pipefail
+
+# POSIX conditionals only
+if [ "$var" = "value" ]; then  # NOT [[ "$var" == "value" ]]
+    echo "correct"
+fi
+
+# No arrays, no mapfile, no process substitution
+# Scripts must work on minimal /bin/sh environments
+```
+
+### Quick Reference Commands
+
+```bash
+# Development setup
+./scripts/setup-dev-env.sh
+
+# Build with all checks
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMETAGRAPH_DEV=ON
+cmake --build build
+
+# Run quality checks
+./scripts/run-clang-format.sh --fix
+cmake --build build --target static-analysis
+ctest --test-dir build --output-on-failure
+
+# Performance profiling
+./scripts/profile.sh all
+```
+
+## Implementation Roadmap
+
+### Phase 1: Foundation (Current Focus)
+
+- **F.010**: Platform abstraction layer
+- **F.011**: Error handling and validation
+- Start with these before any other features
+
+### Phase 2: Core Data Structures
+
+- **F.001**: Hypergraph data model
+- **F.007**: Asset ID system
+- **F.009**: Memory pool management
+
+### Phase 3: I/O and Serialization
+
+- **F.002**: Binary bundle format
+- **F.003**: Memory-mapped I/O
+- **F.004**: BLAKE3 integrity
+
+### Phase 4: Algorithms and Concurrency
+
+- **F.005**: Graph traversal
+- **F.006**: Dependency resolution
+- **F.008**: Thread-safe access
+
+### Phase 5: Builder System
+
+- **F.012**: Bundle creation and serialization
+
+## Quality Requirements
+
+### Absolute Requirements - NO EXCEPTIONS
+
+- **100% test coverage** for all functions
+- **Zero clang-tidy warnings** - fix, don't suppress
+- **Clean sanitizer runs** - ASan, MSan, UBSan, TSan must all pass
+- **No memory leaks** - Valgrind must report zero issues
+- **Performance targets met** - <5% regression tolerance
+
+### Testing Philosophy
+
+Every function needs:
+
+1. Success case tests
+2. Error case tests
+3. Edge case tests
+4. Concurrent access tests (where applicable)
+5. Performance benchmarks (for critical paths)
+
+## Third-Party Integration Notes
+
+### BLAKE3
+
+- Use streaming API for large files
+- Enable SIMD optimizations
+- Integrate with memory pool for hash contexts
+
+### mimalloc
+
+- Create custom arenas on top of mimalloc
+- Use thread-local heaps for hot paths
+- Override malloc/free globally in release builds
+
+### uthash
+
+- Wrap in type-safe macros
+- Integrate with memory pool
+- Use HASH_ADD_KEYPTR for string keys
+
+### tinycthread
+
+- Combine with C11 atomics for lock-free patterns
+- Use condition variables sparingly
+- Prefer atomic operations over mutexes
+
+## Common Pitfalls to Avoid
+
+1. **Don't assume libraries exist** - always check package.json/CMakeLists.txt first
+2. **Don't create new patterns** - study existing code and follow conventions
+3. **Don't skip tests** - every function must have comprehensive tests
+4. **Don't use non-POSIX shell** - scripts must work on minimal /bin/sh
+5. **Don't ignore performance** - profile critical paths and optimize
+6. **Don't use int/bool for errors** - ALWAYS use metagraph_result_t for fallible functions
+
+### When to Use metagraph_result_t
+
+**MUST use metagraph_result_t when:**
+- Function performs any allocation (could fail with OOM)
+- Function does any I/O operations (file, network, etc.)
+- Function validates input parameters
+- Function calls other functions that return metagraph_result_t
+- Function could fail for ANY reason
+
+**Can use void when:**
+- Function is a simple getter that cannot fail
+- Function only modifies already-validated internal state
+- Function is a destructor/cleanup function
+
+```c
+// ✅ Correct usage examples
+metagraph_result_t metagraph_graph_create(...);  // Allocates memory
+metagraph_result_t metagraph_node_add(...);      // Modifies graph, allocates
+metagraph_result_t metagraph_bundle_load(...);   // I/O operation
+metagraph_result_t metagraph_validate(...);      // Input validation
+
+// ✅ Correct void usage
+void metagraph_graph_destroy(graph);             // Cleanup, can't fail
+void metagraph_node_get_id(node, out_id);       // Simple getter
+```
+
+## Critical Reminders
+
+- **Never create files unless absolutely necessary**
+- **Always prefer editing existing files**
+- **Never proactively create documentation**
+- **Follow C23 best practices rigorously**
+- **Let clang-tidy enforce naming conventions**
+- **Use Task tool for complex searches**
+- **Run linting/type checking after implementation**
+
+## Getting Started
+
+When implementing a new feature:
+
+1. Read the feature specification in `docs/features/`
+2. Study existing code for patterns and conventions
+3. Implement with comprehensive tests
+4. Run all quality checks
+5. Profile performance if on critical path
+
+Remember: The goal is mathematical purity, extreme performance, and absolute reliability. Every line of code should reflect these values.

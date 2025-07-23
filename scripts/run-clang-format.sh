@@ -1,11 +1,11 @@
 #!/bin/sh
-# HyperDAG clang-format wrapper script
+# MetaGraph clang-format wrapper script
 
 set -eu
 
 # Load shared shell library (tools auto-configured)
-PROJECT_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
-. "$PROJECT_ROOT/scripts/shlib.sh"
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
 
 CLANG_FORMAT=$(command -v clang-format)
 
@@ -45,7 +45,7 @@ EOF
             exit 0
             ;;
         *)
-            echo "Unknown option: $1"
+            mg_red "Unknown option: $1"
             exit 1
             ;;
     esac
@@ -65,7 +65,7 @@ fi
 
 if [ "$check_mode" = true ]; then
     echo "🔍 Checking code formatting..."
-    
+
     issues=0
     find "$PROJECT_ROOT" \( -name '*.c' -o -name '*.h' \) -print | \
     grep -v /build/ | grep -v /third_party/ | grep -v /external/ | \
@@ -73,19 +73,19 @@ if [ "$check_mode" = true ]; then
         [ -z "$file" ] && continue
         # Force C language for .h files
         if ! "$CLANG_FORMAT" --dry-run --Werror --style=file --assume-filename="${file%.h}.c" "$file" >/dev/null 2>&1; then
-            echo "❌ Formatting issues in: $file"
+            mg_red "❌ Formatting issues in: $file"
             issues=$((issues + 1))
         elif [ "$verbose" = true ]; then
-            echo "✓ $file"
+            mg_green "✓ $file"
         fi
     done
-    
+
     # Note: Due to subshell, we can't get the exact count, but any issues will show above
-    echo "✓ Format check complete"
-    
+    mg_green "✓ Format check complete"
+
 elif [ "$fix_mode" = true ]; then
     echo "🔧 Fixing code formatting..."
-    
+
     find "$PROJECT_ROOT" \( -name '*.c' -o -name '*.h' \) -print | \
     grep -v /build/ | grep -v /third_party/ | grep -v /external/ | \
     while IFS= read -r file; do
@@ -96,6 +96,6 @@ elif [ "$fix_mode" = true ]; then
         # Force C language for .h files
         "$CLANG_FORMAT" -i --style=file --assume-filename="${file%.h}.c" "$file"
     done
-    
-    echo "✓ Formatting complete"
+
+    mg_green "✓ Formatting complete"
 fi

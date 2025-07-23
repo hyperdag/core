@@ -1,314 +1,245 @@
-# HyperDAG - Mathematical Hypergraph Foundation for Asset Management
-
-> **This is a WIP!**
-
-[![CI](https://github.com/hyperdag/hyperdag-core/workflows/CI/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
-[![Security](https://github.com/hyperdag/hyperdag-core/workflows/Security/badge.svg)](https://github.com/hyperdag/hyperdag-core/actions)
-[![SLSA](https://slsa.dev/images/gh-badge-level1.svg)](https://slsa.dev)
-
-A high-performance C23 library providing mathematical hypergraph foundations for complex asset dependency management. HyperDAG enables hyperedges that connect multiple nodes simultaneously, representing rich N-to-M relationships impossible with traditional graphs.
-
-## What is HyperDAG?
+# MetaGraph
 
 > _Graphs. All. The. Way. Down._
 
-HyperDAG implements the core mathematical structure underlying TurtlGraph's asset management system. It provides:
+A high-performance C23 library implementing a recursive metagraph foundation where nodes are graphs, edges are graphs, and graphs contain graphs infinitely.
 
-- **🔗 Hypergraph Mathematics**: Hyperedges connecting multiple nodes (e.g., "this material depends on these 3 textures and 2 shaders")
-- **💾 Memory-Mapped Bundles**: Zero-copy binary format with cryptographic integrity
-- **⚡ Lock-Free Performance**: Concurrent access optimized for multi-core systems
-- **🛡️ Memory Safety**: Comprehensive sanitizer coverage and deterministic cleanup
-- **🏗️ Modern C23**: Contemporary safety practices with broad platform support
+[![CI](https://github.com/meta-graph/core/workflows/CI/badge.svg)](https://github.com/meta-graph/core/actions)
+[![Security](https://github.com/meta-graph/core/workflows/Security/badge.svg)](https://github.com/meta-graph/core/actions)
+[![SLSA](https://slsa.dev/images/gh-badge-level1.svg)](https://slsa.dev)
 
-## Architecture Overview
+## Overview
 
-```mermaid
-graph TD
-    subgraph "HyperDAG Core System"
-        subgraph "Foundation"
-            F010[Platform Abstraction]
-            F011[Error Handling]
-        end
+MetaGraph implements a **recursive metagraph** data structure - not just a hypergraph. In this mathematical foundation:
 
-        subgraph "Data Layer"
-            F001[Hypergraph Model]
-            F007[Asset Addressing]
-            F009[Memory Pools]
-        end
+- **Nodes are graphs** - Every node can contain an entire subgraph
+- **Edges are graphs** - Every edge is itself a graph connecting graphs
+- **Graphs are graphs** - The structure recurses infinitely
 
-        subgraph "I/O & Integrity"
-            F002[Binary Bundles]
-            F003[Memory Mapping]
-            F004[BLAKE3 Integrity]
-        end
+This recursive nature enables profound modeling capabilities: neural networks where neurons are networks, game worlds where objects contain worlds, dependency systems where packages are entire dependency graphs. Built with extreme performance and mathematical purity, MetaGraph provides the foundation for a new paradigm of graph-native computing.
 
-        subgraph "Algorithms"
-            F005[Graph Traversal]
-            F006[Dependency Resolution]
-        end
+### Key Features
 
-        subgraph "Concurrency"
-            F008[Thread-Safe Access]
-        end
-
-        subgraph "Builder"
-            F012[Bundle Creation]
-        end
-    end
-```
-
-## Core Features
-
-### 🎯 Hypergraph Mathematics ([F.001](docs/features/F001-core-hypergraph-data-model.md))
-
-- **Hypernodes**: Assets with 128-bit content-addressed IDs
-- **Hyperedges**: Connect N sources to M targets with typed relationships
-- **O(1) Lookup**: Hash-based node access with efficient edge enumeration
-- **Memory Efficient**: Arena allocation with cache-friendly layout
-
-### 💽 Binary Bundle Format ([F.002](docs/features/F002-binary-bundle-format.md))
-
-```text
-[Header: 64B][Index: Variable][Edges: Variable][Store: Variable]
-```
-
-- **Memory Mapped**: Zero-copy access with pointer hydration
-- **Cross-Platform**: Unified format for Windows/Linux/macOS
-- **Compressed**: LZ4/Zstandard optimization for size vs speed
-- **Integrity**: BLAKE3 cryptographic verification
-
-### ⚡ High Performance
-
-- **Lock-Free Reads**: Atomic operations for concurrent access
-- **NUMA Aware**: Memory binding for multi-socket systems
-- **Thread-Safe**: Reader-writer locks with deadlock prevention
-- **Streaming I/O**: Platform-optimized (io_uring, DirectStorage)
+- **Recursive Metagraph**: Nodes and edges are themselves graphs, enabling infinite nesting
+- **True Composability**: Any graph can be a node in another graph, any graph can connect other graphs
+- **Extreme Performance**: Lock-free algorithms, cache-optimized layouts, <200ms load times for 1GB bundles
+- **Memory-Mapped I/O**: Zero-copy loading with pointer hydration and cross-platform support
+- **Cryptographic Integrity**: BLAKE3 Merkle trees for tamper detection and verification
+- **Modern C23**: Leveraging bleeding-edge language features for safety and performance
+- **Thread-Safe Design**: Concurrent access with atomic operations and deadlock prevention
 
 ## Quick Start
 
-> **Note**: HyperDAG is currently in architectural design phase. Implementation begins with foundation layer.
-
-### Architecture Complete ✅
+### Using DevContainer (Recommended)
 
 ```bash
-# Review comprehensive feature specifications
-ls docs/features/
-# F001-core-hypergraph-data-model.md
-# F002-binary-bundle-format.md
-# ... (12 total features)
+# Open in VS Code
+code .
 
-# Examine third-party library recommendations
-cat docs/3rd-party.md
+# Click "Reopen in Container" when prompted
+# Everything is pre-configured and ready to use
 ```
 
-### Planned API (Implementation Pending)
-
-```c
-#include "hyperdag/hyperdag.h"
-
-int main() {
-    // Create hypergraph with memory pool
-    hyperdag_graph_config_t config = {
-        .initial_node_capacity = 10000,
-        .enable_concurrent_access = true,
-        .memory_pool_size = 64 * 1024 * 1024  // 64MB
-    };
-
-    hyperdag_graph_t* graph;
-    hyperdag_result_t result = hyperdag_graph_create(&config, &graph);
-    if (result != HYPERDAG_SUCCESS) return 1;
-
-    // Add nodes (assets)
-    hyperdag_id_t texture_id, shader_id, material_id;
-
-    hyperdag_node_metadata_t texture_meta = {
-        .name = "brick_diffuse.png",
-        .type = HYPERDAG_ASSET_TYPE_TEXTURE,
-        .data_size = 2048 * 2048 * 4,
-        .hash = compute_asset_hash(texture_data)
-    };
-    hyperdag_graph_add_node(graph, &texture_meta, &texture_id);
-
-    // Create hyperedge: material depends on texture + shader
-    hyperdag_edge_metadata_t edge_meta = {
-        .type = HYPERDAG_EDGE_TYPE_DEPENDENCY,
-        .weight = 1.0f,
-        .node_count = 3,
-        .nodes = (hyperdag_id_t[]){material_id, texture_id, shader_id}
-    };
-    hyperdag_graph_add_edge(graph, &edge_meta, NULL);
-
-    // Dependency resolution
-    hyperdag_id_t* sorted_assets;
-    size_t asset_count;
-    hyperdag_dependency_resolve(graph, &sorted_assets, &asset_count);
-
-    hyperdag_graph_destroy(graph);
-    return 0;
-}
-```
-
-## Implementation Status
-
-### ✅ Complete
-
-- **Architecture**: 12 features fully specified with dependencies
-- **Third-Party Selection**: Libraries evaluated with integration guides
-- **API Design**: Core C interfaces defined with examples
-- **Documentation**: Comprehensive specs with Mermaid diagrams
-
-### 🔄 Next Phase (Ready to Start)
-
-- **Foundation Layer**: Platform abstraction and error handling ([F.010](docs/features/F010-platform-abstraction.md), [F.011](docs/features/F011-error-handling-validation.md))
-- **Core Implementation**: Hypergraph data structures ([F.001](docs/features/F001-core-hypergraph-data-model.md))
-- **Memory Management**: Object pools and arenas ([F.009](docs/features/F009-memory-pool-management.md))
-
-## Technology Stack
-
-### Selected Libraries
-
-| Component | Library | Rating | Notes |
-|-----------|---------|--------|-------|
-| **Cryptography** | [BLAKE3](https://github.com/BLAKE3-team/BLAKE3) | ⭐⭐⭐⭐⭐ | Official implementation with SIMD |
-| **Threading** | [tinycthread](https://github.com/tinycthread/tinycthread) | ⭐⭐⭐⭐ | C11 compatibility + atomics |
-| **Memory** | [mimalloc](https://github.com/microsoft/mimalloc) | ⭐⭐⭐⭐ | High performance + custom arenas |
-| **Hash Tables** | [uthash](https://github.com/troydhanson/uthash) | ⭐⭐⭐⭐ | Flexible macro-based implementation |
-
-### Custom Components
-
-- **Platform Abstraction**: Thin wrapper for file I/O and memory mapping
-- **I/O Layer**: DirectStorage (Windows) and io_uring (Linux) optimization
-- **Memory Pools**: Specialized allocators for hypergraph patterns
-
-## Building
-
-### Requirements
-
-- **C23 Compiler**: GCC 13+, Clang 17+, MSVC 2022+
-- **CMake**: 3.28+ with modern practices
-- **Platform**: Windows 10+, Linux 5.4+, macOS 12+
-
-### Development Environment Setup
+### Manual Setup
 
 ```bash
-# Automated development environment setup
+# Automated environment setup
 ./scripts/setup-dev-env.sh
 
-# Or verify existing environment  
-./scripts/setup-dev-env.sh --verify
+# Build the project
+cmake -B build -DCMAKE_BUILD_TYPE=Debug -DMETAGRAPH_DEV=ON
+cmake --build build
 
-# Check what tools are missing
-./scripts/setup-dev-env.sh --dry-run
+# Run tests
+ctest --test-dir build --output-on-failure
 ```
 
-The setup script automatically:
-- Installs required tools (cmake, clang, gitleaks, etc.)
-- Configures git hooks for quality enforcement
-- Sets up clang-tidy and clang-format
-- Validates C23 tool compatibility
-- Provides optional git configuration improvements
+## Architecture
 
-### Build Configuration
+MetaGraph consists of 12 carefully designed features organized in phases:
+
+```
+Foundation Layer:
+├── F.010 Platform Abstraction
+└── F.011 Error Handling
+
+Core Data Structures:
+├── F.001 Recursive Metagraph Model
+├── F.007 Asset ID System
+└── F.009 Memory Pool Management
+
+I/O and Serialization:
+├── F.002 Binary Bundle Format
+├── F.003 Memory-Mapped I/O
+└── F.004 BLAKE3 Integrity
+
+Algorithms and Concurrency:
+├── F.005 Graph Traversal
+├── F.006 Dependency Resolution
+└── F.008 Thread-Safe Access
+
+Builder System:
+└── F.012 Bundle Creation
+```
+
+See [Feature Documentation](docs/features/) for detailed specifications.
+
+## Usage Example (Planned API)
+
+```c
+#include <metagraph/metagraph.h>
+
+// Create a metagraph
+metagraph_graph_config_t config = {
+    .initial_node_capacity = 10000,
+    .enable_concurrent_access = true,
+    .memory_pool_size = 64 * 1024 * 1024  // 64MB
+};
+
+metagraph_graph_t* world_graph;
+metagraph_graph_create(&config, &world_graph);
+
+// Create a subgraph for a game level (this graph will become a node!)
+metagraph_graph_t* level_graph;
+metagraph_graph_create(&config, &level_graph);
+
+// Add assets to the level subgraph
+metagraph_id_t texture_id, shader_id;
+metagraph_node_add_simple(level_graph, "diffuse.png", &texture_id);
+metagraph_node_add_simple(level_graph, "shader.glsl", &shader_id);
+
+// Now add the entire level graph as a NODE in the world graph
+metagraph_id_t level_node_id;
+metagraph_node_add_graph(world_graph, level_graph, "Level_01", &level_node_id);
+
+// Create another subgraph for game logic
+metagraph_graph_t* logic_graph;
+metagraph_graph_create(&config, &logic_graph);
+
+// The edge connecting levels IS ITSELF A GRAPH
+metagraph_graph_t* transition_graph;
+metagraph_graph_create(&config, &transition_graph);
+metagraph_node_add_simple(transition_graph, "fade_effect", NULL);
+metagraph_node_add_simple(transition_graph, "checkpoint_save", NULL);
+
+// Connect level to logic using the transition graph as an edge
+metagraph_id_t transition_edge_id;
+metagraph_edge_add_graph(world_graph, level_node_id, logic_node_id, 
+                         transition_graph, &transition_edge_id);
+
+// Graphs all the way down!
+metagraph_graph_destroy(world_graph);
+```
+
+## Performance Targets
+
+| Metric | Target | Notes |
+|--------|--------|-------|
+| Node Lookup | O(1), <100ns | Hash-based indexing |
+| Bundle Loading | >1GB/s | Memory-mapped I/O |
+| Concurrent Reads | Linear scaling | Up to 16 threads |
+| Memory Overhead | <5% | Efficient packing |
+| Load Time (1GB) | <200ms | With integrity checks |
+
+## Development
+
+### Build Requirements
+
+- **Compiler**: GCC 15+, Clang 18+, or MSVC 2022+ (C23 support required)
+- **CMake**: 3.28 or higher
+- **Platform**: Windows 10+, Linux 5.4+, or macOS 12+
+
+### Building from Source
 
 ```bash
-# Standard release build
+# Standard build
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 
-# Development with all sanitizers
-cmake -B build -DCMAKE_BUILD_TYPE=Debug -DHYPERDAG_DEV=ON -DHYPERDAG_SANITIZERS=ON
+# Development build with sanitizers
+cmake -B build -DCMAKE_BUILD_TYPE=Debug \
+    -DMETAGRAPH_DEV=ON \
+    -DMETAGRAPH_SANITIZERS=ON
+cmake --build build
 
-# Static analysis
+# Run static analysis
 cmake --build build --target static-analysis
 
 # Performance profiling
 ./scripts/profile.sh all
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for complete development guidelines and build system documentation.
+### Development Workflow
 
-## Performance Targets
+1. Create feature branch from release branch
+   ```bash
+   git checkout release/v0.1.0
+   git checkout -b feat/123-graph-traversal
+   ```
 
-| Operation | Target Performance |
-|-----------|-------------------|
-| Node Lookup | O(1) average, <100ns |
-| Bundle Loading | >1GB/s on NVMe |
-| Concurrent Reads | Linear scaling to 16 threads |
-| Memory Overhead | <5% of graph data |
+2. Implement with comprehensive tests
+   - 100% test coverage required
+   - All sanitizers must pass
+   - Zero clang-tidy warnings
+
+3. Run quality checks
+   ```bash
+   ./scripts/run-clang-format.sh --fix
+   ctest --test-dir build --output-on-failure
+   cmake --build build --target static-analysis
+   ```
+
+4. Submit PR following guidelines in [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Technology Stack
+
+### Core Libraries
+
+| Purpose | Library | License | Integration Status |
+|---------|---------|---------|-------------------|
+| Cryptography | [BLAKE3](https://github.com/BLAKE3-team/BLAKE3) | CC0/Apache 2.0 | Planned |
+| Memory | [mimalloc](https://github.com/microsoft/mimalloc) | MIT | Planned |
+| Data Structures | [uthash](https://github.com/troydhanson/uthash) | BSD | Planned |
+| Threading | [tinycthread](https://github.com/tinycthread/tinycthread) | Simplified BSD | Planned |
+
+### Platform Features
+
+- **Linux**: io_uring for async I/O, huge pages support
+- **Windows**: DirectStorage integration, SEH for error handling
+- **macOS**: Grand Central Dispatch, Accelerate framework
 
 ## Documentation
 
-### Architecture & Design
+- [Contributing Guidelines](CONTRIBUTING.md) - Development standards and workflow
+- [Feature Specifications](docs/features/) - Detailed technical documentation
+- [Third-Party Integration](docs/3rd-party.md) - Library usage patterns
+- [Threat Model](docs/THREAT-MODEL.md) - Security considerations
+- [Release Process](docs/RELEASE.md) - Fort Knox-grade release workflow
+- [AI Assistant Guide](CLAUDE.md) - Context for Claude Code development
 
-- **[Feature Specifications](docs/features/)**: Complete technical specifications
-- **[Third-Party Integration](docs/3rd-party.md)**: Library selection and usage guides
+## Project Status
 
-### Development Guides
+- ✅ **Architecture**: Complete specification of 12 features
+- ✅ **Design**: API design and integration patterns defined
+- ✅ **Documentation**: Comprehensive technical documentation
+- 🚧 **Implementation**: Ready to begin (Phase 1: Foundation)
+- ⏳ **Testing**: Pending implementation
+- ⏳ **Release**: v0.1.0 planned after implementation
 
-- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Complete development guidelines and standards
-- **[CLAUDE.md](CLAUDE.md)**: AI-specific development context
-- **API Reference**: Generated from implementation (pending)
-- **Performance Guide**: Optimization recommendations (pending)
+## Related Projects
 
-## HyperDAG vs TurtlGraph
-
-**HyperDAG** (This Repository):
-
-- Mathematical hypergraph foundation
-- Binary bundle format and I/O
-- Memory management and concurrency primitives
-- Pure C23 library with minimal dependencies
-
-**TurtlGraph** (Production System):
-
-- Game engine integration and UI
-- Network protocols and caching
-- Content pipeline and asset processing
-- Production deployment features
-
-## Contributing
-
-1. **Set Up Environment**: Run `./scripts/setup-dev-env.sh` for complete development setup
-2. **Review Architecture**: Study feature specifications in `docs/features/`
-3. **Understand Dependencies**: Check third-party integration guides
-4. **Follow Standards**: C23 practices with comprehensive testing
-5. **Quality Gates**: >95% coverage, sanitizer-clean, static analysis passing
-
-**DevContainer (Recommended)**:
-Use the provided DevContainer for instant setup with VS Code.
-
-**Manual Setup**:
-```bash
-# Set up development environment
-./scripts/setup-dev-env.sh
-
-# Validate contribution
-ctest --test-dir build --output-on-failure
-cmake --build build --target static-analysis
-./scripts/run-gitleaks.sh
-```
-
-For detailed contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## Development Timeline
-
-- **Phase 1** (Weeks 1-2): Foundation and core data structures
-- **Phase 2** (Weeks 3-5): I/O system and binary format
-- **Phase 3** (Weeks 6-7): Algorithms and concurrency
-- **Phase 4** (Weeks 8-9): Builder system and integration
-
-See [Feature Specifications](docs/features/) for detailed implementation roadmap.
+- **MetaGraph** (this project): Pure mathematical recursive metagraph foundation
+- **TurtlGraph** (future): Production system with streaming, CDN, hot reload built on MetaGraph
+- **Applications**: Game engines (worlds within worlds), neural networks (networks of networks), package managers (dependencies as graphs), knowledge graphs (concepts containing concept graphs)
 
 ## License
 
 Apache License 2.0 - see [LICENSE](LICENSE) for details.
 
-## Contact
+## Security
 
-- **Technical Questions**: GitHub Issues
-- **Security Reports**: <james@flyingrobots.dev>
-- **Development**: Reference [CLAUDE.md](CLAUDE.md) for AI-assisted development context
+For security vulnerabilities, please email james@flyingrobots.dev directly rather than using public issue tracker.
 
----
+## Acknowledgments
 
-_HyperDAG: The mathematical foundation enabling "everything is graphs" for modern asset management._
+MetaGraph emerged from the profound realization that "everything is a graph" - and more importantly, that graphs themselves are made of graphs. From Git commits (graphs of changes) to neural networks (graphs of graphs) to game worlds (graphs containing graph worlds), this recursive insight changes how we model complex systems. This project provides the mathematical foundation for that vision: Graphs. All. The. Way. Down.
