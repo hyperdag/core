@@ -132,9 +132,10 @@ typedef struct {
  * @return true if the result indicates success, false otherwise
  */
 static inline bool metagraph_result_is_success(metagraph_result_t result) {
-    return (result >= METAGRAPH_SUCCESS &&
-            result < METAGRAPH_ERROR_OUT_OF_MEMORY) !=
-           0; // NOLINT(readability-implicit-bool-conversion)
+    // Only explicit success codes are considered successful
+    /* MAINTENANCE: Add new success codes here */
+    return (bool)((result == METAGRAPH_SUCCESS) ||
+                  (result == METAGRAPH_SUCCESS_PARTIAL));
 }
 
 /**
@@ -180,6 +181,18 @@ metagraph_get_error_context(metagraph_error_context_t *context);
  * @brief Clear error context for current thread
  */
 void metagraph_clear_error_context(void);
+
+/* Optional thread cleanup function */
+#ifdef METAGRAPH_EXPOSE_THREAD_CLEANUP
+/**
+ * @brief Free thread-local error context storage
+ *
+ * Optional function to explicitly free thread-local storage before
+ * thread exit. Not required as the OS will reclaim memory on thread
+ * termination, but useful for thread pools that create/destroy many threads.
+ */
+void metagraph_thread_cleanup(void);
+#endif
 
 // ============================================================================
 // Convenience Macros for Error Handling

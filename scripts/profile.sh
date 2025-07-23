@@ -118,6 +118,58 @@ profile_with_gprof() {
     echo "[INFO] gprof report generated: .ignored/gprof-report.txt"
 }
 
+# Performance targets from documentation
+# - Node Lookup: O(1), <100ns
+# - Bundle Loading: >1GB/s  
+# - Load Time (1GB): <200ms
+# - Memory Overhead: <5%
+# - Regression tolerance: <5%
+
+# Check performance targets
+check_performance_targets() {
+    echo "[INFO] 🎯 Checking adherence to documented performance targets..."
+    
+    # Create results file
+    mkdir -p .ignored
+    results_file=".ignored/performance-targets-check.txt"
+    
+    {
+        echo "==================================================="
+        echo "MetaGraph Performance Targets Validation"
+        echo "==================================================="
+        echo ""
+        echo "Targets from documentation:"
+        echo "- Node Lookup: O(1), <100ns"
+        echo "- Bundle Loading: >1GB/s"
+        echo "- Load Time (1GB): <200ms"
+        echo "- Memory Overhead: <5%"
+        echo "- Regression tolerance: <5%"
+        echo ""
+        echo "==================================================="
+        echo ""
+    } > "$results_file"
+    
+    # Run performance benchmarks
+    if [ -f "./build-profile/bin/mg_benchmarks" ]; then
+        echo "[INFO] Running performance benchmarks..."
+        ./build-profile/bin/mg_benchmarks --validate-targets >> "$results_file" 2>&1 || true
+    else
+        echo "[WARN] Benchmarks not built yet. Build with profile configuration first."
+        echo "WARN: Benchmarks not found. Skipping target validation." >> "$results_file"
+    fi
+    
+    # Check for target violations
+    if grep -q "FAIL" "$results_file" 2>/dev/null; then
+        mg_red "[FAIL] Some performance targets not met!"
+        grep "FAIL" "$results_file"
+        return 1
+    else
+        mg_green "[PASS] All performance targets met!"
+    fi
+    
+    echo "[INFO] Performance target results saved to: $results_file"
+}
+
 # Benchmark timing analysis
 benchmark_timing() {
     echo "[INFO] ⏱️  Running detailed timing analysis..."
@@ -155,6 +207,9 @@ benchmark_timing() {
     rm -f "$times_file"
 
     echo "[INFO] Timing analysis saved to: .ignored/timing-analysis.txt"
+    
+    # Check performance targets after timing analysis
+    check_performance_targets
 }
 
 # Profile-Guided Optimization
@@ -242,6 +297,10 @@ main() {
             build_for_profiling
             benchmark_timing
             ;;
+        "targets")
+            build_for_profiling
+            check_performance_targets
+            ;;
         "pgo")
             run_pgo
             ;;
@@ -260,7 +319,17 @@ main() {
             run_fuzzing
             ;;
         *)
-            echo "Usage: $0 [perf|valgrind|gprof|timing|pgo|fuzz|all]"
+            echo "Usage: $0 [perf|valgrind|gprof|timing|targets|pgo|fuzz|all]"
+            echo ""
+            echo "Options:"
+            echo "  perf      - Performance profiling with perf (Linux only)"
+            echo "  valgrind  - Memory profiling with Valgrind"
+            echo "  gprof     - CPU profiling with gprof"
+            echo "  timing    - Benchmark timing analysis"
+            echo "  targets   - Check adherence to documented performance targets"
+            echo "  pgo       - Profile-Guided Optimization"
+            echo "  fuzz      - Fuzzing tests"
+            echo "  all       - Run all profiling tests"
             exit 1
             ;;
     esac

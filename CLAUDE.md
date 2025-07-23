@@ -26,6 +26,44 @@ MetaGraph is a high-performance C23 library implementing a mathematical hypergra
 
 ### Code Generation Standards
 
+#### Error Handling - MANDATORY
+
+**ALWAYS use `metagraph_result_t` for ANY function that could fail:**
+
+```c
+// ✅ CORRECT - Every fallible function returns metagraph_result_t
+metagraph_result_t metagraph_node_add(metagraph_graph_t* graph,
+                                      const metagraph_node_metadata_t* metadata,
+                                      metagraph_id_t* out_id) {
+    METAGRAPH_CHECK_NULL(graph);
+    METAGRAPH_CHECK_NULL(metadata);
+    METAGRAPH_CHECK_NULL(out_id);
+    
+    // Allocation could fail
+    metagraph_node_t* node = metagraph_pool_alloc(graph->pool, sizeof(*node));
+    METAGRAPH_CHECK_ALLOC(node);
+    
+    // Any operation that could fail must be checked
+    METAGRAPH_CHECK(metagraph_id_generate(&node->id));
+    
+    *out_id = node->id;
+    return METAGRAPH_OK();
+}
+
+// ❌ WRONG - Using int/bool for error handling
+int add_node(graph_t* graph, node_t* node) {
+    if (!graph || !node) return -1;  // NO! Use METAGRAPH_CHECK_NULL
+    return 0;  // NO! Use METAGRAPH_OK()
+}
+```
+
+**Key error handling patterns:**
+- Use `METAGRAPH_CHECK()` to propagate errors up the call stack
+- Use `METAGRAPH_CHECK_NULL()` for null pointer validation
+- Use `METAGRAPH_CHECK_ALLOC()` after any allocation
+- Use `METAGRAPH_ERR()` to return errors with context
+- Never use `int`, `bool`, or custom error codes - always `metagraph_result_t`
+
 #### C23 Modern Features
 
 ```c
@@ -201,6 +239,33 @@ Every function needs:
 3. **Don't skip tests** - every function must have comprehensive tests
 4. **Don't use non-POSIX shell** - scripts must work on minimal /bin/sh
 5. **Don't ignore performance** - profile critical paths and optimize
+6. **Don't use int/bool for errors** - ALWAYS use metagraph_result_t for fallible functions
+
+### When to Use metagraph_result_t
+
+**MUST use metagraph_result_t when:**
+- Function performs any allocation (could fail with OOM)
+- Function does any I/O operations (file, network, etc.)
+- Function validates input parameters
+- Function calls other functions that return metagraph_result_t
+- Function could fail for ANY reason
+
+**Can use void when:**
+- Function is a simple getter that cannot fail
+- Function only modifies already-validated internal state
+- Function is a destructor/cleanup function
+
+```c
+// ✅ Correct usage examples
+metagraph_result_t metagraph_graph_create(...);  // Allocates memory
+metagraph_result_t metagraph_node_add(...);      // Modifies graph, allocates
+metagraph_result_t metagraph_bundle_load(...);   // I/O operation
+metagraph_result_t metagraph_validate(...);      // Input validation
+
+// ✅ Correct void usage
+void metagraph_graph_destroy(graph);             // Cleanup, can't fail
+void metagraph_node_get_id(node, out_id);       // Simple getter
+```
 
 ## Critical Reminders
 

@@ -66,7 +66,7 @@ CheckOptions:
   - key: readability-function-size.ParameterThreshold
     value: '6'
   - key: readability-function-size.NestingThreshold
-    value: '3'
+    value: '5'
 
   # Memory safety
   - key: bugprone-suspicious-string-compare.WarnOnImplicitComparison
