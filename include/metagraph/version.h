@@ -1,76 +1,71 @@
 /**
  * @file version.h
- * @brief Version information for HyperDAG library
+ * @brief Version information for MetaGraph library
  *
  * This header provides compile-time and runtime version information
  * including API versions, bundle format compatibility, and build details.
  *
+ * NOTE: This file is manually managed. Use scripts/release.sh to update
+ * version information when preparing a new release.
+ *
  * @copyright Apache License 2.0 - see LICENSE file for details
  */
 
-#ifndef HYPERDAG_VERSION_H
-#define HYPERDAG_VERSION_H
+#ifndef METAGRAPH_VERSION_H
+#define METAGRAPH_VERSION_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 // =============================================================================
-// API Version Information (from VERSION file)
+// API Version Information (from CMake project version)
 // =============================================================================
 
-#define HYPERDAG_API_VERSION_MAJOR 0
-#define HYPERDAG_API_VERSION_MINOR 1
-#define HYPERDAG_API_VERSION_PATCH 0
-#define HYPERDAG_API_VERSION_STRING "0.1.0-alpha"
+#define METAGRAPH_API_VERSION_MAJOR 0
+#define METAGRAPH_API_VERSION_MINOR 1
+#define METAGRAPH_API_VERSION_PATCH 0
+#define METAGRAPH_API_VERSION_STRING "0.1.0"
 
 // Legacy compatibility (maps to API version)
-#define HYPERDAG_VERSION_MAJOR HYPERDAG_API_VERSION_MAJOR
-#define HYPERDAG_VERSION_MINOR HYPERDAG_API_VERSION_MINOR
-#define HYPERDAG_VERSION_PATCH HYPERDAG_API_VERSION_PATCH
-#define HYPERDAG_VERSION_STRING HYPERDAG_API_VERSION_STRING
+#define METAGRAPH_VERSION_MAJOR METAGRAPH_API_VERSION_MAJOR
+#define METAGRAPH_VERSION_MINOR METAGRAPH_API_VERSION_MINOR
+#define METAGRAPH_VERSION_PATCH METAGRAPH_API_VERSION_PATCH
+#define METAGRAPH_VERSION_STRING METAGRAPH_API_VERSION_STRING
 
 // =============================================================================
 // Binary Bundle Format Version
 // =============================================================================
 
-#define HYPERDAG_BUNDLE_FORMAT_VERSION 1
-#define HYPERDAG_BUNDLE_FORMAT_UUID "550e8400-e29b-41d4-a716-446655440000"
+#define METAGRAPH_BUNDLE_FORMAT_VERSION 1
+#define METAGRAPH_BUNDLE_FORMAT_UUID "550e8400-e29b-41d4-a716-446655440000"
 
 // =============================================================================
 // Build Information (populated by CMake)
 // =============================================================================
 
-#ifndef HYPERDAG_BUILD_TIMESTAMP
-#define HYPERDAG_BUILD_TIMESTAMP "@BUILD_TIMESTAMP@"
-#endif
-
-#ifndef HYPERDAG_BUILD_COMMIT_HASH
-#define HYPERDAG_BUILD_COMMIT_HASH "@GIT_COMMIT_HASH@"
-#endif
-
-#ifndef HYPERDAG_BUILD_BRANCH
-#define HYPERDAG_BUILD_BRANCH "@GIT_BRANCH@"
-#endif
+#define METAGRAPH_BUILD_TIMESTAMP "1753216542"
+#define METAGRAPH_BUILD_COMMIT_HASH "b60468a7fdb4c1297c84ce070dfb301cfc8081d0"
+#define METAGRAPH_BUILD_BRANCH "feat/docker-dev-container-image"
 
 // Fallback to compiler macros if CMake variables not available
-#define HYPERDAG_BUILD_DATE __DATE__
-#define HYPERDAG_BUILD_TIME __TIME__
+#define METAGRAPH_BUILD_DATE __DATE__
+#define METAGRAPH_BUILD_TIME __TIME__
 
 // =============================================================================
 // Minimum Requirements
 // =============================================================================
 
-#define HYPERDAG_MIN_C_STANDARD 23
-#define HYPERDAG_MIN_CMAKE_VERSION "3.28"
+#define METAGRAPH_MIN_C_STANDARD 23
+#define METAGRAPH_MIN_CMAKE_VERSION "3.28"
 
 // =============================================================================
 // Feature Flags for Forward Compatibility
 // =============================================================================
 
-#define HYPERDAG_FEATURE_VERSIONED_BUNDLES 1
-#define HYPERDAG_FEATURE_DELTA_PATCHES 0  // Reserved for future
-#define HYPERDAG_FEATURE_COMPRESSION_V2 0 // Reserved for future
+#define METAGRAPH_FEATURE_VERSIONED_BUNDLES 1
+#define METAGRAPH_FEATURE_DELTA_PATCHES 0  // Reserved for future
+#define METAGRAPH_FEATURE_COMPRESSION_V2 0 // Reserved for future
 
 // =============================================================================
 // Runtime Version API
@@ -80,79 +75,91 @@ extern "C" {
  * @brief Get API major version number
  * @return Major version number
  */
-int hyperdag_version_major(void);
+int metagraph_version_major(void);
 
 /**
  * @brief Get API minor version number
  * @return Minor version number
  */
-int hyperdag_version_minor(void);
+int metagraph_version_minor(void);
 
 /**
  * @brief Get API patch version number
  * @return Patch version number
  */
-int hyperdag_version_patch(void);
+int metagraph_version_patch(void);
 
 /**
  * @brief Get API version string
- * @return Pointer to static version string (e.g., "0.1.0-alpha")
+ * @return Pointer to static version string (e.g., "0.1.0")
  */
-const char *hyperdag_version_string(void);
+const char *metagraph_version_string(void);
 
 /**
  * @brief Get bundle format version
  * @return Bundle format version number
  */
-int hyperdag_bundle_format_version(void);
+int metagraph_bundle_format_version(void);
 
 /**
  * @brief Get bundle format UUID
  * @return Pointer to static UUID string
  */
-const char *hyperdag_bundle_format_uuid(void);
+const char *metagraph_bundle_format_uuid(void);
 
 /**
  * @brief Get build information
  * @return Pointer to static string containing build timestamp and commit
  */
-const char *hyperdag_build_info(void);
+const char *metagraph_build_info(void);
+
+/**
+ * @brief Build details structure
+ */
+typedef struct metagraph_build_details_s {
+    const char *timestamp;
+    const char *commit_hash;
+    const char *branch;
+} metagraph_build_details_t;
 
 /**
  * @brief Get detailed build information
- * @param timestamp Output parameter for build timestamp (can be NULL)
- * @param commit_hash Output parameter for git commit hash (can be NULL)
- * @param branch Output parameter for git branch (can be NULL)
+ * @param details Output structure for build details (must not be NULL)
  */
-void hyperdag_build_details(const char **timestamp, const char **commit_hash,
-                            const char **branch);
+void metagraph_get_build_details(metagraph_build_details_t *details);
 
 /**
  * @brief Check if a feature is available
  * @param feature_name Name of the feature to check
  * @return 1 if feature is available, 0 otherwise
  */
-int hyperdag_feature_available(const char *feature_name);
+int metagraph_feature_available(const char *feature_name);
+
+/**
+ * @brief Version structure
+ */
+typedef struct metagraph_version_s {
+    int major;
+    int minor;
+    int patch;
+} metagraph_version_t;
 
 /**
  * @brief Check API compatibility
- * @param required_major Required major version
- * @param required_minor Required minor version
- * @param required_patch Required patch version
+ * @param required Required version
  * @return 1 if API is compatible, 0 otherwise
  */
-int hyperdag_api_compatible(int required_major, int required_minor,
-                            int required_patch);
+int metagraph_api_compatible(const metagraph_version_t *required);
 
 /**
  * @brief Check bundle format compatibility
  * @param bundle_version Bundle format version to check
  * @return 1 if bundle format is supported, 0 otherwise
  */
-int hyperdag_bundle_compatible(int bundle_version);
+int metagraph_bundle_compatible(int bundle_version);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* HYPERDAG_VERSION_H */
+#endif /* METAGRAPH_VERSION_H */

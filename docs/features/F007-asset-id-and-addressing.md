@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Asset ID and Addressing system provides a unified, hierarchical identification scheme for assets within HyperDAG bundles. This system enables efficient lookup, content-based addressing, and stable references that persist across bundle modifications and platform migrations.
+The Asset ID and Addressing system provides a unified, hierarchical identification scheme for assets within MetaGraph bundles. This system enables efficient lookup, content-based addressing, and stable references that persist across bundle modifications and platform migrations.
 
 Drawing from the origin story's insight about moving from JSON manifests to graph-based asset management, this feature implements a robust addressing scheme that supports both human-readable paths and cryptographic content hashes.
 
@@ -16,9 +16,9 @@ Drawing from the origin story's insight about moving from JSON manifests to grap
 ## User Stories
 
 ### F007.US001 - Hierarchical Asset Paths
-**As a** content creator  
-**I want** human-readable hierarchical asset paths  
-**So that** I can organize and reference assets intuitively  
+**As a** content creator
+**I want** human-readable hierarchical asset paths
+**So that** I can organize and reference assets intuitively
 
 **Prerequisites:**
 - Platform abstraction for string operations (F.010)
@@ -32,9 +32,9 @@ Drawing from the origin story's insight about moving from JSON manifests to grap
 - Maximum path length enforcement (4096 characters)
 
 ### F007.US002 - Content-Based Addressing
-**As a** system developer  
-**I want** content-based asset IDs using cryptographic hashes  
-**So that** asset integrity can be verified and deduplication is automatic  
+**As a** system developer
+**I want** content-based asset IDs using cryptographic hashes
+**So that** asset integrity can be verified and deduplication is automatic
 
 **Prerequisites:**
 - Hash algorithm implementation (BLAKE3)
@@ -48,9 +48,9 @@ Drawing from the origin story's insight about moving from JSON manifests to grap
 - Hash-based lookup performance optimization
 
 ### F007.US003 - Stable Asset References
-**As a** system developer  
-**I want** stable asset IDs that persist across bundle modifications  
-**So that** references remain valid during development and deployment  
+**As a** system developer
+**I want** stable asset IDs that persist across bundle modifications
+**So that** references remain valid during development and deployment
 
 **Prerequisites:**
 - ID generation and management system
@@ -63,9 +63,9 @@ Drawing from the origin story's insight about moving from JSON manifests to grap
 - Orphaned reference detection and cleanup
 
 ### F007.US004 - Efficient Lookup Operations
-**As a** performance engineer  
-**I want** O(1) average-case asset lookup by ID or path  
-**So that** asset access is fast even in large bundles  
+**As a** performance engineer
+**I want** O(1) average-case asset lookup by ID or path
+**So that** asset access is fast even in large bundles
 
 **Prerequisites:**
 - Hash table implementation
@@ -79,9 +79,9 @@ Drawing from the origin story's insight about moving from JSON manifests to grap
 - Minimal memory overhead per asset
 
 ### F007.US005 - Asset Metadata Management
-**As a** asset pipeline developer  
-**I want** to associate metadata with asset IDs  
-**So that** I can track asset properties, dependencies, and versioning information  
+**As a** asset pipeline developer
+**I want** to associate metadata with asset IDs
+**So that** I can track asset properties, dependencies, and versioning information
 
 **Prerequisites:**
 - Metadata storage system
@@ -100,107 +100,107 @@ Drawing from the origin story's insight about moving from JSON manifests to grap
 // Asset ID types
 typedef struct {
     uint8_t bytes[32];  // BLAKE3 hash (256 bits)
-} hyperdag_content_hash_t;
+} mg_content_hash_t;
 
 typedef struct {
     uint64_t high;
     uint64_t low;
-} hyperdag_uuid_t;
+} mg_uuid_t;
 
 typedef enum {
-    HYPERDAG_ID_TYPE_UUID,
-    HYPERDAG_ID_TYPE_CONTENT_HASH,
-    HYPERDAG_ID_TYPE_PATH_HASH
-} hyperdag_id_type_t;
+    METAGRAPH_ID_TYPE_UUID,
+    METAGRAPH_ID_TYPE_CONTENT_HASH,
+    METAGRAPH_ID_TYPE_PATH_HASH
+} mg_id_type_t;
 
 typedef struct {
-    hyperdag_id_type_t type;
+    mg_id_type_t type;
     union {
-        hyperdag_uuid_t uuid;
-        hyperdag_content_hash_t content_hash;
+        mg_uuid_t uuid;
+        mg_content_hash_t content_hash;
         uint64_t path_hash;
     } id;
-} hyperdag_asset_id_t;
+} mg_asset_id_t;
 
 // Asset path operations
-typedef struct hyperdag_asset_path hyperdag_asset_path_t;
+typedef struct mg_asset_path mg_asset_path_t;
 
-hyperdag_result_t hyperdag_path_create(
+mg_result_t mg_path_create(
     const char* path_string,
-    hyperdag_asset_path_t** out_path
+    mg_asset_path_t** out_path
 );
 
-hyperdag_result_t hyperdag_path_destroy(hyperdag_asset_path_t* path);
+mg_result_t mg_path_destroy(mg_asset_path_t* path);
 
-hyperdag_result_t hyperdag_path_normalize(
+mg_result_t mg_path_normalize(
     const char* input_path,
     char* normalized_path,
     size_t buffer_size
 );
 
-hyperdag_result_t hyperdag_path_join(
-    const hyperdag_asset_path_t* base_path,
+mg_result_t mg_path_join(
+    const mg_asset_path_t* base_path,
     const char* relative_path,
-    hyperdag_asset_path_t** out_path
+    mg_asset_path_t** out_path
 );
 
-hyperdag_result_t hyperdag_path_get_parent(
-    const hyperdag_asset_path_t* path,
-    hyperdag_asset_path_t** out_parent
+mg_result_t mg_path_get_parent(
+    const mg_asset_path_t* path,
+    mg_asset_path_t** out_parent
 );
 
-hyperdag_result_t hyperdag_path_get_filename(
-    const hyperdag_asset_path_t* path,
+mg_result_t mg_path_get_filename(
+    const mg_asset_path_t* path,
     const char** out_filename
 );
 
-hyperdag_result_t hyperdag_path_get_extension(
-    const hyperdag_asset_path_t* path,
+mg_result_t mg_path_get_extension(
+    const mg_asset_path_t* path,
     const char** out_extension
 );
 
 // Asset ID operations
-hyperdag_result_t hyperdag_id_create_uuid(hyperdag_asset_id_t* out_id);
+mg_result_t mg_id_create_uuid(mg_asset_id_t* out_id);
 
-hyperdag_result_t hyperdag_id_create_from_content(
+mg_result_t mg_id_create_from_content(
     const void* content,
     size_t content_size,
-    hyperdag_asset_id_t* out_id
+    mg_asset_id_t* out_id
 );
 
-hyperdag_result_t hyperdag_id_create_from_path(
-    const hyperdag_asset_path_t* path,
-    hyperdag_asset_id_t* out_id
+mg_result_t mg_id_create_from_path(
+    const mg_asset_path_t* path,
+    mg_asset_id_t* out_id
 );
 
-hyperdag_result_t hyperdag_id_compare(
-    const hyperdag_asset_id_t* id1,
-    const hyperdag_asset_id_t* id2,
+mg_result_t mg_id_compare(
+    const mg_asset_id_t* id1,
+    const mg_asset_id_t* id2,
     int* out_result
 );
 
-hyperdag_result_t hyperdag_id_to_string(
-    const hyperdag_asset_id_t* id,
+mg_result_t mg_id_to_string(
+    const mg_asset_id_t* id,
     char* buffer,
     size_t buffer_size
 );
 
-hyperdag_result_t hyperdag_id_from_string(
+mg_result_t mg_id_from_string(
     const char* id_string,
-    hyperdag_asset_id_t* out_id
+    mg_asset_id_t* out_id
 );
 
 // Asset metadata
 typedef enum {
-    HYPERDAG_METADATA_TYPE_STRING,
-    HYPERDAG_METADATA_TYPE_INTEGER,
-    HYPERDAG_METADATA_TYPE_FLOAT,
-    HYPERDAG_METADATA_TYPE_BOOLEAN,
-    HYPERDAG_METADATA_TYPE_BINARY
-} hyperdag_metadata_type_t;
+    METAGRAPH_METADATA_TYPE_STRING,
+    METAGRAPH_METADATA_TYPE_INTEGER,
+    METAGRAPH_METADATA_TYPE_FLOAT,
+    METAGRAPH_METADATA_TYPE_BOOLEAN,
+    METAGRAPH_METADATA_TYPE_BINARY
+} mg_metadata_type_t;
 
 typedef struct {
-    hyperdag_metadata_type_t type;
+    mg_metadata_type_t type;
     union {
         const char* string_value;
         int64_t integer_value;
@@ -211,67 +211,67 @@ typedef struct {
             size_t size;
         } binary_value;
     } value;
-} hyperdag_metadata_value_t;
+} mg_metadata_value_t;
 
-typedef struct hyperdag_asset_metadata hyperdag_asset_metadata_t;
+typedef struct mg_asset_metadata mg_asset_metadata_t;
 
-hyperdag_result_t hyperdag_metadata_create(hyperdag_asset_metadata_t** out_metadata);
-hyperdag_result_t hyperdag_metadata_destroy(hyperdag_asset_metadata_t* metadata);
+mg_result_t mg_metadata_create(mg_asset_metadata_t** out_metadata);
+mg_result_t mg_metadata_destroy(mg_asset_metadata_t* metadata);
 
-hyperdag_result_t hyperdag_metadata_set(
-    hyperdag_asset_metadata_t* metadata,
+mg_result_t mg_metadata_set(
+    mg_asset_metadata_t* metadata,
     const char* key,
-    const hyperdag_metadata_value_t* value
+    const mg_metadata_value_t* value
 );
 
-hyperdag_result_t hyperdag_metadata_get(
-    const hyperdag_asset_metadata_t* metadata,
+mg_result_t mg_metadata_get(
+    const mg_asset_metadata_t* metadata,
     const char* key,
-    hyperdag_metadata_value_t* out_value
+    mg_metadata_value_t* out_value
 );
 
-hyperdag_result_t hyperdag_metadata_remove(
-    hyperdag_asset_metadata_t* metadata,
+mg_result_t mg_metadata_remove(
+    mg_asset_metadata_t* metadata,
     const char* key
 );
 
-hyperdag_result_t hyperdag_metadata_enumerate(
-    const hyperdag_asset_metadata_t* metadata,
+mg_result_t mg_metadata_enumerate(
+    const mg_asset_metadata_t* metadata,
     const char*** out_keys,
     size_t* out_count
 );
 
 // Asset registry
-typedef struct hyperdag_asset_registry hyperdag_asset_registry_t;
+typedef struct mg_asset_registry mg_asset_registry_t;
 
-hyperdag_result_t hyperdag_registry_create(hyperdag_asset_registry_t** out_registry);
-hyperdag_result_t hyperdag_registry_destroy(hyperdag_asset_registry_t* registry);
+mg_result_t mg_registry_create(mg_asset_registry_t** out_registry);
+mg_result_t mg_registry_destroy(mg_asset_registry_t* registry);
 
-hyperdag_result_t hyperdag_registry_register_asset(
-    hyperdag_asset_registry_t* registry,
-    const hyperdag_asset_id_t* asset_id,
-    const hyperdag_asset_path_t* path,
-    const hyperdag_asset_metadata_t* metadata
+mg_result_t mg_registry_register_asset(
+    mg_asset_registry_t* registry,
+    const mg_asset_id_t* asset_id,
+    const mg_asset_path_t* path,
+    const mg_asset_metadata_t* metadata
 );
 
-hyperdag_result_t hyperdag_registry_lookup_by_id(
-    const hyperdag_asset_registry_t* registry,
-    const hyperdag_asset_id_t* asset_id,
-    const hyperdag_asset_path_t** out_path,
-    const hyperdag_asset_metadata_t** out_metadata
+mg_result_t mg_registry_lookup_by_id(
+    const mg_asset_registry_t* registry,
+    const mg_asset_id_t* asset_id,
+    const mg_asset_path_t** out_path,
+    const mg_asset_metadata_t** out_metadata
 );
 
-hyperdag_result_t hyperdag_registry_lookup_by_path(
-    const hyperdag_asset_registry_t* registry,
-    const hyperdag_asset_path_t* path,
-    hyperdag_asset_id_t* out_asset_id,
-    const hyperdag_asset_metadata_t** out_metadata
+mg_result_t mg_registry_lookup_by_path(
+    const mg_asset_registry_t* registry,
+    const mg_asset_path_t* path,
+    mg_asset_id_t* out_asset_id,
+    const mg_asset_metadata_t** out_metadata
 );
 
-hyperdag_result_t hyperdag_registry_enumerate_assets(
-    const hyperdag_asset_registry_t* registry,
+mg_result_t mg_registry_enumerate_assets(
+    const mg_asset_registry_t* registry,
     const char* path_prefix,
-    hyperdag_asset_id_t** out_asset_ids,
+    mg_asset_id_t** out_asset_ids,
     size_t* out_count
 );
 ```
@@ -286,27 +286,27 @@ graph TD
             CONTENT[Content Hash<br/>BLAKE3 256-bit]
             PATH[Path Hash<br/>64-bit hash of path]
         end
-        
+
         subgraph "Path System"
             ABSOLUTE[Absolute Path<br/>/textures/player/diffuse.png]
             RELATIVE[Relative Path<br/>../materials/metal.mtl]
             NORMALIZED[Normalized Path<br/>Clean, canonical form]
         end
-        
+
         subgraph "Registry"
             LOOKUP[Asset Lookup Table]
             METADATA[Metadata Storage]
             INDEX[Search Indices]
         end
-        
+
         UUID --> LOOKUP
         CONTENT --> LOOKUP
         PATH --> LOOKUP
-        
+
         ABSOLUTE --> NORMALIZED
         RELATIVE --> NORMALIZED
         NORMALIZED --> PATH
-        
+
         LOOKUP --> METADATA
         LOOKUP --> INDEX
     end
@@ -321,23 +321,23 @@ graph TD
             HASH_TABLE[Hash Table<br/>O(1) ID lookup]
             BTREE[B-Tree<br/>O(log n) path lookup]
         end
-        
+
         subgraph "Secondary Indices"
             TYPE_INDEX[Type Index<br/>Assets by type]
             SIZE_INDEX[Size Index<br/>Assets by size]
             TIME_INDEX[Time Index<br/>Assets by timestamp]
         end
-        
+
         subgraph "Cache Layer"
             LRU_CACHE[LRU Cache<br/>Recently accessed]
             PATH_CACHE[Path Cache<br/>Resolved paths]
             META_CACHE[Metadata Cache<br/>Frequently used metadata]
         end
-        
+
         HASH_TABLE --> LRU_CACHE
         BTREE --> PATH_CACHE
         TYPE_INDEX --> META_CACHE
-        
+
         LRU_CACHE --> |Cache Miss| HASH_TABLE
         PATH_CACHE --> |Cache Miss| BTREE
         META_CACHE --> |Cache Miss| TYPE_INDEX
@@ -352,12 +352,12 @@ sequenceDiagram
     participant Hash as Hash Computer
     participant Registry as Asset Registry
     participant Dedup as Deduplication
-    
+
     Asset->>Hash: compute_blake3_hash(content)
     Hash->>Asset: content_hash
     Asset->>Registry: check_existing(content_hash)
     Registry->>Dedup: find_duplicate(content_hash)
-    
+
     alt Content exists
         Dedup->>Registry: existing_asset_id
         Registry->>Asset: reuse_existing_asset
@@ -379,20 +379,20 @@ static const struct {
     {"textures/player/diffuse.png", "textures/player/diffuse.png"},
     {"textures//player//diffuse.png", "textures/player/diffuse.png"},
     {"./textures/player/diffuse.png", "textures/player/diffuse.png"},
-    
+
     // Parent directory resolution
     {"textures/player/../shared/diffuse.png", "textures/shared/diffuse.png"},
     {"textures/player/../../shared/diffuse.png", "shared/diffuse.png"},
-    
+
     // Case preservation
     {"Textures/Player/Diffuse.PNG", "Textures/Player/Diffuse.PNG"},
-    
+
     // Trailing slash removal
     {"textures/player/", "textures/player"},
-    
+
     // Absolute path handling
     {"/textures/player/diffuse.png", "/textures/player/diffuse.png"},
-    
+
     // Invalid paths (should fail)
     {"../outside/texture.png", NULL},  // Outside root
     {"", NULL},                        // Empty path
@@ -412,20 +412,20 @@ graph TD
             CREATED[Creation Time<br/>timestamp]
             MODIFIED[Modification Time<br/>timestamp]
         end
-        
+
         subgraph "Format Properties"
             FORMAT[File Format<br/>PNG, GLTF, OGG, etc.]
             VERSION[Format Version<br/>version string]
             COMPRESSION[Compression<br/>algorithm and level]
         end
-        
+
         subgraph "Custom Properties"
             TAGS[Tags<br/>array of strings]
             AUTHOR[Author<br/>creator information]
             LICENSE[License<br/>usage rights]
             CUSTOM[Custom Fields<br/>extensible key-value]
         end
-        
+
         TYPE --> FORMAT
         SIZE --> COMPRESSION
         HASH --> VERSION

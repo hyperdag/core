@@ -1,12 +1,12 @@
-# HyperDAG Threat Model
+# MetaGraph Threat Model
 
 ## Executive Summary
 
-HyperDAG processes untrusted binary bundles and user-provided graph data, making it a critical security boundary. This document identifies attack vectors, assets, trust boundaries, and mitigations for the HyperDAG core library.
+MetaGraph processes untrusted binary bundles and user-provided graph data, making it a critical security boundary. This document identifies attack vectors, assets, trust boundaries, and mitigations for the MetaGraph core library.
 
-**Security Goals**: Confidentiality, Integrity, Availability  
-**Primary Threats**: Malicious bundles, memory corruption, denial of service  
-**Trust Boundary**: HyperDAG library ↔ Bundle files and user input  
+**Security Goals**: Confidentiality, Integrity, Availability
+**Primary Threats**: Malicious bundles, memory corruption, denial of service
+**Trust Boundary**: MetaGraph library ↔ Bundle files and user input
 
 ## Assets and Trust Boundaries
 
@@ -19,7 +19,7 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 ### Trust Boundaries
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Host Process  │────│  HyperDAG Core  │────│  Bundle Files   │
+│   Host Process  │────│  MetaGraph Core  │────│  Bundle Files   │
 │   (Trusted)     │    │ (Trust Boundary)│    │  (Untrusted)    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
                                 │
@@ -34,9 +34,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 ### 1. Malicious Bundle Attacks
 
 #### T001: Bundle Header Tampering
-**Attacker Goal**: Bypass validation, trigger buffer overflows  
-**Attack Vector**: Modified magic numbers, invalid sizes, corrupted checksums  
-**Impact**: Memory corruption, crashes, potential RCE  
+**Attacker Goal**: Bypass validation, trigger buffer overflows
+**Attack Vector**: Modified magic numbers, invalid sizes, corrupted checksums
+**Impact**: Memory corruption, crashes, potential RCE
 
 **Mitigations**:
 - ✅ Comprehensive header validation before processing
@@ -45,9 +45,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - ✅ Format UUID validation for version compatibility
 
 #### T002: Hash Length Extension Attacks
-**Attacker Goal**: Forge valid checksums for malicious data  
-**Attack Vector**: Exploit hash algorithm weaknesses  
-**Impact**: Bypass integrity checks, corrupt graph data  
+**Attacker Goal**: Forge valid checksums for malicious data
+**Attack Vector**: Exploit hash algorithm weaknesses
+**Impact**: Bypass integrity checks, corrupt graph data
 
 **Mitigations**:
 - ✅ BLAKE3 immune to length extension attacks (unlike SHA-1/SHA-2)
@@ -55,19 +55,19 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - ✅ Hash verification before any data processing
 
 #### T003: Integer Overflow in Size Fields
-**Attacker Goal**: Trigger integer wraparound in memory calculations  
-**Attack Vector**: Large size values causing allocation wraparound  
-**Impact**: Buffer overflows, memory corruption  
+**Attacker Goal**: Trigger integer wraparound in memory calculations
+**Attack Vector**: Large size values causing allocation wraparound
+**Impact**: Buffer overflows, memory corruption
 
 **Mitigations**:
 - ✅ Explicit overflow checking using C23 `ckd_add()` functions
 - ✅ Maximum size limits enforced at bundle load time
 - ✅ 64-bit size fields prevent most practical overflow scenarios
 
-#### T004: Section Offset Manipulation  
-**Attacker Goal**: Access memory outside allocated regions  
-**Attack Vector**: Invalid section offsets pointing beyond bundle boundaries  
-**Impact**: Segmentation faults, information disclosure  
+#### T004: Section Offset Manipulation
+**Attacker Goal**: Access memory outside allocated regions
+**Attack Vector**: Invalid section offsets pointing beyond bundle boundaries
+**Impact**: Segmentation faults, information disclosure
 
 **Mitigations**:
 - ✅ Bounds checking for all section offsets against total bundle size
@@ -77,9 +77,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 ### 2. Memory Corruption Attacks
 
 #### T005: Buffer Overflow in Asset Data
-**Attacker Goal**: Overwrite adjacent memory structures  
-**Attack Vector**: Asset content larger than declared size  
-**Impact**: Code execution, privilege escalation  
+**Attacker Goal**: Overwrite adjacent memory structures
+**Attack Vector**: Asset content larger than declared size
+**Impact**: Code execution, privilege escalation
 
 **Mitigations**:
 - ✅ Strict bounds checking in all copy operations
@@ -87,9 +87,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - ✅ Safe string handling using `strncpy_s()` equivalents
 
 #### T006: Use-After-Free in Graph Operations
-**Attacker Goal**: Access freed memory containing sensitive data  
-**Attack Vector**: Concurrent graph modifications during traversal  
-**Impact**: Information disclosure, corruption, crashes  
+**Attacker Goal**: Access freed memory containing sensitive data
+**Attack Vector**: Concurrent graph modifications during traversal
+**Impact**: Information disclosure, corruption, crashes
 
 **Mitigations**:
 - ✅ Reference counting for shared graph nodes
@@ -97,9 +97,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - ✅ Memory poisoning in debug builds to catch UAF early
 
 #### T007: Double-Free in Error Paths
-**Attacker Goal**: Trigger memory allocator corruption  
-**Attack Vector**: Error conditions causing multiple cleanup attempts  
-**Impact**: Heap corruption, potential RCE  
+**Attacker Goal**: Trigger memory allocator corruption
+**Attack Vector**: Error conditions causing multiple cleanup attempts
+**Impact**: Heap corruption, potential RCE
 
 **Mitigations**:
 - ✅ Consistent ownership patterns with RAII cleanup
@@ -109,9 +109,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 ### 3. Denial of Service Attacks
 
 #### T008: Resource Exhaustion via Large Graphs
-**Attacker Goal**: Exhaust system memory or CPU  
-**Attack Vector**: Bundles with millions of nodes/edges  
-**Impact**: System unresponsiveness, OOM crashes  
+**Attacker Goal**: Exhaust system memory or CPU
+**Attack Vector**: Bundles with millions of nodes/edges
+**Impact**: System unresponsiveness, OOM crashes
 
 **Mitigations**:
 - ✅ Configurable memory limits enforced by memory pools
@@ -119,9 +119,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - ✅ Memory pressure callbacks for graceful degradation
 
 #### T009: Algorithmic Complexity Attacks
-**Attacker Goal**: Trigger worst-case algorithm performance  
-**Attack Vector**: Carefully crafted graphs causing O(n²) behavior  
-**Impact**: CPU exhaustion, application timeouts  
+**Attacker Goal**: Trigger worst-case algorithm performance
+**Attack Vector**: Carefully crafted graphs causing O(n²) behavior
+**Impact**: CPU exhaustion, application timeouts
 
 **Mitigations**:
 - ✅ Hash table load factor monitoring to prevent O(n) lookups
@@ -129,9 +129,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - ✅ Cycle detection to prevent infinite loops
 
 #### T010: Infinite Loops in Graph Traversal
-**Attacker Goal**: Hang application threads indefinitely  
-**Attack Vector**: Circular references despite DAG constraints  
-**Impact**: Thread exhaustion, application freeze  
+**Attacker Goal**: Hang application threads indefinitely
+**Attack Vector**: Circular references despite DAG constraints
+**Impact**: Thread exhaustion, application freeze
 
 **Mitigations**:
 - ✅ Visited node tracking in all traversal algorithms
@@ -141,9 +141,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 ### 4. Information Disclosure Attacks
 
 #### T011: Memory Information Leakage
-**Attacker Goal**: Extract sensitive data from process memory  
-**Attack Vector**: Uninitialized memory or padding bytes in structures  
-**Impact**: Information disclosure, privacy violation  
+**Attacker Goal**: Extract sensitive data from process memory
+**Attack Vector**: Uninitialized memory or padding bytes in structures
+**Impact**: Information disclosure, privacy violation
 
 **Mitigations**:
 - ✅ Explicit memory initialization of all allocated structures
@@ -151,9 +151,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - ✅ Structure padding explicitly zeroed in constructors
 
 #### T012: Timing Side-Channel Attacks
-**Attacker Goal**: Infer sensitive information from operation timing  
-**Attack Vector**: Measure hash table lookup times to deduce content  
-**Impact**: Asset fingerprinting, cache attacks  
+**Attacker Goal**: Infer sensitive information from operation timing
+**Attack Vector**: Measure hash table lookup times to deduce content
+**Impact**: Asset fingerprinting, cache attacks
 
 **Mitigations**:
 - ✅ Constant-time comparison functions for cryptographic hashes
@@ -187,7 +187,7 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 - **PVS-Studio**: Commercial static analysis for complex vulnerabilities
 - **Coverity**: Integer overflow and buffer overflow detection
 
-### Dynamic Analysis  
+### Dynamic Analysis
 - **AddressSanitizer**: Memory corruption detection during execution
 - **ThreadSanitizer**: Race condition and data race detection
 - **MemorySanitizer**: Uninitialized memory access detection
@@ -235,9 +235,9 @@ HyperDAG processes untrusted binary bundles and user-provided graph data, making
 
 ---
 
-**Document Version**: 1.0  
-**Last Updated**: 2025-07-20  
-**Review Schedule**: Quarterly or after security incidents  
-**Approved By**: Development Team  
+**Document Version**: 1.0
+**Last Updated**: 2025-07-20
+**Review Schedule**: Quarterly or after security incidents
+**Approved By**: Development Team
 
 *This threat model is a living document and should be updated as new threats emerge or system architecture changes.*

@@ -1,0 +1,41 @@
+# MetaGraph Code Owners
+# These owners will be automatically requested for review when someone
+# opens a pull request modifying the matching files.
+
+# Global owners (fallback)
+*                           @meta-graph/maintainers
+
+# Core library
+/src/                       @meta-graph/core-team
+/include/                   @meta-graph/core-team
+/tests/                     @meta-graph/core-team
+
+# Build system
+/CMakeLists.txt            @meta-graph/build-team
+/cmake/                    @meta-graph/build-team
+*.cmake                    @meta-graph/build-team
+
+# Documentation
+/docs/                     @meta-graph/docs-team
+*.md                       @meta-graph/docs-team
+/CONTRIBUTING.md           @meta-graph/maintainers
+/SECURITY.md               @meta-graph/security-team
+
+# Scripts and tooling
+/scripts/                  @meta-graph/devops-team
+/.github/                  @meta-graph/devops-team
+/docker/                   @meta-graph/devops-team
+
+# Security-critical files
+/src/crypto/               @meta-graph/security-team
+/src/validation/           @meta-graph/security-team
+/scripts/security-audit.sh @meta-graph/security-team
+
+# Release process
+/scripts/prepare-release.sh @meta-graph/maintainers
+/scripts/cut-release.sh     @meta-graph/maintainers
+/docs/RELEASE.md           @meta-graph/maintainers
+
+# Third-party dependencies
+/docs/3rd-party.md         @meta-graph/maintainers
+/cmake/ThirdPartyDependencies.cmake @meta-graph/maintainers

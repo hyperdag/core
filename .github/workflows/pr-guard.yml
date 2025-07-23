@@ -1,0 +1,40 @@
+name: PR Gatekeeper
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    concurrency:
+      group: pr-guard-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Branch naming & target rules
+        run: |
+          scripts/ci/guard-branch.sh \
+            "${{ github.event.pull_request.head.ref }}" \
+            "${{ github.event.pull_request.base.ref }}"
+
+      - name: Version downgrade guard
+        run: |
+          scripts/ci/guard-version.sh \
+            "${{ github.event.pull_request.head.sha }}" \
+            "${{ github.event.pull_request.base.ref }}"
+
+      - name: Conventional-commit lint
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          scripts/ci/lint-commits.sh "$BASE_REF...$HEAD_SHA"

@@ -1,30 +1,35 @@
 #!/bin/sh
-# HyperDAG pre-push hook - Comprehensive validation before sharing
+# MetaGraph pre-push hook - Comprehensive validation before sharing
 # This hook runs before pushing to ensure shared code meets extreme quality standards
 
 set -eu
 
 # Import shared utilities
-. "$(git rev-parse --show-toplevel)/scripts/shlib.sh"
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+. ./scripts/mg.sh
 
 echo "🚀 Running pre-push validation..."
 
-PROJECT_ROOT="$(git rev-parse --show-toplevel)"
-pushd "$PROJECT_ROOT" >/dev/null
+# Build the project first to ensure we're testing current code
+echo "🔨 Building project..."
+if ! cmake --build build --parallel; then
+    mg_red "❌ Build failed"
+    exit 1
+fi
 
 # Full static analysis
 echo "🔍 Running comprehensive static analysis..."
+
 if ! ./scripts/run-clang-tidy.sh; then
-    echo "❌ Static analysis failed"
-    popd >/dev/null
+    mg_red "❌ Static analysis failed"
     exit 1
 fi
 
 # Security scan
 echo "🛡️ Running security audit..."
 if ! ./scripts/security-audit.sh; then
-    echo "❌ Security audit failed"
-    popd >/dev/null
+    mg_red "❌ Security audit failed"
     exit 1
 fi
 
@@ -32,30 +37,75 @@ fi
 if [ -d "build" ]; then
     echo "🧪 Running full test suite..."
     if ! make -C build test; then
-        echo "❌ Test suite failed"
-        popd >/dev/null
+        mg_red "❌ Test suite failed"
         exit 1
     fi
-    
+
     # Memory leak detection if ASan is available
     echo "🧪 Checking for memory leaks..."
-    if [ -f "build/bin/hyperdag_tests" ]; then
-        if ! ASAN_OPTIONS="abort_on_error=1:detect_leaks=1" build/bin/hyperdag_tests; then
-            echo "❌ Memory leak detected"
-            popd >/dev/null
+    if [ -f "build/bin/mg_tests" ]; then
+        if ! ASAN_OPTIONS="abort_on_error=1:detect_leaks=1" build/bin/mg_tests; then
+            mg_red "❌ Memory leak detected"
             exit 1
         fi
     fi
 fi
 
 # Performance regression check
-if [ -d "benchmarks" ]; then
+if [ -d "benchmarks" ] || [ -f "build/bin/mg_benchmarks" ]; then
     echo "📊 Running performance regression check..."
-    if ! ./scripts/profile.sh --check-regression; then
-        echo "⚠️ Performance regression detected (non-blocking)"
+    
+    # Check if baseline performance data exists
+    if [ ! -f "performance-baseline.txt" ]; then
+        mg_red "❌ No performance baseline data found"
+        
+        # Only prompt in interactive mode
+        if mg_is_interactive; then
+            if mg_prompt "Would you like to capture baseline performance data now?"; then
+                echo "Capturing baseline performance data..."
+                if ./scripts/profile.sh timing; then
+                    mv .ignored/timing-analysis.txt performance-baseline.txt
+                    mg_green "✅ Baseline performance data captured"
+                    mg_yellow "Note: Performance baseline is machine-specific and not tracked in git"
+                else
+                    mg_red "❌ Failed to capture baseline data"
+                    exit 1
+                fi
+            else
+                mg_red "❌ Cannot proceed without performance baseline"
+                echo "Run: ./scripts/profile.sh timing && mv .ignored/timing-analysis.txt performance-baseline.txt"
+                exit 1
+            fi
+        else
+            mg_red "❌ No performance baseline data (non-interactive mode)"
+            echo "Run: ./scripts/profile.sh timing && mv .ignored/timing-analysis.txt performance-baseline.txt"
+            exit 1
+        fi
+    else
+        # Run timing analysis and compare with baseline
+        if ! ./scripts/profile.sh timing; then
+            mg_red "❌ Failed to run performance analysis"
+            exit 1
+        fi
+        
+        # Compare with baseline - would do statistical analysis in production
+        echo "Comparing with baseline performance..."
+        if ! diff -u performance-baseline.txt .ignored/timing-analysis.txt > .ignored/performance-diff.txt 2>&1; then
+            mg_yellow "⚠️ Performance differences detected (review .ignored/performance-diff.txt)"
+            # For now, don't fail on performance differences, just warn
+        fi
     fi
 fi
 
-popd >/dev/null
-echo "✅ All pre-push checks passed!"
-echo "🎉 Code is ready for sharing - maintaining extreme quality standards!"
+# Check if we're pushing a release branch
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+if echo "$current_branch" | grep -qE '^release/v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?$'; then
+    echo "🏷️ Detected release branch push - running release preparation..."
+    if ! ./scripts/prepare-release.sh; then
+        mg_red "❌ Release preparation failed"
+        exit 1
+    fi
+fi
+
+mg_green "✅ All pre-push checks passed!"
+mg_green "🎉 Code is ready for sharing - maintaining extreme quality standards!"

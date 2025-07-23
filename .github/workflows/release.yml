@@ -1,0 +1,345 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Perform a dry run without creating release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write  # For OIDC signing
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  check-release:
+    name: Check Release Readiness
+    runs-on: ubuntu-latest
+    outputs:
+      is_release: ${{ steps.check.outputs.is_release }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check if release
+      id: check
+      run: |
+        # Get the merge commit message
+        COMMIT_MSG=$(git log -1 --pretty=%B)
+        
+        # Check if this is a merge from a release branch
+        if echo "$COMMIT_MSG" | grep -qE "^Merge pull request .* from .*/release/v[0-9]+\.[0-9]+\.[0-9]+"; then
+          # Extract version from merge commit
+          VERSION=$(echo "$COMMIT_MSG" | grep -oE "release/v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?" | head -1 | sed 's|release/v||')
+          echo "is_release=true" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected release version: $VERSION"
+        else
+          echo "is_release=false" >> $GITHUB_OUTPUT
+          echo "Not a release merge"
+        fi
+
+  validate-release:
+    name: Validate Release
+    needs: check-release
+    if: needs.check-release.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Validate version files
+      run: |
+        VERSION="${{ needs.check-release.outputs.version }}"
+        
+        # Check version.h
+        HEADER_VERSION=$(grep "#define METAGRAPH_API_VERSION_STRING" include/metagraph/version.h | cut -d'"' -f2)
+        if [ "$HEADER_VERSION" != "$VERSION" ]; then
+          echo "ERROR: version.h shows $HEADER_VERSION, expected $VERSION"
+          exit 1
+        fi
+        
+        # Check CMakeLists.txt
+        CMAKE_VERSION=$(grep "project(MetaGraph VERSION" CMakeLists.txt | sed 's/.*VERSION \([0-9.]*\).*/\1/')
+        VERSION_NO_RC=$(echo "$VERSION" | cut -d- -f1)
+        if [ "$CMAKE_VERSION" != "$VERSION_NO_RC" ]; then
+          echo "ERROR: CMakeLists.txt shows $CMAKE_VERSION, expected $VERSION_NO_RC"
+          exit 1
+        fi
+        
+        echo "Version validation passed: $VERSION"
+
+    - name: Check tag doesn't exist
+      run: |
+        if git rev-parse "v${{ needs.check-release.outputs.version }}" >/dev/null 2>&1; then
+          echo "ERROR: Tag v${{ needs.check-release.outputs.version }} already exists"
+          exit 1
+        fi
+
+  build-release:
+    name: Build Release Artifacts
+    needs: [check-release, validate-release]
+    if: needs.check-release.outputs.is_release == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: metagraph-linux-x86_64
+          - os: macos-latest
+            artifact: metagraph-macos-universal
+          - os: windows-latest
+            artifact: metagraph-windows-x86_64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup build environment
+      uses: ./.github/actions/setup-build-env
+      with:
+        os: ${{ runner.os }}
+
+    - name: Build release
+      run: |
+        SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+        export SOURCE_DATE_EPOCH
+        
+        cmake -B build-release \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DMETAGRAPH_WERROR=ON \
+          -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=ON
+        
+        cmake --build build-release --parallel
+
+    - name: Run tests
+      run: ctest --test-dir build-release --output-on-failure
+
+    - name: Package artifacts
+      run: |
+        mkdir -p dist
+        
+        # Create tarball with deterministic attributes
+        if [ "${{ runner.os }}" != "Windows" ]; then
+          tar --sort=name \
+              --mtime="@${SOURCE_DATE_EPOCH}" \
+              --owner=0 --group=0 --numeric-owner \
+              -czf "dist/${{ matrix.artifact }}.tar.gz" \
+              -C build-release/bin .
+        else
+          # Windows ZIP
+          cd build-release/bin
+          7z a -tzip "../../dist/${{ matrix.artifact }}.zip" *
+          cd ../..
+        fi
+
+    - name: Generate checksums
+      run: |
+        cd dist
+        if [ "${{ runner.os }}" != "Windows" ]; then
+          shasum -a 256 *.tar.gz > SHA256SUMS
+        else
+          certutil -hashfile *.zip SHA256 > SHA256SUMS
+        fi
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-${{ matrix.artifact }}
+        path: dist/
+        retention-days: 7
+
+  generate-sbom:
+    name: Generate SBOM
+    needs: [check-release, validate-release]
+    if: needs.check-release.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install syft
+      run: |
+        curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
+
+    - name: Generate SBOM
+      run: |
+        syft . -o spdx-json > metagraph-${{ needs.check-release.outputs.version }}-sbom.spdx.json
+        syft . -o cyclonedx-json > metagraph-${{ needs.check-release.outputs.version }}-sbom.cyclonedx.json
+
+    - name: Upload SBOM
+      uses: actions/upload-artifact@v4
+      with:
+        name: sbom
+        path: |
+          *.spdx.json
+          *.cyclonedx.json
+
+  sign-and-release:
+    name: Sign and Create Release
+    needs: [check-release, build-release, generate-sbom]
+    if: needs.check-release.outputs.is_release == 'true' && github.event.inputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+
+    - name: Organize artifacts
+      run: |
+        mkdir -p release-assets
+        
+        # Move all release artifacts
+        find artifacts -name "*.tar.gz" -o -name "*.zip" -exec mv {} release-assets/ \;
+        find artifacts -name "SHA256SUMS" -exec cat {} >> release-assets/SHA256SUMS.combined \;
+        find artifacts -name "*.json" -exec mv {} release-assets/ \;
+        
+        # Sort and deduplicate checksums
+        sort -u release-assets/SHA256SUMS.combined > release-assets/SHA256SUMS
+        rm release-assets/SHA256SUMS.combined
+
+    - name: Setup Cosign
+      uses: sigstore/cosign-installer@v3
+
+    - name: Sign artifacts
+      run: |
+        cd release-assets
+        
+        # Sign each artifact with cosign (keyless OIDC)
+        for file in *.tar.gz *.zip *.json; do
+          if [ -f "$file" ]; then
+            echo "Signing $file..."
+            cosign sign-blob \
+              --yes \
+              --output-signature="${file}.sig" \
+              --output-certificate="${file}.crt" \
+              "$file"
+          fi
+        done
+        
+        # Create a manifest of all signatures
+        echo "# Signature Manifest" > SIGNATURES.md
+        echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> SIGNATURES.md
+        echo "" >> SIGNATURES.md
+        for sig in *.sig; do
+          base=$(basename "$sig" .sig)
+          echo "## $base" >> SIGNATURES.md
+          echo '```' >> SIGNATURES.md
+          cat "$sig" >> SIGNATURES.md
+          echo '```' >> SIGNATURES.md
+          echo "" >> SIGNATURES.md
+        done
+
+    - name: Create release tag
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        VERSION="${{ needs.check-release.outputs.version }}"
+        git tag -a "v$VERSION" -m "Release v$VERSION"
+        git push origin "v$VERSION"
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ needs.check-release.outputs.version }}
+        name: MetaGraph v${{ needs.check-release.outputs.version }}
+        draft: false
+        prerelease: ${{ contains(needs.check-release.outputs.version, '-') }}
+        files: release-assets/*
+        body: |
+          # MetaGraph v${{ needs.check-release.outputs.version }}
+          
+          ## Installation
+          
+          Download the appropriate binary for your platform below.
+          
+          ### Verify Downloads
+          
+          All artifacts are signed with Cosign. To verify:
+          
+          ```bash
+          # Install cosign
+          brew install cosign  # or see https://docs.sigstore.dev/cosign/installation/
+          
+          # Verify artifact
+          cosign verify-blob \
+            --certificate metagraph-linux-x86_64.tar.gz.crt \
+            --signature metagraph-linux-x86_64.tar.gz.sig \
+            metagraph-linux-x86_64.tar.gz
+          ```
+          
+          ### Checksums
+          
+          Verify file integrity with SHA256:
+          
+          ```bash
+          shasum -a 256 -c SHA256SUMS
+          ```
+          
+          ## What's Changed
+          
+          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/v${{ needs.check-release.outputs.version }}/CHANGELOG.md) for details.
+          
+          ## Software Bill of Materials
+          
+          SBOM available in SPDX and CycloneDX formats.
+
+  build-container:
+    name: Build Container Image
+    needs: [check-release, sign-and-release]
+    if: needs.check-release.outputs.is_release == 'true' && github.event.inputs.dry_run != 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push container
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: docker/Dockerfile.runtime
+        push: true
+        tags: |
+          ${{ env.REGISTRY }}/${{ github.repository }}:${{ needs.check-release.outputs.version }}
+          ${{ env.REGISTRY }}/${{ github.repository }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        build-args: |
+          SOURCE_DATE_EPOCH=${{ github.event.repository.pushed_at }}
+
+  notify-release:
+    name: Notify Release
+    needs: [check-release, sign-and-release, build-container]
+    if: always() && needs.check-release.outputs.is_release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+    - name: Send notification
+      run: |
+        if [ "${{ needs.sign-and-release.result }}" == "success" ]; then
+          echo "✅ Release v${{ needs.check-release.outputs.version }} completed successfully!"
+        else
+          echo "❌ Release v${{ needs.check-release.outputs.version }} failed!"
+          exit 1
+        fi

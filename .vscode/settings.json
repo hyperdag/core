@@ -9,9 +9,9 @@
     "/usr/local/include"
   ],
   "C_Cpp.default.defines": [
-    "HYPERDAG_API_VERSION_MAJOR=0",
-    "HYPERDAG_API_VERSION_MINOR=1",
-    "HYPERDAG_API_VERSION_PATCH=0",
+    "METAGRAPH_API_VERSION_MAJOR=0",
+    "METAGRAPH_API_VERSION_MINOR=1",
+    "METAGRAPH_API_VERSION_PATCH=0",
     "_GNU_SOURCE",
     "__STDC_WANT_LIB_EXT1__=1"
   ],
@@ -27,9 +27,9 @@
   "cmake.generator": "Ninja",
   "cmake.configureArgs": [
     "-DCMAKE_BUILD_TYPE=Debug",
-    "-DHYPERDAG_DEV=ON",
-    "-DHYPERDAG_SANITIZERS=ON",
-    "-DHYPERDAG_BUILD_TESTS=ON",
+    "-DMETAGRAPH_DEV=ON",
+    "-DMETAGRAPH_SANITIZERS=ON",
+    "-DMETAGRAPH_BUILD_TESTS=ON",
     "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
   ],
   "cmake.buildArgs": [
@@ -147,5 +147,13 @@
   "[cmake]": {
     "editor.tabSize": 2
   },
-  "workbench.colorTheme": "Cobalt2"
+  "workbench.colorTheme": "Cobalt2",
+  "cSpell.words": [
+    "CDPATH",
+    "METAGRAPH"
+  ],
+  "cSpell.autoFormatConfigFile": true,
+  "cSpell.enabledFileTypes": {
+    "sh": false
+  }
 }

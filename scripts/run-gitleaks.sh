@@ -1,15 +1,16 @@
 #!/bin/sh
-# HyperDAG gitleaks wrapper script
+# MetaGraph gitleaks wrapper script
 
 set -eu
 
 # Load shared shell library
-PROJECT_ROOT="$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)"
-. "$PROJECT_ROOT/scripts/shlib.sh"
+PROJECT_ROOT="$(CDPATH='' cd -- "$(dirname "$0")/.." && pwd)"
+. "$PROJECT_ROOT/scripts/mg.sh"
 
 # Check for gitleaks and offer to install if missing (only in interactive mode)
-if ! check_tool gitleaks >/dev/null 2>&1; then
+if ! mg_tool_exists gitleaks >/dev/null 2>&1; then
     if is_interactive; then
+        install_cmd=""
         install_cmd="$(get_install_command gitleaks)"
         if ! prompt_install_tool gitleaks "$install_cmd" "Gitleaks (secret scanner)"; then
             echo "❌ gitleaks is required for security scanning"
@@ -31,7 +32,7 @@ main() {
     scan_mode="detect"
     verbose=false
     staged_only=false
-    
+
     # Parse arguments
     while [ $# -gt 0 ]; do
         case $1 in
@@ -70,15 +71,15 @@ EOF
                 ;;
         esac
     done
-    
+
     cd "$PROJECT_ROOT"
-    
+
     if [ "$verbose" = true ]; then
         echo "Using gitleaks: $GITLEAKS"
         echo "Scan mode: $scan_mode"
         echo "Staged only: $staged_only"
     fi
-    
+
     # Build command arguments
     if [ "$staged_only" = true ]; then
         echo "🔍 Scanning staged files for secrets..."
@@ -102,7 +103,7 @@ EOF
             set -- detect
         fi
     fi
-    
+
     # Run gitleaks
     if "$GITLEAKS" "$@"; then
         echo "✓ No secrets detected"

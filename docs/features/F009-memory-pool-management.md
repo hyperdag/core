@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Memory Pool Management feature provides efficient, predictable memory allocation strategies optimized for hypergraph operations. This feature implements custom memory allocators that reduce fragmentation, improve cache locality, and provide deterministic performance for asset management workflows.
+The Memory Pool Management feature provides efficient, predictable memory allocation strategies optimized for meta-graph operations. This feature implements custom memory allocators that reduce fragmentation, improve cache locality, and provide deterministic performance for asset management workflows.
 
 Building on the insight from the origin story about the importance of memory-mapped I/O and efficient binary formats, this feature ensures that memory management doesn't become a bottleneck in high-performance asset processing.
 
@@ -16,9 +16,9 @@ Building on the insight from the origin story about the importance of memory-map
 ## User Stories
 
 ### F009.US001 - Object Pool Allocation
-**As a** performance engineer  
-**I want** object pools for frequently allocated/deallocated structures  
-**So that** allocation overhead doesn't impact performance  
+**As a** performance engineer
+**I want** object pools for frequently allocated/deallocated structures
+**So that** allocation overhead doesn't impact performance
 
 **Prerequisites:**
 - Platform memory allocation primitives (F.010)
@@ -32,9 +32,9 @@ Building on the insight from the origin story about the importance of memory-map
 - Memory usage statistics and monitoring
 
 ### F009.US002 - Arena-Based Allocation
-**As a** system developer  
-**I want** arena allocators for bulk memory management  
-**So that** related objects are allocated together for better cache locality  
+**As a** system developer
+**I want** arena allocators for bulk memory management
+**So that** related objects are allocated together for better cache locality
 
 **Prerequisites:**
 - Large memory block management
@@ -48,9 +48,9 @@ Building on the insight from the origin story about the importance of memory-map
 - Support for different allocation strategies within arenas
 
 ### F009.US003 - NUMA-Aware Allocation
-**As a** platform engineer  
-**I want** NUMA-aware memory allocation  
-**So that** multi-socket systems achieve optimal performance  
+**As a** platform engineer
+**I want** NUMA-aware memory allocation
+**So that** multi-socket systems achieve optimal performance
 
 **Prerequisites:**
 - NUMA topology detection (F.010)
@@ -64,9 +64,9 @@ Building on the insight from the origin story about the importance of memory-map
 - Performance monitoring for NUMA efficiency
 
 ### F009.US004 - Memory Pressure Handling
-**As a** reliability engineer  
-**I want** graceful handling of memory pressure conditions  
-**So that** the system remains stable under resource constraints  
+**As a** reliability engineer
+**I want** graceful handling of memory pressure conditions
+**So that** the system remains stable under resource constraints
 
 **Prerequisites:**
 - Memory pressure detection mechanisms
@@ -80,9 +80,9 @@ Building on the insight from the origin story about the importance of memory-map
 - Proper error reporting for out-of-memory conditions
 
 ### F009.US005 - Garbage Collection and Cleanup
-**As a** system developer  
-**I want** deterministic memory cleanup and garbage collection  
-**So that** long-running applications don't suffer from memory leaks  
+**As a** system developer
+**I want** deterministic memory cleanup and garbage collection
+**So that** long-running applications don't suffer from memory leaks
 
 **Prerequisites:**
 - Reference counting or ownership tracking
@@ -100,15 +100,15 @@ Building on the insight from the origin story about the importance of memory-map
 ```c
 // Memory pool types
 typedef enum {
-    HYPERDAG_POOL_TYPE_OBJECT,     // Fixed-size object pools
-    HYPERDAG_POOL_TYPE_ARENA,      // Arena-based allocation
-    HYPERDAG_POOL_TYPE_STACK,      // Stack-based allocation
-    HYPERDAG_POOL_TYPE_RING        // Ring buffer allocation
-} hyperdag_pool_type_t;
+    METAGRAPH_POOL_TYPE_OBJECT,     // Fixed-size object pools
+    METAGRAPH_POOL_TYPE_ARENA,      // Arena-based allocation
+    METAGRAPH_POOL_TYPE_STACK,      // Stack-based allocation
+    METAGRAPH_POOL_TYPE_RING        // Ring buffer allocation
+} mg_pool_type_t;
 
 // Memory pool configuration
 typedef struct {
-    hyperdag_pool_type_t type;
+    mg_pool_type_t type;
     size_t initial_size;           // Initial pool size in bytes
     size_t max_size;               // Maximum pool size (0 = unlimited)
     size_t alignment;              // Memory alignment requirement
@@ -116,63 +116,63 @@ typedef struct {
     bool allow_growth;             // Whether pool can grow
     bool numa_aware;               // Enable NUMA awareness
     uint32_t numa_node;            // Preferred NUMA node
-} hyperdag_pool_config_t;
+} mg_pool_config_t;
 
 // Memory pool handle
-typedef struct hyperdag_memory_pool hyperdag_memory_pool_t;
+typedef struct mg_memory_pool mg_memory_pool_t;
 
 // Pool creation and destruction
-hyperdag_result_t hyperdag_memory_pool_create(
-    const hyperdag_pool_config_t* config,
-    hyperdag_memory_pool_t** out_pool
+mg_result_t mg_memory_pool_create(
+    const mg_pool_config_t* config,
+    mg_memory_pool_t** out_pool
 );
 
-hyperdag_result_t hyperdag_memory_pool_destroy(
-    hyperdag_memory_pool_t* pool
+mg_result_t mg_memory_pool_destroy(
+    mg_memory_pool_t* pool
 );
 
 // Memory allocation and deallocation
-hyperdag_result_t hyperdag_memory_pool_alloc(
-    hyperdag_memory_pool_t* pool,
+mg_result_t mg_memory_pool_alloc(
+    mg_memory_pool_t* pool,
     size_t size,
     void** out_ptr
 );
 
-hyperdag_result_t hyperdag_memory_pool_free(
-    hyperdag_memory_pool_t* pool,
+mg_result_t mg_memory_pool_free(
+    mg_memory_pool_t* pool,
     void* ptr
 );
 
-hyperdag_result_t hyperdag_memory_pool_aligned_alloc(
-    hyperdag_memory_pool_t* pool,
+mg_result_t mg_memory_pool_aligned_alloc(
+    mg_memory_pool_t* pool,
     size_t size,
     size_t alignment,
     void** out_ptr
 );
 
 // Object pool operations
-hyperdag_result_t hyperdag_object_pool_acquire(
-    hyperdag_memory_pool_t* pool,
+mg_result_t mg_object_pool_acquire(
+    mg_memory_pool_t* pool,
     void** out_object
 );
 
-hyperdag_result_t hyperdag_object_pool_release(
-    hyperdag_memory_pool_t* pool,
+mg_result_t mg_object_pool_release(
+    mg_memory_pool_t* pool,
     void* object
 );
 
 // Arena operations
-hyperdag_result_t hyperdag_arena_reset(
-    hyperdag_memory_pool_t* arena
+mg_result_t mg_arena_reset(
+    mg_memory_pool_t* arena
 );
 
-hyperdag_result_t hyperdag_arena_checkpoint(
-    hyperdag_memory_pool_t* arena,
+mg_result_t mg_arena_checkpoint(
+    mg_memory_pool_t* arena,
     void** out_checkpoint
 );
 
-hyperdag_result_t hyperdag_arena_restore(
-    hyperdag_memory_pool_t* arena,
+mg_result_t mg_arena_restore(
+    mg_memory_pool_t* arena,
     void* checkpoint
 );
 
@@ -182,19 +182,19 @@ typedef struct {
     uint32_t* node_ids;            // NUMA node identifiers
     size_t* node_memory_sizes;     // Available memory per node
     uint32_t* cpu_counts;          // CPU count per node
-} hyperdag_numa_topology_t;
+} mg_numa_topology_t;
 
-hyperdag_result_t hyperdag_get_numa_topology(
-    hyperdag_numa_topology_t* out_topology
+mg_result_t mg_get_numa_topology(
+    mg_numa_topology_t* out_topology
 );
 
-hyperdag_result_t hyperdag_memory_pool_bind_numa(
-    hyperdag_memory_pool_t* pool,
+mg_result_t mg_memory_pool_bind_numa(
+    mg_memory_pool_t* pool,
     uint32_t numa_node
 );
 
-hyperdag_result_t hyperdag_memory_pool_get_numa_node(
-    const hyperdag_memory_pool_t* pool,
+mg_result_t mg_memory_pool_get_numa_node(
+    const mg_memory_pool_t* pool,
     uint32_t* out_numa_node
 );
 
@@ -206,53 +206,53 @@ typedef struct {
     uint64_t pool_wasted;          // Fragmented/wasted memory
     double fragmentation_ratio;    // Fragmentation percentage
     uint32_t pressure_level;       // 0-100 pressure indicator
-} hyperdag_memory_status_t;
+} mg_memory_status_t;
 
-hyperdag_result_t hyperdag_get_memory_status(
-    hyperdag_memory_status_t* out_status
+mg_result_t mg_get_memory_status(
+    mg_memory_status_t* out_status
 );
 
-typedef void (*hyperdag_memory_pressure_callback_t)(
+typedef void (*mg_memory_pressure_callback_t)(
     uint32_t pressure_level,
-    const hyperdag_memory_status_t* status,
+    const mg_memory_status_t* status,
     void* user_data
 );
 
-hyperdag_result_t hyperdag_register_memory_pressure_callback(
-    hyperdag_memory_pressure_callback_t callback,
+mg_result_t mg_register_memory_pressure_callback(
+    mg_memory_pressure_callback_t callback,
     void* user_data
 );
 
 // Garbage collection
 typedef enum {
-    HYPERDAG_GC_POLICY_NONE,       // Manual memory management only
-    HYPERDAG_GC_POLICY_REFERENCE,  // Reference counting
-    HYPERDAG_GC_POLICY_MARK_SWEEP, // Mark and sweep
-    HYPERDAG_GC_POLICY_GENERATIONAL // Generational collection
-} hyperdag_gc_policy_t;
+    METAGRAPH_GC_POLICY_NONE,       // Manual memory management only
+    METAGRAPH_GC_POLICY_REFERENCE,  // Reference counting
+    METAGRAPH_GC_POLICY_MARK_SWEEP, // Mark and sweep
+    METAGRAPH_GC_POLICY_GENERATIONAL // Generational collection
+} mg_gc_policy_t;
 
 typedef struct {
-    hyperdag_gc_policy_t policy;
+    mg_gc_policy_t policy;
     uint32_t collection_threshold; // Collection trigger threshold
     uint32_t max_pause_time_ms;    // Maximum collection pause time
     bool incremental;              // Enable incremental collection
     bool concurrent;               // Enable concurrent collection
-} hyperdag_gc_config_t;
+} mg_gc_config_t;
 
-hyperdag_result_t hyperdag_gc_configure(
-    const hyperdag_gc_config_t* config
+mg_result_t mg_gc_configure(
+    const mg_gc_config_t* config
 );
 
-hyperdag_result_t hyperdag_gc_collect(
+mg_result_t mg_gc_collect(
     bool force_full_collection
 );
 
-hyperdag_result_t hyperdag_gc_add_root(
+mg_result_t mg_gc_add_root(
     void* root_object,
     size_t object_size
 );
 
-hyperdag_result_t hyperdag_gc_remove_root(
+mg_result_t mg_gc_remove_root(
     void* root_object
 );
 
@@ -267,19 +267,19 @@ typedef struct {
     uint32_t growth_count;         // Number of pool expansions
     double fragmentation_ratio;    // Internal fragmentation
     double utilization_ratio;      // Memory utilization
-} hyperdag_pool_stats_t;
+} mg_pool_stats_t;
 
-hyperdag_result_t hyperdag_memory_pool_get_stats(
-    const hyperdag_memory_pool_t* pool,
-    hyperdag_pool_stats_t* out_stats
+mg_result_t mg_memory_pool_get_stats(
+    const mg_memory_pool_t* pool,
+    mg_pool_stats_t* out_stats
 );
 
-hyperdag_result_t hyperdag_memory_pool_reset_stats(
-    hyperdag_memory_pool_t* pool
+mg_result_t mg_memory_pool_reset_stats(
+    mg_memory_pool_t* pool
 );
 
 // Memory debugging and validation
-#ifdef HYPERDAG_DEBUG_MEMORY
+#ifdef METAGRAPH_DEBUG_MEMORY
 typedef struct {
     void* address;
     size_t size;
@@ -287,39 +287,39 @@ typedef struct {
     int line;
     uint64_t timestamp;
     uint32_t thread_id;
-} hyperdag_allocation_info_t;
+} mg_allocation_info_t;
 
-hyperdag_result_t hyperdag_memory_debug_enable(void);
-hyperdag_result_t hyperdag_memory_debug_disable(void);
+mg_result_t mg_memory_debug_enable(void);
+mg_result_t mg_memory_debug_disable(void);
 
-hyperdag_result_t hyperdag_memory_debug_get_allocations(
-    hyperdag_allocation_info_t** out_allocations,
+mg_result_t mg_memory_debug_get_allocations(
+    mg_allocation_info_t** out_allocations,
     size_t* out_count
 );
 
-hyperdag_result_t hyperdag_memory_debug_check_leaks(
+mg_result_t mg_memory_debug_check_leaks(
     bool* out_leaks_detected
 );
 #endif
 
 // Thread-local pools
-typedef struct hyperdag_thread_local_pool hyperdag_thread_local_pool_t;
+typedef struct mg_thread_local_pool mg_thread_local_pool_t;
 
-hyperdag_result_t hyperdag_thread_local_pool_create(
-    const hyperdag_pool_config_t* config,
-    hyperdag_thread_local_pool_t** out_pool
+mg_result_t mg_thread_local_pool_create(
+    const mg_pool_config_t* config,
+    mg_thread_local_pool_t** out_pool
 );
 
-hyperdag_result_t hyperdag_thread_local_pool_destroy(
-    hyperdag_thread_local_pool_t* pool
+mg_result_t mg_thread_local_pool_destroy(
+    mg_thread_local_pool_t* pool
 );
 
-hyperdag_result_t hyperdag_thread_local_alloc(
+mg_result_t mg_thread_local_alloc(
     size_t size,
     void** out_ptr
 );
 
-hyperdag_result_t hyperdag_thread_local_free(
+mg_result_t mg_thread_local_free(
     void* ptr
 );
 ```
@@ -335,24 +335,24 @@ graph TD
             STACK[Stack Pools<br/>LIFO allocation]
             RING[Ring Pools<br/>Circular allocation]
         end
-        
+
         subgraph "Allocation Strategies"
             NUMA[NUMA-Aware<br/>Topology optimization]
             TLS[Thread-Local<br/>Per-thread pools]
             SHARED[Shared Pools<br/>Global allocation]
         end
-        
+
         subgraph "Management"
             GC[Garbage Collection<br/>Automatic cleanup]
             PRESSURE[Memory Pressure<br/>Resource monitoring]
             STATS[Statistics<br/>Usage tracking]
         end
-        
+
         OBJECT --> NUMA
         ARENA --> TLS
         STACK --> SHARED
         RING --> TLS
-        
+
         NUMA --> GC
         TLS --> PRESSURE
         SHARED --> STATS
@@ -370,23 +370,23 @@ graph TD
             FREE_2[Free Object 2]
             FREE_N[Free Object N]
         end
-        
+
         subgraph "Allocated Objects"
             ALLOC_1[Allocated Object 1]
             ALLOC_2[Allocated Object 2]
             ALLOC_M[Allocated Object M]
         end
-        
+
         subgraph "Memory Blocks"
             BLOCK_1[Memory Block 1<br/>Fixed-size objects]
             BLOCK_2[Memory Block 2<br/>Fixed-size objects]
             BLOCK_K[Memory Block K<br/>Fixed-size objects]
         end
-        
+
         FREE_HEAD --> FREE_1
         FREE_1 --> FREE_2
         FREE_2 --> FREE_N
-        
+
         BLOCK_1 --> FREE_1
         BLOCK_1 --> ALLOC_1
         BLOCK_2 --> FREE_2
@@ -404,27 +404,27 @@ graph TD
             NODES[NUMA Nodes Identified]
             AFFINITY[CPU Affinity Mapping]
         end
-        
+
         subgraph "Memory Binding"
             BIND[Bind Memory to Nodes]
             LOCAL[Local Memory Access]
             REMOTE[Remote Memory Fallback]
         end
-        
+
         subgraph "Allocation Strategy"
             THREAD_LOCAL[Thread-Local Pools]
             NODE_LOCAL[Node-Local Allocation]
             MIGRATION[Memory Migration]
         end
-        
+
         DETECT --> NODES
         NODES --> AFFINITY
         AFFINITY --> BIND
-        
+
         BIND --> LOCAL
         LOCAL --> THREAD_LOCAL
         THREAD_LOCAL --> NODE_LOCAL
-        
+
         LOCAL -->|NUMA Miss| REMOTE
         REMOTE --> MIGRATION
         MIGRATION --> NODE_LOCAL
@@ -440,21 +440,21 @@ sequenceDiagram
     participant Pool as Memory Pool
     participant GC as Garbage Collector
     participant System as Operating System
-    
+
     System->>Monitor: memory_pressure_notification()
     Monitor->>Monitor: calculate_pressure_level()
     Monitor->>App: pressure_callback(level_85)
-    
+
     App->>Pool: reduce_cache_size()
     Pool->>Pool: evict_least_recently_used()
     Pool->>Monitor: memory_freed(size)
-    
+
     alt Pressure still high
         Monitor->>GC: trigger_collection()
         GC->>GC: mark_and_sweep()
         GC->>Monitor: collection_complete(freed_size)
     end
-    
+
     alt Pressure critical
         Monitor->>App: critical_pressure_callback()
         App->>App: emergency_cleanup()
@@ -556,4 +556,4 @@ sequenceDiagram
 - Stress testing validates performance under extreme load
 - Memory debugging tools help identify usage issues
 
-This memory pool management system provides the efficient, predictable memory allocation foundation that enables HyperDAG to maintain high performance even under demanding workloads and resource constraints.
+This memory pool management system provides the efficient, predictable memory allocation foundation that enables MetaGraph to maintain high performance even under demanding workloads and resource constraints.

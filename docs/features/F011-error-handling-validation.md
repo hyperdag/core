@@ -2,7 +2,7 @@
 
 ## Feature Overview
 
-The Error Handling and Validation system provides comprehensive, structured error reporting and data validation throughout HyperDAG. This system enables robust error recovery, detailed diagnostics, and defensive programming practices that ensure reliability in production environments.
+The Error Handling and Validation system provides comprehensive, structured error reporting and data validation throughout MetaGraph. This system enables robust error recovery, detailed diagnostics, and defensive programming practices that ensure reliability in production environments.
 
 Following C23 best practices, this feature implements a result-based error handling model that makes error conditions explicit and provides rich context for debugging and monitoring.
 
@@ -15,9 +15,9 @@ None - This is a base layer alongside platform abstraction
 ## User Stories
 
 ### F011.US001 - Structured Error Reporting
-**As a** system developer  
-**I want** structured error codes with detailed context  
-**So that** I can handle errors appropriately and provide useful diagnostics  
+**As a** system developer
+**I want** structured error codes with detailed context
+**So that** I can handle errors appropriately and provide useful diagnostics
 
 **Prerequisites:**
 - None (foundation layer)
@@ -30,9 +30,9 @@ None - This is a base layer alongside platform abstraction
 - Thread-safe error reporting
 
 ### F011.US002 - Result Type System
-**As a** library integrator  
-**I want** explicit success/failure return types  
-**So that** error conditions cannot be accidentally ignored  
+**As a** library integrator
+**I want** explicit success/failure return types
+**So that** error conditions cannot be accidentally ignored
 
 **Prerequisites:**
 - C23 compiler support for modern features
@@ -45,9 +45,9 @@ None - This is a base layer alongside platform abstraction
 - No silent failures or undefined behavior
 
 ### F011.US003 - Data Validation Framework
-**As a** security engineer  
-**I want** comprehensive input validation  
-**So that** invalid data is caught early and security vulnerabilities are prevented  
+**As a** security engineer
+**I want** comprehensive input validation
+**So that** invalid data is caught early and security vulnerabilities are prevented
 
 **Prerequisites:**
 - Understanding of data validation requirements
@@ -60,9 +60,9 @@ None - This is a base layer alongside platform abstraction
 - Sanitization of user-provided strings
 
 ### F011.US004 - Diagnostic Information Collection
-**As a** support engineer  
-**I want** detailed diagnostic information when errors occur  
-**So that** I can quickly identify and resolve issues  
+**As a** support engineer
+**I want** detailed diagnostic information when errors occur
+**So that** I can quickly identify and resolve issues
 
 **Prerequisites:**
 - Platform abstraction for system information
@@ -75,9 +75,9 @@ None - This is a base layer alongside platform abstraction
 - Reproducible error scenarios
 
 ### F011.US005 - Error Recovery Mechanisms
-**As a** system developer  
-**I want** structured error recovery options  
-**So that** applications can gracefully handle failures without crashing  
+**As a** system developer
+**I want** structured error recovery options
+**So that** applications can gracefully handle failures without crashing
 
 **Prerequisites:**
 - Error categorization system
@@ -94,74 +94,74 @@ None - This is a base layer alongside platform abstraction
 ```c
 // Core result type
 typedef enum {
-    HYPERDAG_SUCCESS = 0,
-    
+    METAGRAPH_SUCCESS = 0,
+
     // General errors (1000-1999)
-    HYPERDAG_ERROR_INVALID_PARAMETER = 1000,
-    HYPERDAG_ERROR_OUT_OF_MEMORY = 1001,
-    HYPERDAG_ERROR_NOT_INITIALIZED = 1002,
-    HYPERDAG_ERROR_ALREADY_INITIALIZED = 1003,
-    HYPERDAG_ERROR_INVALID_STATE = 1004,
-    HYPERDAG_ERROR_OPERATION_FAILED = 1005,
-    HYPERDAG_ERROR_NOT_IMPLEMENTED = 1006,
-    HYPERDAG_ERROR_TIMEOUT = 1007,
-    
+    METAGRAPH_ERROR_INVALID_PARAMETER = 1000,
+    METAGRAPH_ERROR_OUT_OF_MEMORY = 1001,
+    METAGRAPH_ERROR_NOT_INITIALIZED = 1002,
+    METAGRAPH_ERROR_ALREADY_INITIALIZED = 1003,
+    METAGRAPH_ERROR_INVALID_STATE = 1004,
+    METAGRAPH_ERROR_OPERATION_FAILED = 1005,
+    METAGRAPH_ERROR_NOT_IMPLEMENTED = 1006,
+    METAGRAPH_ERROR_TIMEOUT = 1007,
+
     // File system errors (2000-2999)
-    HYPERDAG_ERROR_FILE_NOT_FOUND = 2000,
-    HYPERDAG_ERROR_FILE_ACCESS_DENIED = 2001,
-    HYPERDAG_ERROR_FILE_CORRUPTED = 2002,
-    HYPERDAG_ERROR_FILE_TOO_LARGE = 2003,
-    HYPERDAG_ERROR_INVALID_PATH = 2004,
-    HYPERDAG_ERROR_DISK_FULL = 2005,
-    HYPERDAG_ERROR_IO_ERROR = 2006,
-    
+    METAGRAPH_ERROR_FILE_NOT_FOUND = 2000,
+    METAGRAPH_ERROR_FILE_ACCESS_DENIED = 2001,
+    METAGRAPH_ERROR_FILE_CORRUPTED = 2002,
+    METAGRAPH_ERROR_FILE_TOO_LARGE = 2003,
+    METAGRAPH_ERROR_INVALID_PATH = 2004,
+    METAGRAPH_ERROR_DISK_FULL = 2005,
+    METAGRAPH_ERROR_IO_ERROR = 2006,
+
     // Bundle format errors (3000-3999)
-    HYPERDAG_ERROR_INVALID_BUNDLE = 3000,
-    HYPERDAG_ERROR_BUNDLE_VERSION_MISMATCH = 3001,
-    HYPERDAG_ERROR_BUNDLE_CORRUPTED = 3002,
-    HYPERDAG_ERROR_BUNDLE_SIGNATURE_INVALID = 3003,
-    HYPERDAG_ERROR_BUNDLE_TOO_OLD = 3004,
-    HYPERDAG_ERROR_BUNDLE_TOO_NEW = 3005,
-    HYPERDAG_ERROR_BUNDLE_INCOMPLETE = 3006,
-    
+    METAGRAPH_ERROR_INVALID_BUNDLE = 3000,
+    METAGRAPH_ERROR_BUNDLE_VERSION_MISMATCH = 3001,
+    METAGRAPH_ERROR_BUNDLE_CORRUPTED = 3002,
+    METAGRAPH_ERROR_BUNDLE_SIGNATURE_INVALID = 3003,
+    METAGRAPH_ERROR_BUNDLE_TOO_OLD = 3004,
+    METAGRAPH_ERROR_BUNDLE_TOO_NEW = 3005,
+    METAGRAPH_ERROR_BUNDLE_INCOMPLETE = 3006,
+
     // Graph errors (4000-4999)
-    HYPERDAG_ERROR_NODE_NOT_FOUND = 4000,
-    HYPERDAG_ERROR_EDGE_NOT_FOUND = 4001,
-    HYPERDAG_ERROR_CIRCULAR_DEPENDENCY = 4002,
-    HYPERDAG_ERROR_INVALID_GRAPH_STATE = 4003,
-    HYPERDAG_ERROR_GRAPH_TOO_LARGE = 4004,
-    HYPERDAG_ERROR_DUPLICATE_NODE = 4005,
-    
+    METAGRAPH_ERROR_NODE_NOT_FOUND = 4000,
+    METAGRAPH_ERROR_EDGE_NOT_FOUND = 4001,
+    METAGRAPH_ERROR_CIRCULAR_DEPENDENCY = 4002,
+    METAGRAPH_ERROR_INVALID_GRAPH_STATE = 4003,
+    METAGRAPH_ERROR_GRAPH_TOO_LARGE = 4004,
+    METAGRAPH_ERROR_DUPLICATE_NODE = 4005,
+
     // Memory errors (5000-5999)
-    HYPERDAG_ERROR_ALLOCATION_FAILED = 5000,
-    HYPERDAG_ERROR_BUFFER_OVERFLOW = 5001,
-    HYPERDAG_ERROR_INVALID_POINTER = 5002,
-    HYPERDAG_ERROR_MEMORY_CORRUPTION = 5003,
-    HYPERDAG_ERROR_MEMORY_LEAK = 5004,
-    
+    METAGRAPH_ERROR_ALLOCATION_FAILED = 5000,
+    METAGRAPH_ERROR_BUFFER_OVERFLOW = 5001,
+    METAGRAPH_ERROR_INVALID_POINTER = 5002,
+    METAGRAPH_ERROR_MEMORY_CORRUPTION = 5003,
+    METAGRAPH_ERROR_MEMORY_LEAK = 5004,
+
     // Threading errors (6000-6999)
-    HYPERDAG_ERROR_THREAD_CREATE_FAILED = 6000,
-    HYPERDAG_ERROR_MUTEX_LOCK_FAILED = 6001,
-    HYPERDAG_ERROR_DEADLOCK_DETECTED = 6002,
-    HYPERDAG_ERROR_RACE_CONDITION = 6003,
-    
+    METAGRAPH_ERROR_THREAD_CREATE_FAILED = 6000,
+    METAGRAPH_ERROR_MUTEX_LOCK_FAILED = 6001,
+    METAGRAPH_ERROR_DEADLOCK_DETECTED = 6002,
+    METAGRAPH_ERROR_RACE_CONDITION = 6003,
+
     // Validation errors (7000-7999)
-    HYPERDAG_ERROR_INVALID_FORMAT = 7000,
-    HYPERDAG_ERROR_CHECKSUM_MISMATCH = 7001,
-    HYPERDAG_ERROR_SIZE_MISMATCH = 7002,
-    HYPERDAG_ERROR_TYPE_MISMATCH = 7003,
-    HYPERDAG_ERROR_RANGE_ERROR = 7004,
-    
+    METAGRAPH_ERROR_INVALID_FORMAT = 7000,
+    METAGRAPH_ERROR_CHECKSUM_MISMATCH = 7001,
+    METAGRAPH_ERROR_SIZE_MISMATCH = 7002,
+    METAGRAPH_ERROR_TYPE_MISMATCH = 7003,
+    METAGRAPH_ERROR_RANGE_ERROR = 7004,
+
     // Platform errors (8000-8999)
-    HYPERDAG_ERROR_PLATFORM_UNSUPPORTED = 8000,
-    HYPERDAG_ERROR_FEATURE_UNAVAILABLE = 8001,
-    HYPERDAG_ERROR_PERMISSION_DENIED = 8002,
-    HYPERDAG_ERROR_RESOURCE_BUSY = 8003
-} hyperdag_result_t;
+    METAGRAPH_ERROR_PLATFORM_UNSUPPORTED = 8000,
+    METAGRAPH_ERROR_FEATURE_UNAVAILABLE = 8001,
+    METAGRAPH_ERROR_PERMISSION_DENIED = 8002,
+    METAGRAPH_ERROR_RESOURCE_BUSY = 8003
+} mg_result_t;
 
 // Error information structure
 typedef struct {
-    hyperdag_result_t code;
+    mg_result_t code;
     const char* message;
     const char* function;
     const char* file;
@@ -170,42 +170,42 @@ typedef struct {
     uint32_t thread_id;
     void* context;
     size_t context_size;
-} hyperdag_error_info_t;
+} mg_error_info_t;
 
 // Error handling functions
-const char* hyperdag_error_string(hyperdag_result_t result);
-const hyperdag_error_info_t* hyperdag_get_last_error(void);
-void hyperdag_clear_last_error(void);
+const char* mg_error_string(mg_result_t result);
+const mg_error_info_t* mg_get_last_error(void);
+void mg_clear_last_error(void);
 
 // Error reporting macros
-#define HYPERDAG_RETURN_ERROR(code, msg, ...) \
+#define METAGRAPH_RETURN_ERROR(code, msg, ...) \
     do { \
-        hyperdag_set_error((code), __func__, __FILE__, __LINE__, (msg), ##__VA_ARGS__); \
+        mg_set_error((code), __func__, __FILE__, __LINE__, (msg), ##__VA_ARGS__); \
         return (code); \
     } while(0)
 
-#define HYPERDAG_CHECK(expr) \
+#define METAGRAPH_CHECK(expr) \
     do { \
-        hyperdag_result_t _result = (expr); \
-        if (_result != HYPERDAG_SUCCESS) { \
-            hyperdag_propagate_error(_result, __func__, __FILE__, __LINE__); \
+        mg_result_t _result = (expr); \
+        if (_result != METAGRAPH_SUCCESS) { \
+            mg_propagate_error(_result, __func__, __FILE__, __LINE__); \
             return _result; \
         } \
     } while(0)
 
-#define HYPERDAG_VALIDATE(condition, error_code, msg, ...) \
+#define METAGRAPH_VALIDATE(condition, error_code, msg, ...) \
     do { \
         if (!(condition)) { \
-            HYPERDAG_RETURN_ERROR((error_code), (msg), ##__VA_ARGS__); \
+            METAGRAPH_RETURN_ERROR((error_code), (msg), ##__VA_ARGS__); \
         } \
     } while(0)
 
 // Validation functions
-hyperdag_result_t hyperdag_validate_pointer(const void* ptr, const char* name);
-hyperdag_result_t hyperdag_validate_buffer(const void* buffer, size_t size, const char* name);
-hyperdag_result_t hyperdag_validate_string(const char* str, size_t max_length, const char* name);
-hyperdag_result_t hyperdag_validate_range_size_t(size_t value, size_t min, size_t max, const char* name);
-hyperdag_result_t hyperdag_validate_range_uint32(uint32_t value, uint32_t min, uint32_t max, const char* name);
+mg_result_t mg_validate_pointer(const void* ptr, const char* name);
+mg_result_t mg_validate_buffer(const void* buffer, size_t size, const char* name);
+mg_result_t mg_validate_string(const char* str, size_t max_length, const char* name);
+mg_result_t mg_validate_range_size_t(size_t value, size_t min, size_t max, const char* name);
+mg_result_t mg_validate_range_uint32(uint32_t value, uint32_t min, uint32_t max, const char* name);
 
 // Advanced validation
 typedef struct {
@@ -214,22 +214,22 @@ typedef struct {
     size_t max_size;
     bool require_alignment;
     size_t alignment;
-} hyperdag_buffer_validation_t;
+} mg_buffer_validation_t;
 
-hyperdag_result_t hyperdag_validate_buffer_advanced(
+mg_result_t mg_validate_buffer_advanced(
     const void* buffer,
     size_t size,
-    const hyperdag_buffer_validation_t* rules,
+    const mg_buffer_validation_t* rules,
     const char* name
 );
 
 // Error context management
-typedef struct hyperdag_error_context hyperdag_error_context_t;
+typedef struct mg_error_context mg_error_context_t;
 
-hyperdag_result_t hyperdag_error_context_create(hyperdag_error_context_t** out_context);
-hyperdag_result_t hyperdag_error_context_destroy(hyperdag_error_context_t* context);
-hyperdag_result_t hyperdag_error_context_add_info(
-    hyperdag_error_context_t* context,
+mg_result_t mg_error_context_create(mg_error_context_t** out_context);
+mg_result_t mg_error_context_destroy(mg_error_context_t* context);
+mg_result_t mg_error_context_add_info(
+    mg_error_context_t* context,
     const char* key,
     const char* value
 );
@@ -243,28 +243,28 @@ typedef struct {
     uint32_t loaded_bundles;
     double cpu_usage_percent;
     uint64_t error_count;
-    hyperdag_result_t last_error;
-} hyperdag_diagnostic_info_t;
+    mg_result_t last_error;
+} mg_diagnostic_info_t;
 
-hyperdag_result_t hyperdag_get_diagnostic_info(hyperdag_diagnostic_info_t* out_info);
+mg_result_t mg_get_diagnostic_info(mg_diagnostic_info_t* out_info);
 
 // Error recovery
 typedef enum {
-    HYPERDAG_RECOVERY_NONE,     // No recovery possible
-    HYPERDAG_RECOVERY_RETRY,    // Operation can be retried
-    HYPERDAG_RECOVERY_FALLBACK, // Alternative approach available
-    HYPERDAG_RECOVERY_PARTIAL   // Partial success possible
-} hyperdag_recovery_strategy_t;
+    METAGRAPH_RECOVERY_NONE,     // No recovery possible
+    METAGRAPH_RECOVERY_RETRY,    // Operation can be retried
+    METAGRAPH_RECOVERY_FALLBACK, // Alternative approach available
+    METAGRAPH_RECOVERY_PARTIAL   // Partial success possible
+} mg_recovery_strategy_t;
 
 typedef struct {
-    hyperdag_recovery_strategy_t strategy;
+    mg_recovery_strategy_t strategy;
     uint32_t max_retries;
     uint32_t retry_delay_ms;
     bool log_retries;
-} hyperdag_recovery_config_t;
+} mg_recovery_config_t;
 
-hyperdag_recovery_strategy_t hyperdag_get_recovery_strategy(hyperdag_result_t error);
-hyperdag_result_t hyperdag_configure_recovery(const hyperdag_recovery_config_t* config);
+mg_recovery_strategy_t mg_get_recovery_strategy(mg_result_t error);
+mg_result_t mg_configure_recovery(const mg_recovery_config_t* config);
 ```
 
 ## Error Categorization System
@@ -272,8 +272,8 @@ hyperdag_result_t hyperdag_configure_recovery(const hyperdag_recovery_config_t* 
 ```mermaid
 graph TD
     subgraph "Error Hierarchy"
-        SUCCESS[HYPERDAG_SUCCESS<br/>0]
-        
+        SUCCESS[METAGRAPH_SUCCESS<br/>0]
+
         subgraph "Error Categories"
             GENERAL[General Errors<br/>1000-1999]
             FILESYSTEM[File System<br/>2000-2999]
@@ -284,14 +284,14 @@ graph TD
             VALIDATION[Validation<br/>7000-7999]
             PLATFORM[Platform<br/>8000-8999]
         end
-        
+
         subgraph "Recovery Strategies"
             NONE[No Recovery]
             RETRY[Retry Operation]
             FALLBACK[Use Fallback]
             PARTIAL[Partial Success]
         end
-        
+
         GENERAL --> RETRY
         FILESYSTEM --> FALLBACK
         BUNDLE --> NONE
@@ -309,7 +309,7 @@ graph TD
 graph TD
     subgraph "Validation Pipeline"
         INPUT[Input Data]
-        
+
         subgraph "Validation Stages"
             NULL_CHECK[Null Pointer Check]
             RANGE_CHECK[Range Validation]
@@ -317,20 +317,20 @@ graph TD
             CONTENT_CHECK[Content Validation]
             SECURITY_CHECK[Security Validation]
         end
-        
+
         subgraph "Error Actions"
             LOG[Log Error]
             SANITIZE[Sanitize Input]
             REJECT[Reject Input]
             FALLBACK[Use Default]
         end
-        
+
         INPUT --> NULL_CHECK
         NULL_CHECK --> RANGE_CHECK
         RANGE_CHECK --> FORMAT_CHECK
         FORMAT_CHECK --> CONTENT_CHECK
         CONTENT_CHECK --> SECURITY_CHECK
-        
+
         NULL_CHECK -->|Fail| REJECT
         RANGE_CHECK -->|Fail| SANITIZE
         FORMAT_CHECK -->|Fail| REJECT
@@ -344,22 +344,22 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant App as Application
-    participant API as HyperDAG API
+    participant API as MetaGraph API
     participant Error as Error System
     participant Diag as Diagnostics
-    
-    App->>API: hyperdag_operation()
+
+    App->>API: mg_operation()
     API->>API: validate_parameters()
     API->>Error: validation_failed()
     Error->>Diag: capture_system_state()
     Diag->>Error: diagnostic_info
     Error->>Error: format_error_message()
-    Error->>API: HYPERDAG_ERROR_INVALID_PARAMETER
+    Error->>API: METAGRAPH_ERROR_INVALID_PARAMETER
     API->>App: error_result
-    
-    App->>Error: hyperdag_get_last_error()
+
+    App->>Error: mg_get_last_error()
     Error->>App: detailed_error_info
-    App->>Diag: hyperdag_get_diagnostic_info()
+    App->>Diag: mg_get_diagnostic_info()
     Diag->>App: system_state
 ```
 
@@ -457,4 +457,4 @@ sequenceDiagram
 - Stress testing validates robustness
 - Documentation covers error handling patterns
 
-This error handling and validation system provides the robust foundation that enables HyperDAG to maintain reliability and provide excellent debugging experiences in production environments.
+This error handling and validation system provides the robust foundation that enables MetaGraph to maintain reliability and provide excellent debugging experiences in production environments.

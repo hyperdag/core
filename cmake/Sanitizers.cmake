@@ -1,6 +1,6 @@
 # Sanitizers.cmake - Memory safety and sanitizer configurations
 
-if(NOT HYPERDAG_SANITIZERS)
+if(NOT METAGRAPH_SANITIZERS)
     return()
 endif()
 
@@ -19,8 +19,8 @@ endif()
 set(SANITIZER_FLAGS "")
 
 # AddressSanitizer (ASAN) - Default choice
-option(HYPERDAG_ASAN "Enable AddressSanitizer" ON)
-if(HYPERDAG_ASAN)
+option(METAGRAPH_ASAN "Enable AddressSanitizer" ON)
+if(METAGRAPH_ASAN)
     list(APPEND SANITIZER_FLAGS
         -fsanitize=address
         -fsanitize-address-use-after-scope
@@ -30,8 +30,8 @@ if(HYPERDAG_ASAN)
 endif()
 
 # UndefinedBehaviorSanitizer (UBSAN)
-option(HYPERDAG_UBSAN "Enable UndefinedBehaviorSanitizer" ON)
-if(HYPERDAG_UBSAN)
+option(METAGRAPH_UBSAN "Enable UndefinedBehaviorSanitizer" ON)
+if(METAGRAPH_UBSAN)
     list(APPEND SANITIZER_FLAGS
         -fsanitize=undefined
         -fsanitize=float-divide-by-zero
@@ -43,27 +43,27 @@ if(HYPERDAG_UBSAN)
 endif()
 
 # ThreadSanitizer (TSAN) - Mutually exclusive with ASAN
-option(HYPERDAG_TSAN "Enable ThreadSanitizer (excludes ASAN)" OFF)
-if(HYPERDAG_TSAN)
-    if(HYPERDAG_ASAN)
+option(METAGRAPH_TSAN "Enable ThreadSanitizer (excludes ASAN)" OFF)
+if(METAGRAPH_TSAN)
+    if(METAGRAPH_ASAN)
         message(FATAL_ERROR "ThreadSanitizer and AddressSanitizer are mutually exclusive")
     endif()
-    
+
     list(APPEND SANITIZER_FLAGS -fsanitize=thread)
     message(STATUS "ThreadSanitizer enabled")
 endif()
 
 # MemorySanitizer (MSAN) - Clang only, mutually exclusive with ASAN/TSAN
-option(HYPERDAG_MSAN "Enable MemorySanitizer (Clang only, excludes ASAN/TSAN)" OFF)
-if(HYPERDAG_MSAN)
+option(METAGRAPH_MSAN "Enable MemorySanitizer (Clang only, excludes ASAN/TSAN)" OFF)
+if(METAGRAPH_MSAN)
     if(NOT CMAKE_C_COMPILER_ID STREQUAL "Clang")
         message(FATAL_ERROR "MemorySanitizer is only supported with Clang")
     endif()
-    
-    if(HYPERDAG_ASAN OR HYPERDAG_TSAN)
+
+    if(METAGRAPH_ASAN OR METAGRAPH_TSAN)
         message(FATAL_ERROR "MemorySanitizer is mutually exclusive with ASAN/TSAN")
     endif()
-    
+
     list(APPEND SANITIZER_FLAGS
         -fsanitize=memory
         -fsanitize-memory-track-origins=2
@@ -74,29 +74,29 @@ endif()
 # Hardware-Assisted Sanitizers (ARM64/Apple Silicon)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64|aarch64")
     # HWASan - Near-zero overhead on ARM64
-    option(HYPERDAG_HWASAN "Enable HWAddressSanitizer (ARM64 only)" OFF)
-    if(HYPERDAG_HWASAN)
-        if(HYPERDAG_ASAN)
+    option(METAGRAPH_HWASAN "Enable HWAddressSanitizer (ARM64 only)" OFF)
+    if(METAGRAPH_HWASAN)
+        if(METAGRAPH_ASAN)
             message(FATAL_ERROR "HWAddressSanitizer and AddressSanitizer are mutually exclusive")
         endif()
-        
+
         list(APPEND SANITIZER_FLAGS -fsanitize=hwaddress)
         message(STATUS "HWAddressSanitizer enabled")
     endif()
-    
+
     # Memory Tagging Extension (MTE) - ARM servers
-    option(HYPERDAG_MTE "Enable Memory Tagging Extension (ARM64 servers)" OFF)
-    if(HYPERDAG_MTE)
+    option(METAGRAPH_MTE "Enable Memory Tagging Extension (ARM64 servers)" OFF)
+    if(METAGRAPH_MTE)
         list(APPEND SANITIZER_FLAGS
             -fsanitize=memtag
             -march=armv8.5-a+memtag
         )
         message(STATUS "Memory Tagging Extension enabled")
     endif()
-    
+
     # ShadowCallStack
-    option(HYPERDAG_SHADOW_CALL_STACK "Enable ShadowCallStack (ARM64)" OFF)
-    if(HYPERDAG_SHADOW_CALL_STACK)
+    option(METAGRAPH_SHADOW_CALL_STACK "Enable ShadowCallStack (ARM64)" OFF)
+    if(METAGRAPH_SHADOW_CALL_STACK)
         list(APPEND SANITIZER_FLAGS
             -fsanitize=shadow-call-stack
             -ffixed-x18  # Reserve x18 for shadow stack
@@ -109,13 +109,13 @@ endif()
 if(SANITIZER_FLAGS)
     add_compile_options(${SANITIZER_FLAGS})
     add_link_options(${SANITIZER_FLAGS})
-    
+
     # Environment setup for sanitizers
     set(ASAN_OPTIONS "abort_on_error=1:halt_on_error=1:print_stats=1")
     set(UBSAN_OPTIONS "abort_on_error=1:halt_on_error=1:print_stacktrace=1")
     set(TSAN_OPTIONS "abort_on_error=1:halt_on_error=1:history_size=7")
     set(MSAN_OPTIONS "abort_on_error=1:halt_on_error=1:print_stats=1")
-    
+
     message(STATUS "Sanitizer flags: ${SANITIZER_FLAGS}")
     message(STATUS "Remember to set environment variables:")
     message(STATUS "  export ASAN_OPTIONS=\"${ASAN_OPTIONS}\"")
@@ -128,7 +128,7 @@ endif()
 find_program(VALGRIND_PROGRAM valgrind)
 if(VALGRIND_PROGRAM)
     message(STATUS "Valgrind found: ${VALGRIND_PROGRAM}")
-    
+
     # Custom target for Valgrind testing
     add_custom_target(valgrind
         COMMAND ${VALGRIND_PROGRAM}
@@ -137,8 +137,8 @@ if(VALGRIND_PROGRAM)
             --track-origins=yes
             --verbose
             --log-file=valgrind-out.txt
-            $<TARGET_FILE:hyperdag_tests>
-        DEPENDS hyperdag_tests
+            $<TARGET_FILE:METAGRAPH_tests>
+        DEPENDS mg_tests
         COMMENT "Running tests under Valgrind"
     )
 endif()

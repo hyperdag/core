@@ -1,12 +1,12 @@
-# HyperDAG Core Features
+# MetaGraph Core Features
 
-This directory contains the complete feature specification for HyperDAG - the mathematical core that provides the foundation for TurtlGraph and other graph-based asset management systems.
+This directory contains the complete feature specification for MetaGraph - the mathematical core that provides the foundation for TurtlGraph and other graph-based asset management systems.
 
 ## Feature Overview
 
 | Feature ID | Name | Priority | Dependencies |
 |------------|------|----------|--------------|
-| [F.001](F001-core-hypergraph-data-model.md) | Core Hypergraph Data Model | Critical | F.010, F.011 |
+| [F.001](F001-core-metagraph-data-model.md) | Core MetaGraph Data Model | Critical | F.010, F.011 |
 | [F.002](F002-binary-bundle-format.md) | Binary Bundle Format | Critical | F.001, F.007, F.011 |
 | [F.003](F003-memory-mapped-io-operations.md) | Memory-Mapped I/O Operations | Critical | F.010, F.009, F.011 |
 | [F.004](F004-blake3-cryptographic-integrity.md) | BLAKE3 Cryptographic Integrity | High | F.002, F.010, F.011 |
@@ -26,7 +26,7 @@ This directory contains the complete feature specification for HyperDAG - the ma
 - F.011 - Error Handling and Validation
 
 ### Phase 2: Core Data Structures (Weeks 3-4)
-- F.001 - Core Hypergraph Data Model  
+- F.001 - Core MetaGraph Data Model
 - F.007 - Asset ID and Addressing
 - F.009 - Memory Pool Management
 
@@ -47,13 +47,13 @@ This directory contains the complete feature specification for HyperDAG - the ma
 
 ```mermaid
 graph TD
-    F010[F.010 Platform Abstraction] --> F001[F.001 Hypergraph Data Model]
+    F010[F.010 Platform Abstraction] --> F001[F.001 MetaGraph Data Model]
     F010 --> F007[F.007 Asset ID & Addressing]
     F010 --> F009[F.009 Memory Pool Management]
     F010 --> F003[F.003 Memory-Mapped I/O]
     F010 --> F008[F.008 Thread-Safe Access]
     F010 --> F004[F.004 BLAKE3 Integrity]
-    
+
     F011[F.011 Error Handling] --> F001
     F011 --> F002[F.002 Binary Bundle Format]
     F011 --> F003
@@ -64,38 +64,38 @@ graph TD
     F011 --> F008
     F011 --> F009
     F011 --> F012[F.012 Bundle Creation]
-    
+
     F001 --> F002
     F001 --> F005
     F001 --> F006
     F001 --> F008
     F001 --> F012
-    
+
     F007 --> F002
     F009 --> F003
-    
+
     F002 --> F004
     F002 --> F012
-    
+
     F005 --> F006
     F008 --> F005
-    
+
     F004 --> F012
     F006 --> F012
-    
+
     classDef foundation fill:#e1f5fe
     classDef critical fill:#fff3e0
     classDef high fill:#f3e5f5
-    
+
     class F010,F011 foundation
     class F001,F002,F003,F005,F006,F007 critical
     class F004,F008,F009,F012 high
 ```
 
-## HyperDAG vs TurtlGraph Boundary
+## MetaGraph vs TurtlGraph Boundary
 
-### HyperDAG Responsibilities
-- Mathematical hypergraph data structures
+### MetaGraph Responsibilities
+- Mathematical meta-graph data structures
 - Binary serialization and deserialization
 - Memory-mapped I/O operations
 - Cryptographic integrity verification
@@ -104,7 +104,7 @@ graph TD
 - Thread-safe concurrent access primitives
 - Error handling and validation
 
-### TurtlGraph Builds Upon HyperDAG
+### TurtlGraph Builds Upon MetaGraph
 - Streaming and prefetching systems
 - Platform-specific optimizations (DirectStorage, PS5, mobile)
 - CDN integration and delta patching
